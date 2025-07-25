@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add `tab.set_content` methods to Set content to page @3mora2
+- Add `tab.expose_function` The method adds a function called name on the window object. When called, the function executes callback and returns a Promise which resolves to the return value of callback. @3mora2
+- Add `tab.expose_bindings` The method adds a function called name on the window object. When called, the function executes callback and returns a Promise which resolves to the return value of callback. If the callback returns a Promise, it will be awaited. @3mora2
+- Add `tab.add_script_tag` The method adds a script tag to page. @3mora2
+- Add `tab.add_style_tag` The method adds a style tag to page. @3mora2
+
 ### Changed
 
 ### Removed

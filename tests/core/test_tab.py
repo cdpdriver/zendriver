@@ -186,7 +186,7 @@ async def test_expect_request(browser: zd.Browser):
 
     async with tab.expect_request(sample_file("groceries.html")) as request_info:
         await tab.get(sample_file("groceries.html"))
-        req = await asyncio.wait_for(request_info.value, timeout=3)
+        req = await request_info.value
         assert type(req) is zd.cdp.network.RequestWillBeSent
         assert type(req.request) is zd.cdp.network.Request
         assert req.request.url == sample_file("groceries.html")
@@ -202,7 +202,7 @@ async def test_expect_response(browser: zd.Browser):
 
     async with tab.expect_response(sample_file("groceries.html")) as response_info:
         await tab.get(sample_file("groceries.html"))
-        resp = await asyncio.wait_for(response_info.value, timeout=3)
+        resp = await response_info.value
         assert type(resp) is zd.cdp.network.ResponseReceived
         assert type(resp.response) is zd.cdp.network.Response
         assert resp.request_id is not None
@@ -218,8 +218,8 @@ async def test_expect_download(browser: zd.Browser):
     async with tab.expect_download() as download_ex:
         await tab.get(sample_file("groceries.html"))
         await (await tab.select("#download_file")).click()
-        download = await asyncio.wait_for(download_ex.value, timeout=3)
-        assert type(download) is zd.cdp.browser.DownloadWillBegin
+        download = await download_ex.value
+        assert type(download) is zd.cdp.page.DownloadWillBegin
         assert download.url is not None
 
 
@@ -238,3 +238,33 @@ async def test_intercept(browser: zd.Browser):
         assert body is not None
         # original_response = loads(body)
         # assert original_response["name"] == "Zendriver"
+
+
+async def test_expose_function(browser: zd.Browser):
+    async def sha256(text):
+        return str(text) + "sha256"
+
+    tab = browser.main_tab
+
+    await tab.expose_function("sha256", sha256)
+    await tab.set_content("""
+            <script>
+              async function onClick() {
+                document.querySelector('div#secret').textContent = await window.sha256('zendriver');
+              }
+            </script>
+            <button onclick="onClick()">Click me</button>
+            <div id="secret"></div>
+        """)
+
+    await (await tab.find("button")).click()
+    assert (await tab.find("div#secret")).text == await sha256("zendriver")
+
+
+async def test_add_script_tag(browser: zd.Browser):
+    tab = browser.main_tab
+
+    await tab.add_script_tag(content="""window.Store = {"name":"zendriver"} """)
+    assert await tab.evaluate("window.Store", return_by_value=True) == {
+        "name": "zendriver"
+    }

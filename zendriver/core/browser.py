@@ -15,10 +15,11 @@ import urllib.parse
 import urllib.request
 import warnings
 from collections import defaultdict
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Dict
 
 import asyncio_atexit
 
+from .helper import PageBinding
 from .. import cdp
 from . import tab, util
 from ._contradict import ContraDict
@@ -139,6 +140,7 @@ class Browser:
         self._process_pid = None
         self._is_updating = asyncio.Event()
         self.connection = None
+        self._pageBindings: Dict[str, PageBinding] = dict()
         logger.debug("Session object initialized: %s" % vars(self))
 
     @property
