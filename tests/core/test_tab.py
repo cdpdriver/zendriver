@@ -269,11 +269,10 @@ async def test_evaluate_return_by_value_modes(browser: zd.Browser) -> None:
     result_by_value = await tab.evaluate(expression, return_by_value=True)
     assert result_by_value is not None
 
-    result_remote_obj, errors = await tab.evaluate(expression, return_by_value=False)
-    assert result_remote_obj is not None
-    assert errors is None or hasattr(
-        errors, "to_json"
-    )  # Should be None or valid ExceptionDetails
+    result_false = await tab.evaluate(expression, return_by_value=False)
+    assert (
+        result_false is not None
+    )  # Should return the deep serialized value, not a tuple
 
 
 async def test_evaluate_stress_test_complex_objects(browser: zd.Browser) -> None:
