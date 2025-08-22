@@ -718,7 +718,6 @@ class Tab(Connection):
         | None
         | typing.Tuple[cdp.runtime.RemoteObject, cdp.runtime.ExceptionDetails | None]
     ):
-
         ser = cdp.runtime.SerializationOptions(
             serialization="deep",
             max_depth=10,
@@ -745,8 +744,8 @@ class Tab(Connection):
                 if remote_object.value:
                     return remote_object.value
             else:
-               if remote_object.deep_serialized_value:
-                   return remote_object.deep_serialized_value.value
+                if remote_object.deep_serialized_value:
+                    return remote_object.deep_serialized_value.value
 
         return remote_object, errors
 

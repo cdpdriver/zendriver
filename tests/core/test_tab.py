@@ -246,3 +246,15 @@ async def test_intercept(browser: zd.Browser) -> None:
         assert body is not None
         # original_response = loads(body)
         # assert original_response["name"] == "Zendriver"
+
+
+async def test_evaluate_complex_object_no_error(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("complex_object.html"))
+    await tab.wait_for_ready_state("complete")
+
+    tab = await browser.get(sample_file("complex_object.html"))
+    await tab.wait_for_ready_state("complete")
+
+    # This is similar to the original failing case but more likely to trigger the error
+    body_with_complex_refs = await tab.evaluate("document.body")
+    assert body_with_complex_refs is not None

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complex Object Test</title>
+</head>
+
+<body class="no-js">
+  <div id="content">
+    <h1>Complex Object Chain Test</h1>
+    <p>This page creates a complex object structure that may cause "Object reference chain is too long" errors.</p>
+  </div>
+
+  <script>
+    // Remove no-js class immediately
+    document.body.classList.remove('no-js');
+
+    // The key insight is that DOM elements themselves can have properties added
+    // that create circular references when Chrome tries to serialize them
+
+    // Add complex circular references directly to DOM elements
+    document.body.complexRef = document;
+    document.body.windowRef = window;
+    document.body.self = document.body;
+
+    // Create a complex object and attach it to DOM elements
+    const createComplexStructure = () => {
+      const structure = {};
+      structure.self = structure;
+      structure.body = document.body;
+      structure.document = document;
+      structure.window = window;
+
+      // Create deep nesting with DOM references
+      let current = structure;
+      for (let i = 0; i < 100; i++) {
+        current.next = {
+          level: i,
+          parent: current,
+          body: document.body,
+          document: document,
+          window: window,
+          elements: Array.from(document.querySelectorAll('*'))
+        };
+        current = current.next;
+      }
+      current.back_to_start = structure;
+
+      return structure;
+    };
+
+    const complexStructure = createComplexStructure();
+
+    // Attach the complex structure to DOM elements
+    document.body.complexStructure = complexStructure;
+    document.documentElement.complexStructure = complexStructure;
+
+    // Add references to all elements
+    Array.from(document.querySelectorAll('*')).forEach((el, i) => {
+      el.complexRef = complexStructure;
+      el.index = i;
+      el.bodyRef = document.body;
+      el.documentRef = document;
+      el.windowRef = window;
+    });
+
+    // Create circular references between elements
+    const allElements = Array.from(document.querySelectorAll('*'));
+    allElements.forEach((el, i) => {
+      el.nextElement = allElements[(i + 1) % allElements.length];
+      el.prevElement = allElements[(i - 1 + allElements.length) % allElements.length];
+      el.allElements = allElements;
+    });
+
+    // Add properties to the body element that create deep circular references
+    document.body.deepRef = {
+      level1: { level2: { level3: { level4: { level5: { body: document.body } } } } }
+    };
+    document.body.deepRef.level1.level2.level3.level4.level5.back = document.body.deepRef;
+
+    console.log('Complex DOM structure with circular references created');
+  </script>
+</body>
+
+</html>
