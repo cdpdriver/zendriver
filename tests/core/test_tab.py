@@ -267,7 +267,7 @@ async def test_intercept(browser: zd.Browser) -> None:
         # original_response = loads(body)
         # assert original_response["name"] == "Zendriver"
 
-        
+
 async def test_intercept_with_reload(browser: zd.Browser) -> None:
     tab = browser.main_tab
     assert tab is not None
@@ -347,8 +347,9 @@ async def test_evaluate_stress_test_complex_objects(browser: zd.Browser) -> None
             assert validator(
                 result
             ), f"Result validation failed for '{expression}': {result}"
-        else:
+        elif isinstance(validator, type):
             assert isinstance(
                 result, validator
             ), f"Expected {validator} for '{expression}', got {type(result)}: {result}"
-
+        else:
+            raise ValueError("Validator must be a type or callable")

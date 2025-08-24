@@ -723,8 +723,6 @@ class Tab(Connection):
             max_depth=10,
             additional_parameters={"maxNodeDepth": 10, "includeShadowTree": "all"},
         )
-        remote_object: cdp.runtime.RemoteObject = None
-        errors: cdp.runtime.ExceptionDetails = None
 
         remote_object, errors = await self.send(
             cdp.runtime.evaluate(
