@@ -51,6 +51,16 @@ class BaseFetchInterception:
         """
         Enter the context manager, adding request and response handlers.
         """
+        await self._setup()
+        return self
+
+    async def __aexit__(self, *args: typing.Any) -> None:
+        """
+        Exit the context manager, removing request and response handlers.
+        """
+        await self._teardown()
+
+    async def _setup(self) -> None:
         await self.tab.send(
             cdp.fetch.enable(
                 [
@@ -66,14 +76,18 @@ class BaseFetchInterception:
             cdp.fetch
         )  # trick to avoid another `fetch.enable` call by _register_handlers
         self.tab.add_handler(cdp.fetch.RequestPaused, self._response_handler)
-        return self
 
-    async def __aexit__(self, *args: typing.Any) -> None:
-        """
-        Exit the context manager, removing request and response handlers.
-        """
+    async def _teardown(self) -> None:
         self._remove_response_handler()
         await self.tab.send(cdp.fetch.disable())
+
+    async def reset(self) -> None:
+        """
+        Resets the internal state, allowing the interception to be reused.
+        """
+        self.response_future = asyncio.Future()
+        await self._teardown()
+        await self._setup()
 
     @property
     async def request(self) -> cdp.network.Request:

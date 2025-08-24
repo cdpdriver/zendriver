@@ -89,20 +89,37 @@ class BaseRequestExpectation:
         """
         Enter the context manager, adding request and response handlers.
         """
-        self.tab.add_handler(cdp.network.RequestWillBeSent, self._request_handler)
-        self.tab.add_handler(cdp.network.ResponseReceived, self._response_handler)
-        self.tab.add_handler(
-            cdp.network.LoadingFinished, self._loading_finished_handler
-        )
+        await self._setup()
         return self
 
     async def __aexit__(self, *args: Any) -> None:
         """
         Exit the context manager, removing request and response handlers.
         """
+        self._teardown()
+
+    async def _setup(self) -> None:
+        self.tab.add_handler(cdp.network.RequestWillBeSent, self._request_handler)
+        self.tab.add_handler(cdp.network.ResponseReceived, self._response_handler)
+        self.tab.add_handler(
+            cdp.network.LoadingFinished, self._loading_finished_handler
+        )
+
+    def _teardown(self) -> None:
         self._remove_request_handler()
         self._remove_response_handler()
         self._remove_loading_finished_handler()
+
+    async def reset(self) -> None:
+        """
+        Resets the internal state, allowing the expectation to be reused.
+        """
+        self.request_future = asyncio.Future()
+        self.response_future = asyncio.Future()
+        self.loading_finished_future = asyncio.Future()
+        self.request_id = None
+        self._teardown()
+        await self._setup()
 
     @property
     async def request(self) -> cdp.network.Request:
