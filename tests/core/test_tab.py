@@ -218,6 +218,26 @@ async def test_expect_response(browser: zd.Browser) -> None:
         assert type(response_body) is tuple
 
 
+async def test_expect_response_with_reload(browser: zd.Browser) -> None:
+    tab = browser.main_tab
+    assert tab is not None
+
+    async with tab.expect_response(sample_file("groceries.html")) as response_info:
+        await tab.get(sample_file("groceries.html"))
+        await tab.wait_for_ready_state("complete")
+        await response_info.reset()
+        await tab.reload()
+        await tab.wait_for_ready_state("complete")
+        resp = await asyncio.wait_for(response_info.value, timeout=3)
+        assert type(resp) is zd.cdp.network.ResponseReceived
+        assert type(resp.response) is zd.cdp.network.Response
+        assert resp.request_id is not None
+
+        response_body = await response_info.response_body
+        assert response_body is not None
+        assert type(response_body) is tuple
+
+
 async def test_expect_download(browser: zd.Browser) -> None:
     tab = browser.main_tab
     assert tab is not None
@@ -240,6 +260,27 @@ async def test_intercept(browser: zd.Browser) -> None:
         ResourceType.XHR,
     ) as interception:
         await tab.get(sample_file("profile.html"))
+        body, _ = await interception.response_body
+        await interception.continue_request()
+
+        assert body is not None
+        # original_response = loads(body)
+        # assert original_response["name"] == "Zendriver"
+
+
+async def test_intercept_with_reload(browser: zd.Browser) -> None:
+    tab = browser.main_tab
+    assert tab is not None
+
+    async with tab.intercept(
+        "*/user-data.json",
+        RequestStage.RESPONSE,
+        ResourceType.XHR,
+    ) as interception:
+        await tab.get(sample_file("profile.html"))
+        await interception.continue_request()
+
+        await interception.reset()
         body, _ = await interception.response_body
         await interception.continue_request()
 
