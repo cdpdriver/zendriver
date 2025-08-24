@@ -83,7 +83,7 @@ class BaseFetchInterception:
 
     async def reset(self) -> None:
         """
-        Resets the internal state, allowing the expectation to be reused.
+        Resets the internal state, allowing the interception to be reused.
         """
         self.response_future = asyncio.Future()
         await self._teardown()

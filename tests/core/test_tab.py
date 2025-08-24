@@ -278,9 +278,11 @@ async def test_intercept_with_reload(browser: zd.Browser) -> None:
         ResourceType.XHR,
     ) as interception:
         await tab.get(sample_file("profile.html"))
+        await interception.response_body
         await interception.continue_request()
 
         await interception.reset()
+        await tab.reload()
         body, _ = await interception.response_body
         await interception.continue_request()
 
