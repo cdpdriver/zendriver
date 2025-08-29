@@ -202,6 +202,11 @@ class DownloadExpectation:
         self.default_behavior = (
             self.tab._download_behavior[0] if self.tab._download_behavior else "default"
         )
+        self.download_path = (
+            self.tab._download_behavior[1]
+            if self.tab._download_behavior and len(self.tab._download_behavior) > 1
+            else None
+        )
 
     async def _handler(self, event: cdp.browser.DownloadWillBegin) -> None:
         self._remove_handler()
@@ -225,7 +230,9 @@ class DownloadExpectation:
         Exit the context manager, removing handler, set download behavior to default.
         """
         await self.tab.send(
-            cdp.browser.set_download_behavior(behavior=self.default_behavior)
+            cdp.browser.set_download_behavior(
+                behavior=self.default_behavior, download_path=self.download_path
+            )
         )
         self._remove_handler()
 
