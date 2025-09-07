@@ -718,6 +718,14 @@ class Tab(Connection):
         | None
         | typing.Tuple[cdp.runtime.RemoteObject, cdp.runtime.ExceptionDetails | None]
     ):
+        ser: cdp.runtime.SerializationOptions | None = None
+        if not return_by_value:
+            ser = cdp.runtime.SerializationOptions(
+                serialization="deep",
+                max_depth=10,
+                additional_parameters={"maxNodeDepth": 10, "includeShadowTree": "all"},
+            )
+
         remote_object, errors = await self.send(
             cdp.runtime.evaluate(
                 expression=expression,
@@ -725,6 +733,7 @@ class Tab(Connection):
                 await_promise=await_promise,
                 return_by_value=return_by_value,
                 allow_unsafe_eval_blocked_by_csp=True,
+                serialization_options=ser,
             )
         )
         if errors:
@@ -734,6 +743,9 @@ class Tab(Connection):
             if return_by_value:
                 if remote_object.value:
                     return remote_object.value
+            else:
+                if remote_object.deep_serialized_value:
+                    return remote_object.deep_serialized_value.value
 
         return remote_object, errors
 

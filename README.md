@@ -78,3 +78,8 @@ Contributions of all types are always welcome! Please see [CONTRIBUTING.md](http
 If you have a question, bug report, or want to make a general inquiry about the project, please create a new GitHub issue. If you are having a problem with Zendriver, please make sure to include your operating system, Chrome version, code example demonstrating the issue, and any other information that may be relevant.
 
 Questions directed to any personal accounts outside of GitHub will be ignored.
+
+## Sponsors
+
+### Powered by
+[![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSource)
