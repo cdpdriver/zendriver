@@ -113,7 +113,7 @@ When submitting a pull request, please stick to the following guidelines:
 
 1. Describe your change in the body of your pull request, ideally linking to an existing GitHub issue for the bug/enhancement you are addressing. Note, if you use the word "closes", "fixes", or "resolves" before linking your issue, the issue will be automatically closed when the pull request is merged (see [GitHub docs](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword)).
 1. Ensure that any newly added/modified code is autoformatted and free of lint errors. To verify this, use the [`scripts/lint.sh`](scripts/lint.sh) script to run `ruff` and `mypy` against your code.
-1. Ensure that all tests pass: `uv run pytest`. In some cases there may be pre-existing failing tests unrelated to your change, in which case ensure that there are no test regressions.
+1. Ensure that all tests pass: `uv run pytest`.
 1. Get credit for your work! Add your changes to [`CHANGELOG.md`](CHANGELOG.md) under the `[UNRELEASED]` section and optionally include your GitHub handle at the end of the line.
 
 > [!TIP]
