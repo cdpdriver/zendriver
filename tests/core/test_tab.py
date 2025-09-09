@@ -339,6 +339,17 @@ async def test_evaluate_return_by_value_simple_json(browser: zd.Browser) -> None
     ]
 
 
+async def test_evaluate_return_by_value_falsy(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("simple_json.html"))
+    await tab.wait_for_ready_state("complete")
+
+    expr_template = "JSON.parse(document.querySelector('%s').textContent)"
+
+    assert await tab.evaluate(expr_template % "#zero") == 0
+    assert await tab.evaluate(expr_template % "#empty_array") == []
+    assert await tab.evaluate(expr_template % "#null") is None
+
+
 async def test_evaluate_stress_test_complex_objects(browser: zd.Browser) -> None:
     tab = await browser.get(sample_file("complex_object.html"))
     await tab.wait_for_ready_state("complete")

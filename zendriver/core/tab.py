@@ -739,15 +739,9 @@ class Tab(Connection):
         if errors:
             raise ProtocolException(errors)
 
-        if remote_object:
-            if return_by_value:
-                if remote_object.value:
-                    return remote_object.value
-            else:
-                if remote_object.deep_serialized_value:
-                    return remote_object.deep_serialized_value.value
-
-        return remote_object, errors
+        if return_by_value:
+            return remote_object.value
+        return remote_object.deep_serialized_value.value
 
     async def js_dumps(
         self, obj_name: str, return_by_value: Optional[bool] = True
