@@ -917,9 +917,10 @@ class Tab(Connection):
 
         if exception_details:
             raise ProtocolException(exception_details)
-        if return_by_value and remote_object.value:
+        if return_by_value:
             return remote_object.value
         else:
+            # TODO Why not remote_object.deep_serialized_value.value?
             return remote_object, exception_details
 
     async def close(self) -> None:
