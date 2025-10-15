@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+  - Fix [#128](https://github.com/cdpdriver/zendriver/issues/218): TimeoutError caused by Tab.xpath @ionutcatana
+
 ### Added
 
 ### Changed
