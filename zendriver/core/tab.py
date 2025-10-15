@@ -389,7 +389,7 @@ class Tab(Connection):
                 start_time = loop.time()
                 try:
                     items = await self.find_all(xpath, timeout=0)
-                except Exception:
+                except TimeoutError:
                     pass
 
                 await self.sleep(0.1)
