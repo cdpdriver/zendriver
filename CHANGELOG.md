@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix `browser.stopped` to detect when the browser was closed by the user. @puc9
+
 ### Added
 
 ### Changed
