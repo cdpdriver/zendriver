@@ -612,7 +612,12 @@ class Browser:
             return
 
         if self.connection:
-            await self.connection.send(cdp.browser.close())
+            try:
+                await self.connection.send(cdp.browser.close())
+            except Exception:
+                logger.warning(
+                    "Could not send the close command when stopping the browser. Likely the browser is already gone. Closing the connection."
+                )
             await self.connection.aclose()
             logger.debug("closed the connection")
 

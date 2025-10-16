@@ -38,6 +38,34 @@ async def test_update_target_sets_target_title(browser: zd.Browser) -> None:
     assert page.target.title == "Example Domain"
 
 
+async def test_browser_stop_can_be_called_on_a_closed_connection(
+    browser: zd.Browser,
+) -> None:
+    await browser.get("https://example.com")
+    if browser.connection is not None:
+        await browser.connection.aclose()
+        assert browser.connection.closed
+
+    await browser.stop()
+    assert browser.stopped
+
+
+async def test_browser_stop_can_be_called_multiple_times(browser: zd.Browser) -> None:
+    await browser.get("https://example.com")
+
+    await browser.stop()
+    assert browser.stopped
+
+    await browser.stop()
+    assert browser.stopped
+
+
+async def test_browser_stopped_is_true_after_calling_stop(browser: zd.Browser) -> None:
+    await browser.get("https://example.com")
+    await browser.stop()
+    assert browser.stopped
+
+
 async def test_browser_stopped_is_true_when_stopped_externally(
     browser: zd.Browser,
 ) -> None:
@@ -72,3 +100,5 @@ async def test_browser_stopped_is_true_when_stopped_externally(
 
     assert not psproc.is_running()
     assert browser.stopped
+
+    await browser.stop()
