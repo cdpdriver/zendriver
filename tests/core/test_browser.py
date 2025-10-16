@@ -42,9 +42,14 @@ async def test_browser_stop_can_be_called_on_a_closed_connection(
     browser: zd.Browser,
 ) -> None:
     await browser.get("https://example.com")
-    if browser.connection is not None:
-        await browser.connection.aclose()
-        assert browser.connection.closed
+
+    assert browser.connection is not None
+    assert browser.connection
+
+    await browser.connection.aclose()
+
+    assert browser.connection.closed
+    assert not browser.connection
 
     await browser.stop()
     assert browser.stopped
