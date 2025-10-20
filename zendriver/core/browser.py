@@ -221,7 +221,7 @@ class Browser:
                         % (self.targets.index(current_tab), changes_string)
                     )
 
-                    current_tab.target = target_info
+                current_tab.target = target_info
 
             elif isinstance(event, cdp.target.TargetCreated):
                 target_info = event.target_info
