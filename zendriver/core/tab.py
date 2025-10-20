@@ -384,15 +384,17 @@ class Tab(Connection):
         items: List[Element] = []
         try:
             await self.send(cdp.dom.enable(), True)
-            items = await self.find_all(xpath, timeout=0)
-            if not items:
-                loop = asyncio.get_running_loop()
+            loop = asyncio.get_running_loop()
+            while not items:
                 start_time = loop.time()
-                while not items:
+                try:
                     items = await self.find_all(xpath, timeout=0)
-                    await self.sleep(0.1)
-                    if loop.time() - start_time > timeout:
-                        break
+                except TimeoutError:
+                    pass
+
+                await self.sleep(0.1)
+                if loop.time() - start_time > timeout:
+                    break
         finally:
             await self.disable_dom_agent()
         return items
