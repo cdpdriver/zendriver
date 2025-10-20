@@ -46,6 +46,8 @@ class Config:
         browser_connection_timeout: float = 0.25,
         browser_connection_max_tries: int = 10,
         user_agent: Optional[str] = None,
+        disable_webRTC: Optional[bool] = True,
+        disable_webGL: Optional[bool] = False,
         **kwargs: Any,
     ):
         """
@@ -106,6 +108,8 @@ class Config:
         self.host = host
         self.port = port
         self.expert = expert
+        self.disable_webRTC = disable_webRTC
+        self.disable_webGL = disable_webGL
         self._extensions: list[PathLike] = []
 
         # when using posix-ish operating system and running as root
@@ -226,6 +230,14 @@ class Config:
             args.append("--remote-debugging-host=%s" % self.host)
         if self.port:
             args.append("--remote-debugging-port=%s" % self.port)
+        if self.disable_webRTC:
+            args += [
+                "--webrtc-ip-handling-policy=disable_non_proxied_udp",
+                "--force-webrtc-ip-handling-policy",
+            ]
+        if self.disable_webGL:
+            args += ["--disable-webgl", "--disable-webgl2"]
+
         return args
 
     def add_argument(self, arg: str) -> None:
