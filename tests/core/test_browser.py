@@ -1,3 +1,6 @@
+import subprocess
+
+import psutil
 import pytest
 from psutil import Process
 from pytest_mock import MockerFixture
@@ -99,7 +102,8 @@ async def test_browser_stopped_is_true_when_stopped_externally(
             break
         try:
             psproc.wait(wait_timeout)
-        except TimeoutError:
+        except (TimeoutError, subprocess.TimeoutExpired, psutil.TimeoutExpired):
+            # So many different exceptions... Why lib authors, why?
             continue
 
     assert not psproc.is_running()
