@@ -331,9 +331,6 @@ class Connection(metaclass=CantTouchThis):
     def closed(self) -> bool:
         return self.websocket is None
 
-    def __bool__(self) -> bool:
-        return not self.closed
-
     def add_handler(
         self,
         event_type_or_domain: Union[type, types.ModuleType],

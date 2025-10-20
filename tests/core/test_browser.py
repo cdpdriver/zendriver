@@ -44,12 +44,11 @@ async def test_browser_stop_can_be_called_on_a_closed_connection(
     await browser.get("https://example.com")
 
     assert browser.connection is not None
-    assert browser.connection
+    assert not browser.connection.closed
 
     await browser.connection.aclose()
 
     assert browser.connection.closed
-    assert not browser.connection
 
     await browser.stop()
     assert browser.stopped

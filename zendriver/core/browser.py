@@ -611,7 +611,7 @@ class Browser:
         if not self.connection and not self._process:
             return
 
-        if self.connection:
+        if self.connection and not self.connection.closed:
             try:
                 await self.connection.send(cdp.browser.close())
             except Exception:
