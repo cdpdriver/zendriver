@@ -3,13 +3,24 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: BluetoothEmulation (experimental)
 
 from __future__ import annotations
+
 import enum
 import typing
-from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+from dataclasses import dataclass, field
+
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 class CentralState(enum.Enum):
@@ -17,9 +28,9 @@ class CentralState(enum.Enum):
     Indicates the various states of Central.
     """
 
-    ABSENT = "absent"
-    POWERED_OFF = "powered-off"
-    POWERED_ON = "powered-on"
+    ABSENT = 'absent'
+    POWERED_OFF = 'powered-off'
+    POWERED_ON = 'powered-on'
 
     def to_json(self) -> str:
         return self.value
@@ -28,14 +39,20 @@ class CentralState(enum.Enum):
     def from_json(cls, json: str) -> CentralState:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> CentralState | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class GATTOperationType(enum.Enum):
     """
     Indicates the various types of GATT event.
     """
 
-    CONNECTION = "connection"
-    DISCOVERY = "discovery"
+    CONNECTION = 'connection'
+    DISCOVERY = 'discovery'
 
     def to_json(self) -> str:
         return self.value
@@ -44,15 +61,21 @@ class GATTOperationType(enum.Enum):
     def from_json(cls, json: str) -> GATTOperationType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> GATTOperationType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class CharacteristicWriteType(enum.Enum):
     """
     Indicates the various types of characteristic write.
     """
 
-    WRITE_DEFAULT_DEPRECATED = "write-default-deprecated"
-    WRITE_WITH_RESPONSE = "write-with-response"
-    WRITE_WITHOUT_RESPONSE = "write-without-response"
+    WRITE_DEFAULT_DEPRECATED = 'write-default-deprecated'
+    WRITE_WITH_RESPONSE = 'write-with-response'
+    WRITE_WITHOUT_RESPONSE = 'write-without-response'
 
     def to_json(self) -> str:
         return self.value
@@ -61,16 +84,22 @@ class CharacteristicWriteType(enum.Enum):
     def from_json(cls, json: str) -> CharacteristicWriteType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> CharacteristicWriteType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class CharacteristicOperationType(enum.Enum):
     """
     Indicates the various types of characteristic operation.
     """
 
-    READ = "read"
-    WRITE = "write"
-    SUBSCRIBE_TO_NOTIFICATIONS = "subscribe-to-notifications"
-    UNSUBSCRIBE_FROM_NOTIFICATIONS = "unsubscribe-from-notifications"
+    READ = 'read'
+    WRITE = 'write'
+    SUBSCRIBE_TO_NOTIFICATIONS = 'subscribe-to-notifications'
+    UNSUBSCRIBE_FROM_NOTIFICATIONS = 'unsubscribe-from-notifications'
 
     def to_json(self) -> str:
         return self.value
@@ -79,14 +108,20 @@ class CharacteristicOperationType(enum.Enum):
     def from_json(cls, json: str) -> CharacteristicOperationType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> CharacteristicOperationType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class DescriptorOperationType(enum.Enum):
     """
     Indicates the various types of descriptor operation.
     """
 
-    READ = "read"
-    WRITE = "write"
+    READ = 'read'
+    WRITE = 'write'
 
     def to_json(self) -> str:
         return self.value
@@ -94,6 +129,12 @@ class DescriptorOperationType(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> DescriptorOperationType:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> DescriptorOperationType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -111,17 +152,23 @@ class ManufacturerData:
     data: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["key"] = self.key
-        json["data"] = self.data
+        json: T_JSON_DICT = {}
+        json['key'] = self.key
+        json['data'] = self.data
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ManufacturerData:
         return cls(
-            key=int(json["key"]),
-            data=str(json["data"]),
+            key=int(json['key']),
+            data=str(json['data']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ManufacturerData | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -130,53 +177,49 @@ class ScanRecord:
     Stores the byte data of the advertisement packet sent by a Bluetooth device.
     """
 
-    name: typing.Optional[str] = None
+    name: str | None = None
 
-    uuids: typing.Optional[typing.List[str]] = None
+    uuids: list[str] = field(default_factory=list)
 
     #: Stores the external appearance description of the device.
-    appearance: typing.Optional[int] = None
+    appearance: int | None = None
 
     #: Stores the transmission power of a broadcasting device.
-    tx_power: typing.Optional[int] = None
+    tx_power: int | None = None
 
     #: Key is the company identifier and the value is an array of bytes of
     #: manufacturer specific data.
-    manufacturer_data: typing.Optional[typing.List[ManufacturerData]] = None
+    manufacturer_data: list[ManufacturerData] = field(default_factory=list)
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
+        json: T_JSON_DICT = {}
         if self.name is not None:
-            json["name"] = self.name
+            json['name'] = self.name
         if self.uuids is not None:
-            json["uuids"] = [i for i in self.uuids]
+            json['uuids'] = self.uuids
         if self.appearance is not None:
-            json["appearance"] = self.appearance
+            json['appearance'] = self.appearance
         if self.tx_power is not None:
-            json["txPower"] = self.tx_power
+            json['txPower'] = self.tx_power
         if self.manufacturer_data is not None:
-            json["manufacturerData"] = [i.to_json() for i in self.manufacturer_data]
+            json['manufacturerData'] = [i.to_json() for i in self.manufacturer_data]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ScanRecord:
         return cls(
-            name=str(json["name"]) if json.get("name", None) is not None else None,
-            uuids=[str(i) for i in json["uuids"]]
-            if json.get("uuids", None) is not None
-            else None,
-            appearance=int(json["appearance"])
-            if json.get("appearance", None) is not None
-            else None,
-            tx_power=int(json["txPower"])
-            if json.get("txPower", None) is not None
-            else None,
-            manufacturer_data=[
-                ManufacturerData.from_json(i) for i in json["manufacturerData"]
-            ]
-            if json.get("manufacturerData", None) is not None
-            else None,
+            name=None if json.get('name') is None else str(json['name']),
+            uuids=[str(i) for i in json.get('uuids', [])],
+            appearance=None if json.get('appearance') is None else int(json['appearance']),
+            tx_power=None if json.get('txPower') is None else int(json['txPower']),
+            manufacturer_data=[ManufacturerData.from_json(i) for i in json.get('manufacturerData', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ScanRecord | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -192,19 +235,25 @@ class ScanEntry:
     scan_record: ScanRecord
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["deviceAddress"] = self.device_address
-        json["rssi"] = self.rssi
-        json["scanRecord"] = self.scan_record.to_json()
+        json: T_JSON_DICT = {}
+        json['deviceAddress'] = self.device_address
+        json['rssi'] = self.rssi
+        json['scanRecord'] = self.scan_record.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ScanEntry:
         return cls(
-            device_address=str(json["deviceAddress"]),
-            rssi=int(json["rssi"]),
-            scan_record=ScanRecord.from_json(json["scanRecord"]),
+            device_address=str(json['deviceAddress']),
+            rssi=int(json['rssi']),
+            scan_record=ScanRecord.from_json(json['scanRecord']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ScanEntry | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -214,110 +263,119 @@ class CharacteristicProperties:
     Specification BT 4.2 Vol 3 Part G 3.3.1. Characteristic Properties.
     """
 
-    broadcast: typing.Optional[bool] = None
+    broadcast: bool | None = None
 
-    read: typing.Optional[bool] = None
+    read: bool | None = None
 
-    write_without_response: typing.Optional[bool] = None
+    write_without_response: bool | None = None
 
-    write: typing.Optional[bool] = None
+    write: bool | None = None
 
-    notify: typing.Optional[bool] = None
+    notify: bool | None = None
 
-    indicate: typing.Optional[bool] = None
+    indicate: bool | None = None
 
-    authenticated_signed_writes: typing.Optional[bool] = None
+    authenticated_signed_writes: bool | None = None
 
-    extended_properties: typing.Optional[bool] = None
+    extended_properties: bool | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
+        json: T_JSON_DICT = {}
         if self.broadcast is not None:
-            json["broadcast"] = self.broadcast
+            json['broadcast'] = self.broadcast
         if self.read is not None:
-            json["read"] = self.read
+            json['read'] = self.read
         if self.write_without_response is not None:
-            json["writeWithoutResponse"] = self.write_without_response
+            json['writeWithoutResponse'] = self.write_without_response
         if self.write is not None:
-            json["write"] = self.write
+            json['write'] = self.write
         if self.notify is not None:
-            json["notify"] = self.notify
+            json['notify'] = self.notify
         if self.indicate is not None:
-            json["indicate"] = self.indicate
+            json['indicate'] = self.indicate
         if self.authenticated_signed_writes is not None:
-            json["authenticatedSignedWrites"] = self.authenticated_signed_writes
+            json['authenticatedSignedWrites'] = self.authenticated_signed_writes
         if self.extended_properties is not None:
-            json["extendedProperties"] = self.extended_properties
+            json['extendedProperties'] = self.extended_properties
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CharacteristicProperties:
         return cls(
-            broadcast=bool(json["broadcast"])
-            if json.get("broadcast", None) is not None
-            else None,
-            read=bool(json["read"]) if json.get("read", None) is not None else None,
-            write_without_response=bool(json["writeWithoutResponse"])
-            if json.get("writeWithoutResponse", None) is not None
-            else None,
-            write=bool(json["write"]) if json.get("write", None) is not None else None,
-            notify=bool(json["notify"])
-            if json.get("notify", None) is not None
-            else None,
-            indicate=bool(json["indicate"])
-            if json.get("indicate", None) is not None
-            else None,
-            authenticated_signed_writes=bool(json["authenticatedSignedWrites"])
-            if json.get("authenticatedSignedWrites", None) is not None
-            else None,
-            extended_properties=bool(json["extendedProperties"])
-            if json.get("extendedProperties", None) is not None
-            else None,
+            broadcast=None if json.get('broadcast') is None else bool(json['broadcast']),
+            read=None if json.get('read') is None else bool(json['read']),
+            write_without_response=None
+            if json.get('writeWithoutResponse') is None
+            else bool(json['writeWithoutResponse']),
+            write=None if json.get('write') is None else bool(json['write']),
+            notify=None if json.get('notify') is None else bool(json['notify']),
+            indicate=None if json.get('indicate') is None else bool(json['indicate']),
+            authenticated_signed_writes=None
+            if json.get('authenticatedSignedWrites') is None
+            else bool(json['authenticatedSignedWrites']),
+            extended_properties=None if json.get('extendedProperties') is None else bool(json['extendedProperties']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CharacteristicProperties | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 def enable(
-    state: CentralState, le_supported: bool
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    state: CentralState,
+    *,
+    le_supported: bool,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enable the BluetoothEmulation domain.
 
     :param state: State of the simulated central.
     :param le_supported: If the simulated central supports low-energy.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["state"] = state.to_json()
-    params["leSupported"] = le_supported
+
+    params: T_JSON_DICT = {}
+    params['state'] = state.to_json()
+    params['leSupported'] = le_supported
     cmd_dict: T_JSON_DICT = {
-        "method": "BluetoothEmulation.enable",
-        "params": params,
+        'method': 'BluetoothEmulation.enable',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_simulated_central_state(
     state: CentralState,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Set the state of the simulated central.
 
     :param state: State of the simulated central.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["state"] = state.to_json()
+
+    params: T_JSON_DICT = {}
+    params['state'] = state.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "BluetoothEmulation.setSimulatedCentralState",
-        "params": params,
+        'method': 'BluetoothEmulation.setSimulatedCentralState',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disable the BluetoothEmulation domain.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "BluetoothEmulation.disable",
+        'method': 'BluetoothEmulation.disable',
     }
     json = yield cmd_dict
 
@@ -325,9 +383,9 @@ def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
 def simulate_preconnected_peripheral(
     address: str,
     name: str,
-    manufacturer_data: typing.List[ManufacturerData],
-    known_service_uuids: typing.List[str],
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    manufacturer_data: list[ManufacturerData],
+    known_service_uuids: list[str],
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Simulates a peripheral with ``address``, ``name`` and ``knownServiceUuids``
     that has already been connected to the system.
@@ -336,40 +394,48 @@ def simulate_preconnected_peripheral(
     :param name:
     :param manufacturer_data:
     :param known_service_uuids:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["address"] = address
-    params["name"] = name
-    params["manufacturerData"] = [i.to_json() for i in manufacturer_data]
-    params["knownServiceUuids"] = [i for i in known_service_uuids]
+
+    params: T_JSON_DICT = {}
+    params['address'] = address
+    params['name'] = name
+    params['manufacturerData'] = [i.to_json() for i in manufacturer_data]
+    params['knownServiceUuids'] = known_service_uuids
     cmd_dict: T_JSON_DICT = {
-        "method": "BluetoothEmulation.simulatePreconnectedPeripheral",
-        "params": params,
+        'method': 'BluetoothEmulation.simulatePreconnectedPeripheral',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def simulate_advertisement(
     entry: ScanEntry,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Simulates an advertisement packet described in ``entry`` being received by
     the central.
 
     :param entry:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["entry"] = entry.to_json()
+
+    params: T_JSON_DICT = {}
+    params['entry'] = entry.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "BluetoothEmulation.simulateAdvertisement",
-        "params": params,
+        'method': 'BluetoothEmulation.simulateAdvertisement',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def simulate_gatt_operation_response(
-    address: str, type_: GATTOperationType, code: int
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    address: str,
+    type_: GATTOperationType,
+    code: int,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Simulates the response code from the peripheral with ``address`` for a
     GATT operation of ``type``. The ``code`` value follows the HCI Error Codes from
@@ -378,14 +444,17 @@ def simulate_gatt_operation_response(
     :param address:
     :param type_:
     :param code:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["address"] = address
-    params["type"] = type_.to_json()
-    params["code"] = code
+
+    params: T_JSON_DICT = {}
+    params['address'] = address
+    params['type'] = type_.to_json()
+    params['code'] = code
     cmd_dict: T_JSON_DICT = {
-        "method": "BluetoothEmulation.simulateGATTOperationResponse",
-        "params": params,
+        'method': 'BluetoothEmulation.simulateGATTOperationResponse',
+        'params': params,
     }
     json = yield cmd_dict
 
@@ -394,8 +463,9 @@ def simulate_characteristic_operation_response(
     characteristic_id: str,
     type_: CharacteristicOperationType,
     code: int,
-    data: typing.Optional[str] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    data: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Simulates the response from the characteristic with ``characteristicId`` for a
     characteristic operation of ``type``. The ``code`` value follows the Error
@@ -407,16 +477,19 @@ def simulate_characteristic_operation_response(
     :param type_:
     :param code:
     :param data: *(Optional)*
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["characteristicId"] = characteristic_id
-    params["type"] = type_.to_json()
-    params["code"] = code
+
+    params: T_JSON_DICT = {}
+    params['characteristicId'] = characteristic_id
+    params['type'] = type_.to_json()
+    params['code'] = code
     if data is not None:
-        params["data"] = data
+        params['data'] = data
     cmd_dict: T_JSON_DICT = {
-        "method": "BluetoothEmulation.simulateCharacteristicOperationResponse",
-        "params": params,
+        'method': 'BluetoothEmulation.simulateCharacteristicOperationResponse',
+        'params': params,
     }
     json = yield cmd_dict
 
@@ -425,8 +498,9 @@ def simulate_descriptor_operation_response(
     descriptor_id: str,
     type_: DescriptorOperationType,
     code: int,
-    data: typing.Optional[str] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    data: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Simulates the response from the descriptor with ``descriptorId`` for a
     descriptor operation of ``type``. The ``code`` value follows the Error
@@ -438,59 +512,72 @@ def simulate_descriptor_operation_response(
     :param type_:
     :param code:
     :param data: *(Optional)*
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["descriptorId"] = descriptor_id
-    params["type"] = type_.to_json()
-    params["code"] = code
+
+    params: T_JSON_DICT = {}
+    params['descriptorId'] = descriptor_id
+    params['type'] = type_.to_json()
+    params['code'] = code
     if data is not None:
-        params["data"] = data
+        params['data'] = data
     cmd_dict: T_JSON_DICT = {
-        "method": "BluetoothEmulation.simulateDescriptorOperationResponse",
-        "params": params,
+        'method': 'BluetoothEmulation.simulateDescriptorOperationResponse',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def add_service(
-    address: str, service_uuid: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, str]:
+    address: str,
+    service_uuid: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, str]:
     """
     Adds a service with ``serviceUuid`` to the peripheral with ``address``.
 
     :param address:
     :param service_uuid:
-    :returns: An identifier that uniquely represents this service.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, str]
     """
-    params: T_JSON_DICT = dict()
-    params["address"] = address
-    params["serviceUuid"] = service_uuid
+
+    params: T_JSON_DICT = {}
+    params['address'] = address
+    params['serviceUuid'] = service_uuid
     cmd_dict: T_JSON_DICT = {
-        "method": "BluetoothEmulation.addService",
-        "params": params,
+        'method': 'BluetoothEmulation.addService',
+        'params': params,
     }
     json = yield cmd_dict
-    return str(json["serviceId"])
+    return str(json['serviceId'])
 
 
-def remove_service(service_id: str) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def remove_service(
+    service_id: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Removes the service respresented by ``serviceId`` from the simulated central.
 
     :param service_id:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["serviceId"] = service_id
+
+    params: T_JSON_DICT = {}
+    params['serviceId'] = service_id
     cmd_dict: T_JSON_DICT = {
-        "method": "BluetoothEmulation.removeService",
-        "params": params,
+        'method': 'BluetoothEmulation.removeService',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def add_characteristic(
-    service_id: str, characteristic_uuid: str, properties: CharacteristicProperties
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, str]:
+    service_id: str,
+    characteristic_uuid: str,
+    properties: CharacteristicProperties,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, str]:
     """
     Adds a characteristic with ``characteristicUuid`` and ``properties`` to the
     service represented by ``serviceId``.
@@ -498,95 +585,109 @@ def add_characteristic(
     :param service_id:
     :param characteristic_uuid:
     :param properties:
-    :returns: An identifier that uniquely represents this characteristic.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, str]
     """
-    params: T_JSON_DICT = dict()
-    params["serviceId"] = service_id
-    params["characteristicUuid"] = characteristic_uuid
-    params["properties"] = properties.to_json()
+
+    params: T_JSON_DICT = {}
+    params['serviceId'] = service_id
+    params['characteristicUuid'] = characteristic_uuid
+    params['properties'] = properties.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "BluetoothEmulation.addCharacteristic",
-        "params": params,
+        'method': 'BluetoothEmulation.addCharacteristic',
+        'params': params,
     }
     json = yield cmd_dict
-    return str(json["characteristicId"])
+    return str(json['characteristicId'])
 
 
 def remove_characteristic(
     characteristic_id: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Removes the characteristic respresented by ``characteristicId`` from the
     simulated central.
 
     :param characteristic_id:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["characteristicId"] = characteristic_id
+
+    params: T_JSON_DICT = {}
+    params['characteristicId'] = characteristic_id
     cmd_dict: T_JSON_DICT = {
-        "method": "BluetoothEmulation.removeCharacteristic",
-        "params": params,
+        'method': 'BluetoothEmulation.removeCharacteristic',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def add_descriptor(
-    characteristic_id: str, descriptor_uuid: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, str]:
+    characteristic_id: str,
+    descriptor_uuid: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, str]:
     """
     Adds a descriptor with ``descriptorUuid`` to the characteristic respresented
     by ``characteristicId``.
 
     :param characteristic_id:
     :param descriptor_uuid:
-    :returns: An identifier that uniquely represents this descriptor.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, str]
     """
-    params: T_JSON_DICT = dict()
-    params["characteristicId"] = characteristic_id
-    params["descriptorUuid"] = descriptor_uuid
+
+    params: T_JSON_DICT = {}
+    params['characteristicId'] = characteristic_id
+    params['descriptorUuid'] = descriptor_uuid
     cmd_dict: T_JSON_DICT = {
-        "method": "BluetoothEmulation.addDescriptor",
-        "params": params,
+        'method': 'BluetoothEmulation.addDescriptor',
+        'params': params,
     }
     json = yield cmd_dict
-    return str(json["descriptorId"])
+    return str(json['descriptorId'])
 
 
 def remove_descriptor(
     descriptor_id: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Removes the descriptor with ``descriptorId`` from the simulated central.
 
     :param descriptor_id:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["descriptorId"] = descriptor_id
+
+    params: T_JSON_DICT = {}
+    params['descriptorId'] = descriptor_id
     cmd_dict: T_JSON_DICT = {
-        "method": "BluetoothEmulation.removeDescriptor",
-        "params": params,
+        'method': 'BluetoothEmulation.removeDescriptor',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def simulate_gatt_disconnection(
     address: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Simulates a GATT disconnection from the peripheral with ``address``.
 
     :param address:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["address"] = address
+
+    params: T_JSON_DICT = {}
+    params['address'] = address
     cmd_dict: T_JSON_DICT = {
-        "method": "BluetoothEmulation.simulateGATTDisconnection",
-        "params": params,
+        'method': 'BluetoothEmulation.simulateGATTDisconnection',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@event_class("BluetoothEmulation.gattOperationReceived")
+@event_type('BluetoothEmulation.gattOperationReceived')
 @dataclass
 class GattOperationReceived:
     """
@@ -600,12 +701,18 @@ class GattOperationReceived:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> GattOperationReceived:
         return cls(
-            address=str(json["address"]),
-            type_=GATTOperationType.from_json(json["type"]),
+            address=str(json['address']),
+            type_=GATTOperationType.from_json(json['type']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> GattOperationReceived | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("BluetoothEmulation.characteristicOperationReceived")
+
+@event_type('BluetoothEmulation.characteristicOperationReceived')
 @dataclass
 class CharacteristicOperationReceived:
     """
@@ -616,22 +723,26 @@ class CharacteristicOperationReceived:
 
     characteristic_id: str
     type_: CharacteristicOperationType
-    data: typing.Optional[str]
-    write_type: typing.Optional[CharacteristicWriteType]
+    data: str | None
+    write_type: CharacteristicWriteType | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CharacteristicOperationReceived:
         return cls(
-            characteristic_id=str(json["characteristicId"]),
-            type_=CharacteristicOperationType.from_json(json["type"]),
-            data=str(json["data"]) if json.get("data", None) is not None else None,
-            write_type=CharacteristicWriteType.from_json(json["writeType"])
-            if json.get("writeType", None) is not None
-            else None,
+            characteristic_id=str(json['characteristicId']),
+            type_=CharacteristicOperationType.from_json(json['type']),
+            data=None if json.get('data') is None else str(json['data']),
+            write_type=CharacteristicWriteType.from_json_optional(json.get('writeType')),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CharacteristicOperationReceived | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("BluetoothEmulation.descriptorOperationReceived")
+
+@event_type('BluetoothEmulation.descriptorOperationReceived')
 @dataclass
 class DescriptorOperationReceived:
     """
@@ -642,12 +753,18 @@ class DescriptorOperationReceived:
 
     descriptor_id: str
     type_: DescriptorOperationType
-    data: typing.Optional[str]
+    data: str | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DescriptorOperationReceived:
         return cls(
-            descriptor_id=str(json["descriptorId"]),
-            type_=DescriptorOperationType.from_json(json["type"]),
-            data=str(json["data"]) if json.get("data", None) is not None else None,
+            descriptor_id=str(json['descriptorId']),
+            type_=DescriptorOperationType.from_json(json['type']),
+            data=None if json.get('data') is None else str(json['data']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DescriptorOperationReceived | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

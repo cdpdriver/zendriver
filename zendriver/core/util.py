@@ -5,42 +5,44 @@ import logging
 import subprocess
 import types
 import typing
-from asyncio import AbstractEventLoop
-from pathlib import Path
-from typing import Any, Callable, List, Optional, Set, Union
+from typing import Any
 
 from deprecated import deprecated
 
-import zendriver
-
+from .. import cdp
+from .config import Config
 from .element import Element
 
-if typing.TYPE_CHECKING:
-    from .browser import Browser
-    from .config import PathLike
-from .. import cdp
-from .config import BrowserType, Config
 
-__registered__instances__: Set[Browser] = set()
+if typing.TYPE_CHECKING:
+    from asyncio import AbstractEventLoop
+    from collections.abc import Callable, Generator
+    from pathlib import Path
+
+    from .browser import Browser
+    from .config import BrowserType, PathLike
+    from .tab import Tab
+
+
+__registered__instances__: set[Browser] = set()
 
 logger = logging.getLogger(__name__)
-T = typing.TypeVar("T")
 
 
 async def start(
-    config: Optional[Config] = None,
+    config: Config | None = None,
     *,
-    user_data_dir: Optional[PathLike] = None,
-    headless: Optional[bool] = False,
-    browser_executable_path: Optional[PathLike] = None,
-    browser: BrowserType = "auto",
-    browser_args: Optional[List[str]] = None,
-    sandbox: Optional[bool] = True,
-    lang: Optional[str] = None,
-    host: Optional[str] = None,
-    port: Optional[int] = None,
-    expert: Optional[bool] = None,
-    user_agent: Optional[str] = None,
+    user_data_dir: PathLike | None = None,
+    headless: bool | None = False,
+    browser_executable_path: PathLike | None = None,
+    browser: BrowserType = 'auto',
+    browser_args: list[str] | None = None,
+    sandbox: bool | None = True,
+    lang: str | None = None,
+    host: str | None = None,
+    port: int | None = None,
+    expert: bool | None = None,
+    user_agent: str | None = None,
     **kwargs: Any,
 ) -> Browser:
     """
@@ -89,13 +91,13 @@ async def start(
     """
     if not config:
         config = Config(
-            user_data_dir,
-            headless,
-            browser_executable_path,
-            browser,
-            browser_args,
-            sandbox,
-            lang,
+            user_data_dir=user_data_dir,
+            headless=headless,
+            browser_executable_path=browser_executable_path,
+            browser=browser,
+            browser_args=browser_args,
+            sandbox=sandbox,
+            lang=lang,
             host=host,
             port=port,
             expert=expert,
@@ -115,7 +117,7 @@ async def create_from_undetected_chromedriver(driver: Any) -> Browser:
 
     conf = Config()
 
-    host, port = driver.options.debugger_address.split(":")
+    host, port = driver.options.debugger_address.split(':')
     conf.host, conf.port = host, int(port)
 
     # create zendriver Browser instance
@@ -129,7 +131,7 @@ async def create_from_undetected_chromedriver(driver: Any) -> Browser:
     return browser
 
 
-def get_registered_instances() -> Set[Browser]:
+def get_registered_instances() -> set[Browser]:
     return __registered__instances__
 
 
@@ -140,7 +142,7 @@ def free_port() -> int:
     import socket
 
     free_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    free_socket.bind(("127.0.0.1", 0))
+    free_socket.bind(('127.0.0.1', 0))
     free_socket.listen(5)
     port: int = free_socket.getsockname()[1]
     free_socket.close()
@@ -148,8 +150,9 @@ def free_port() -> int:
 
 
 def filter_recurse_all(
-    doc: T, predicate: Union[Callable[[cdp.dom.Node], bool], Callable[[Element], bool]]
-) -> List[T]:
+    doc: cdp.dom.Node | Element,
+    predicate: Callable[[cdp.dom.Node | Element], bool],
+) -> list[cdp.dom.Node | Element]:
     """
     test each child using predicate(child), and return all children for which predicate(child) == True
 
@@ -158,8 +161,9 @@ def filter_recurse_all(
     :return:
     :rtype:
     """
-    if not hasattr(doc, "children"):
-        raise TypeError("object should have a .children attribute")
+    if not hasattr(doc, 'children'):
+        msg = 'object should have a .children attribute'
+        raise TypeError(msg)
     out = []
     if doc and doc.children:
         for child in doc.children:
@@ -174,7 +178,8 @@ def filter_recurse_all(
 
 
 def filter_recurse(
-    doc: cdp.dom.Node, predicate: Callable[[cdp.dom.Node], bool]
+    doc: cdp.dom.Node,
+    predicate: Callable[[cdp.dom.Node], bool],
 ) -> cdp.dom.Node | None:
     """
     test each child using predicate(child), and return the first child of which predicate(child) == True
@@ -183,8 +188,9 @@ def filter_recurse(
     :param predicate: a function which takes a node as first parameter and returns a boolean, where True means include
 
     """
-    if not hasattr(doc, "children"):
-        raise TypeError("object should have a .children attribute")
+    if not hasattr(doc, 'children'):
+        msg = 'object should have a .children attribute'
+        raise TypeError(msg)
 
     if doc and doc.children:
         for child in doc.children:
@@ -203,8 +209,13 @@ def filter_recurse(
 
 
 def circle(
-    x: float, y: float | None = None, radius: int = 10, num: int = 10, dir: int = 0
-) -> typing.Generator[typing.Tuple[float, float], None, None]:
+    x: float,
+    y: float | None = None,
+    *,
+    radius: int = 10,
+    num: int = 10,
+    dir_: int = 0,
+) -> Generator[tuple[float, float]]:
     """
     a generator will calculate coordinates around a circle.
 
@@ -219,6 +230,7 @@ def circle(
     :return:
     :rtype:
     """
+
     import math
 
     r = radius
@@ -228,7 +240,7 @@ def circle(
     a = int(x - r * 2)
     b = int(y - r * 2)
     m = (2 * math.pi) / w
-    if dir == 0:
+    if dir == 0:  # noqa: SIM108
         # regular direction
         ran = 0, w + 1, 1
     else:
@@ -243,8 +255,9 @@ def circle(
 
 
 def remove_from_tree(tree: cdp.dom.Node, node: cdp.dom.Node) -> cdp.dom.Node:
-    if not hasattr(tree, "children"):
-        raise TypeError("object should have a .children attribute")
+    if not hasattr(tree, 'children'):
+        msg = 'object should have a .children attribute'
+        raise TypeError(msg)
 
     if tree and tree.children:
         for child in tree.children:
@@ -255,18 +268,20 @@ def remove_from_tree(tree: cdp.dom.Node, node: cdp.dom.Node) -> cdp.dom.Node:
 
 
 async def html_from_tree(
-    tree: Union[cdp.dom.Node, Element], target: zendriver.Tab
+    tree: cdp.dom.Node | Element,
+    target: Tab,
 ) -> str:
-    if not hasattr(tree, "children"):
-        raise TypeError("object should have a .children attribute")
-    out = ""
+    if not hasattr(tree, 'children'):
+        msg = 'object should have a .children attribute'
+        raise TypeError(msg)
+    out = ''
     if tree and tree.children:
         for child in tree.children:
             if isinstance(child, Element):
                 out += await child.get_html()
             elif isinstance(child, cdp.dom.Node):
                 out += await target.send(
-                    cdp.dom.get_outer_html(backend_node_id=child.backend_node_id)
+                    cdp.dom.get_outer_html(backend_node_id=child.backend_node_id),
                 )
             else:
                 out += child
@@ -277,8 +292,9 @@ async def html_from_tree(
 
 
 def compare_target_info(
-    info1: cdp.target.TargetInfo | None, info2: cdp.target.TargetInfo
-) -> List[typing.Tuple[str, typing.Any, typing.Any]]:
+    info1: cdp.target.TargetInfo | None,
+    info2: cdp.target.TargetInfo,
+) -> list[tuple[str, typing.Any, typing.Any]]:
     """
     when logging mode is set to debug, browser object will log when target info
     is changed. To provide more meaningful log messages, this function is called to
@@ -298,7 +314,8 @@ def compare_target_info(
 
 
 @deprecated(
-    version="0.5.1", reason="Use asyncio functions directly instead, e.g. asyncio.run"
+    version='0.5.1',
+    reason='Use asyncio functions directly instead, e.g. asyncio.run',
 )
 def loop() -> AbstractEventLoop:
     loop = asyncio.new_event_loop()
@@ -306,7 +323,7 @@ def loop() -> AbstractEventLoop:
     return loop
 
 
-def cdp_get_module(domain: Union[str, types.ModuleType]) -> Any:
+def cdp_get_module(domain: str | types.ModuleType) -> Any:
     """
     get cdp module by given string
 
@@ -315,6 +332,7 @@ def cdp_get_module(domain: Union[str, types.ModuleType]) -> Any:
     :return:
     :rtype:
     """
+
     import importlib
 
     if isinstance(domain, types.ModuleType):
@@ -322,8 +340,8 @@ def cdp_get_module(domain: Union[str, types.ModuleType]) -> Any:
         domain_mod = domain
     else:
         try:
-            if domain in ("input",):
-                domain = "input_"
+            if domain == 'input':
+                domain = 'input_'
 
             #  fallback if someone passes a str
             domain_mod = getattr(cdp, domain)
@@ -332,15 +350,17 @@ def cdp_get_module(domain: Union[str, types.ModuleType]) -> Any:
         except AttributeError:
             try:
                 domain_mod = importlib.import_module(domain)
-            except ModuleNotFoundError:
-                raise ModuleNotFoundError(
-                    "could not find cdp module from input '%s'" % domain
-                )
+            except ModuleNotFoundError as err:
+                msg = f"could not find cdp module from input '{domain}'"
+                raise ModuleNotFoundError(msg) from err
     return domain_mod
 
 
 def _start_process(
-    exe: str | Path, params: List[str], is_posix: bool
+    exe: str | Path,
+    params: list[str],
+    *,
+    is_posix: bool,
 ) -> subprocess.Popen[bytes]:
     """
     Start a subprocess with the given executable and parameters.
@@ -351,8 +371,9 @@ def _start_process(
 
     :return: An instance of `subprocess.Popen`.
     """
-    return subprocess.Popen(
-        [str(exe)] + params,
+
+    return subprocess.Popen(  # noqa: S603
+        [str(exe), *params],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -369,11 +390,12 @@ async def _read_process_stderr(process: subprocess.Popen[bytes], n: int = 2**16)
 
     async def read_stderr() -> bytes:
         if process.stderr is None:
-            raise ValueError("Process has no stderr")
+            msg = 'Process has no stderr'
+            raise ValueError(msg)
         return await asyncio.to_thread(process.stderr.read, n)
 
     try:
-        return (await asyncio.wait_for(read_stderr(), 0.25)).decode("utf-8")
-    except asyncio.TimeoutError:
-        logger.debug("Timeout reading process stderr")
-        return ""
+        return (await asyncio.wait_for(read_stderr(), 0.25)).decode('utf-8')
+    except TimeoutError:
+        logger.debug('Timeout reading process stderr')
+        return ''

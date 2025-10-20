@@ -3,16 +3,25 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Autofill (experimental)
 
 from __future__ import annotations
+
 import enum
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
 
-from . import dom
-from . import page
+from . import dom, page
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 @dataclass
@@ -33,45 +42,59 @@ class CreditCard:
     cvc: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["number"] = self.number
-        json["name"] = self.name
-        json["expiryMonth"] = self.expiry_month
-        json["expiryYear"] = self.expiry_year
-        json["cvc"] = self.cvc
+        json: T_JSON_DICT = {}
+        json['number'] = self.number
+        json['name'] = self.name
+        json['expiryMonth'] = self.expiry_month
+        json['expiryYear'] = self.expiry_year
+        json['cvc'] = self.cvc
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CreditCard:
         return cls(
-            number=str(json["number"]),
-            name=str(json["name"]),
-            expiry_month=str(json["expiryMonth"]),
-            expiry_year=str(json["expiryYear"]),
-            cvc=str(json["cvc"]),
+            number=str(json['number']),
+            name=str(json['name']),
+            expiry_month=str(json['expiryMonth']),
+            expiry_year=str(json['expiryYear']),
+            cvc=str(json['cvc']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CreditCard | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
 class AddressField:
     #: address field name, for example GIVEN_NAME.
+    #: The full list of supported field names:
+    #: https://source.chromium.org/chromium/chromium/src/+/main:components/autofill/core/browser/field_types.cc;l=38
     name: str
 
     #: address field value, for example Jon Doe.
     value: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
-        json["value"] = self.value
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
+        json['value'] = self.value
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AddressField:
         return cls(
-            name=str(json["name"]),
-            value=str(json["value"]),
+            name=str(json['name']),
+            value=str(json['value']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AddressField | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -80,35 +103,47 @@ class AddressFields:
     A list of address fields.
     """
 
-    fields: typing.List[AddressField]
+    fields: list[AddressField]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["fields"] = [i.to_json() for i in self.fields]
+        json: T_JSON_DICT = {}
+        json['fields'] = [i.to_json() for i in self.fields]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AddressFields:
         return cls(
-            fields=[AddressField.from_json(i) for i in json["fields"]],
+            fields=[AddressField.from_json(i) for i in json.get('fields', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AddressFields | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
 class Address:
     #: fields and values defining an address.
-    fields: typing.List[AddressField]
+    fields: list[AddressField]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["fields"] = [i.to_json() for i in self.fields]
+        json: T_JSON_DICT = {}
+        json['fields'] = [i.to_json() for i in self.fields]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Address:
         return cls(
-            fields=[AddressField.from_json(i) for i in json["fields"]],
+            fields=[AddressField.from_json(i) for i in json.get('fields', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Address | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -124,18 +159,24 @@ class AddressUI:
     """
 
     #: A two dimension array containing the representation of values from an address profile.
-    address_fields: typing.List[AddressFields]
+    address_fields: list[AddressFields]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["addressFields"] = [i.to_json() for i in self.address_fields]
+        json: T_JSON_DICT = {}
+        json['addressFields'] = [i.to_json() for i in self.address_fields]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AddressUI:
         return cls(
-            address_fields=[AddressFields.from_json(i) for i in json["addressFields"]],
+            address_fields=[AddressFields.from_json(i) for i in json.get('addressFields', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AddressUI | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class FillingStrategy(enum.Enum):
@@ -143,8 +184,8 @@ class FillingStrategy(enum.Enum):
     Specified whether a filled field was done so by using the html autocomplete attribute or autofill heuristics.
     """
 
-    AUTOCOMPLETE_ATTRIBUTE = "autocompleteAttribute"
-    AUTOFILL_INFERRED = "autofillInferred"
+    AUTOCOMPLETE_ATTRIBUTE = 'autocompleteAttribute'
+    AUTOFILL_INFERRED = 'autofillInferred'
 
     def to_json(self) -> str:
         return self.value
@@ -152,6 +193,12 @@ class FillingStrategy(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> FillingStrategy:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> FillingStrategy | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -181,94 +228,118 @@ class FilledField:
     field_id: dom.BackendNodeId
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["htmlType"] = self.html_type
-        json["id"] = self.id_
-        json["name"] = self.name
-        json["value"] = self.value
-        json["autofillType"] = self.autofill_type
-        json["fillingStrategy"] = self.filling_strategy.to_json()
-        json["frameId"] = self.frame_id.to_json()
-        json["fieldId"] = self.field_id.to_json()
+        json: T_JSON_DICT = {}
+        json['htmlType'] = self.html_type
+        json['id'] = self.id_
+        json['name'] = self.name
+        json['value'] = self.value
+        json['autofillType'] = self.autofill_type
+        json['fillingStrategy'] = self.filling_strategy.to_json()
+        json['frameId'] = self.frame_id.to_json()
+        json['fieldId'] = self.field_id.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FilledField:
         return cls(
-            html_type=str(json["htmlType"]),
-            id_=str(json["id"]),
-            name=str(json["name"]),
-            value=str(json["value"]),
-            autofill_type=str(json["autofillType"]),
-            filling_strategy=FillingStrategy.from_json(json["fillingStrategy"]),
-            frame_id=page.FrameId.from_json(json["frameId"]),
-            field_id=dom.BackendNodeId.from_json(json["fieldId"]),
+            html_type=str(json['htmlType']),
+            id_=str(json['id']),
+            name=str(json['name']),
+            value=str(json['value']),
+            autofill_type=str(json['autofillType']),
+            filling_strategy=FillingStrategy.from_json(json['fillingStrategy']),
+            frame_id=page.FrameId.from_json(json['frameId']),
+            field_id=dom.BackendNodeId.from_json(json['fieldId']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FilledField | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 def trigger(
     field_id: dom.BackendNodeId,
-    card: CreditCard,
-    frame_id: typing.Optional[page.FrameId] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    frame_id: page.FrameId | None = None,
+    card: CreditCard | None = None,
+    address: Address | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Trigger autofill on a form identified by the fieldId.
     If the field and related form cannot be autofilled, returns an error.
 
     :param field_id: Identifies a field that serves as an anchor for autofill.
     :param frame_id: *(Optional)* Identifies the frame that field belongs to.
-    :param card: Credit card information to fill out the form. Credit card data is not saved.
+    :param card: *(Optional)* Credit card information to fill out the form. Credit card data is not saved.  Mutually exclusive with ```address````.
+    :param address: *(Optional)* Address to fill out the form. Address data is not saved. Mutually exclusive with ````card```.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["fieldId"] = field_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['fieldId'] = field_id.to_json()
     if frame_id is not None:
-        params["frameId"] = frame_id.to_json()
-    params["card"] = card.to_json()
+        params['frameId'] = frame_id.to_json()
+    if card is not None:
+        params['card'] = card.to_json()
+    if address is not None:
+        params['address'] = address.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Autofill.trigger",
-        "params": params,
+        'method': 'Autofill.trigger',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_addresses(
-    addresses: typing.List[Address],
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    addresses: list[Address],
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Set addresses so that developers can verify their forms implementation.
 
     :param addresses:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["addresses"] = [i.to_json() for i in addresses]
+
+    params: T_JSON_DICT = {}
+    params['addresses'] = [i.to_json() for i in addresses]
     cmd_dict: T_JSON_DICT = {
-        "method": "Autofill.setAddresses",
-        "params": params,
+        'method': 'Autofill.setAddresses',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disables autofill domain notifications.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Autofill.disable",
+        'method': 'Autofill.disable',
     }
     json = yield cmd_dict
 
 
-def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def enable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables autofill domain notifications.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Autofill.enable",
+        'method': 'Autofill.enable',
     }
     json = yield cmd_dict
 
 
-@event_class("Autofill.addressFormFilled")
+@event_type('Autofill.addressFormFilled')
 @dataclass
 class AddressFormFilled:
     """
@@ -276,7 +347,7 @@ class AddressFormFilled:
     """
 
     #: Information about the fields that were filled
-    filled_fields: typing.List[FilledField]
+    filled_fields: list[FilledField]
     #: An UI representation of the address used to fill the form.
     #: Consists of a 2D array where each child represents an address/profile line.
     address_ui: AddressUI
@@ -284,6 +355,12 @@ class AddressFormFilled:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AddressFormFilled:
         return cls(
-            filled_fields=[FilledField.from_json(i) for i in json["filledFields"]],
-            address_ui=AddressUI.from_json(json["addressUi"]),
+            filled_fields=[FilledField.from_json(i) for i in json.get('filledFields', [])],
+            address_ui=AddressUI.from_json(json['addressUi']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AddressFormFilled | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

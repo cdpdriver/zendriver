@@ -3,20 +3,35 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Target
 
 from __future__ import annotations
-import enum
-import typing
-from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
 
-from . import browser
-from . import page
-from deprecated.sphinx import deprecated  # type: ignore
+import enum
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from deprecated.sphinx import deprecated
+
+from . import browser, page
+from .util import event_type
+
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
+
+
+# ruff: noqa: FURB189
 
 
 class TargetID(str):
+    __slots__ = ()
+
     def to_json(self) -> str:
         return self
 
@@ -24,14 +39,22 @@ class TargetID(str):
     def from_json(cls, json: str) -> TargetID:
         return cls(json)
 
-    def __repr__(self):
-        return "TargetID({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> TargetID | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'TargetID({super().__repr__()})'
 
 
 class SessionID(str):
     """
     Unique identifier of attached debugging session.
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -40,8 +63,14 @@ class SessionID(str):
     def from_json(cls, json: str) -> SessionID:
         return cls(json)
 
-    def __repr__(self):
-        return "SessionID({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> SessionID | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'SessionID({super().__repr__()})'
 
 
 @dataclass
@@ -62,59 +91,61 @@ class TargetInfo:
     can_access_opener: bool
 
     #: Opener target Id
-    opener_id: typing.Optional[TargetID] = None
+    opener_id: TargetID | None = None
 
     #: Frame id of originating window (is only set if target has an opener).
-    opener_frame_id: typing.Optional[page.FrameId] = None
+    opener_frame_id: page.FrameId | None = None
 
-    browser_context_id: typing.Optional[browser.BrowserContextID] = None
+    #: Id of the parent frame, only present for the "iframe" targets.
+    parent_frame_id: page.FrameId | None = None
+
+    browser_context_id: browser.BrowserContextID | None = None
 
     #: Provides additional details for specific target types. For example, for
     #: the type of "page", this may be set to "prerender".
-    subtype: typing.Optional[str] = None
+    subtype: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["targetId"] = self.target_id.to_json()
-        json["type"] = self.type_
-        json["title"] = self.title
-        json["url"] = self.url
-        json["attached"] = self.attached
-        json["canAccessOpener"] = self.can_access_opener
+        json: T_JSON_DICT = {}
+        json['targetId'] = self.target_id.to_json()
+        json['type'] = self.type_
+        json['title'] = self.title
+        json['url'] = self.url
+        json['attached'] = self.attached
+        json['canAccessOpener'] = self.can_access_opener
         if self.opener_id is not None:
-            json["openerId"] = self.opener_id.to_json()
+            json['openerId'] = self.opener_id.to_json()
         if self.opener_frame_id is not None:
-            json["openerFrameId"] = self.opener_frame_id.to_json()
+            json['openerFrameId'] = self.opener_frame_id.to_json()
+        if self.parent_frame_id is not None:
+            json['parentFrameId'] = self.parent_frame_id.to_json()
         if self.browser_context_id is not None:
-            json["browserContextId"] = self.browser_context_id.to_json()
+            json['browserContextId'] = self.browser_context_id.to_json()
         if self.subtype is not None:
-            json["subtype"] = self.subtype
+            json['subtype'] = self.subtype
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> TargetInfo:
         return cls(
-            target_id=TargetID.from_json(json["targetId"]),
-            type_=str(json["type"]),
-            title=str(json["title"]),
-            url=str(json["url"]),
-            attached=bool(json["attached"]),
-            can_access_opener=bool(json["canAccessOpener"]),
-            opener_id=TargetID.from_json(json["openerId"])
-            if json.get("openerId", None) is not None
-            else None,
-            opener_frame_id=page.FrameId.from_json(json["openerFrameId"])
-            if json.get("openerFrameId", None) is not None
-            else None,
-            browser_context_id=browser.BrowserContextID.from_json(
-                json["browserContextId"]
-            )
-            if json.get("browserContextId", None) is not None
-            else None,
-            subtype=str(json["subtype"])
-            if json.get("subtype", None) is not None
-            else None,
+            target_id=TargetID.from_json(json['targetId']),
+            type_=str(json['type']),
+            title=str(json['title']),
+            url=str(json['url']),
+            attached=bool(json['attached']),
+            can_access_opener=bool(json['canAccessOpener']),
+            opener_id=TargetID.from_json_optional(json.get('openerId')),
+            opener_frame_id=page.FrameId.from_json_optional(json.get('openerFrameId')),
+            parent_frame_id=page.FrameId.from_json_optional(json.get('parentFrameId')),
+            browser_context_id=browser.BrowserContextID.from_json_optional(json.get('browserContextId')),
+            subtype=None if json.get('subtype') is None else str(json['subtype']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> TargetInfo | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -124,27 +155,31 @@ class FilterEntry:
     """
 
     #: If set, causes exclusion of matching targets from the list.
-    exclude: typing.Optional[bool] = None
+    exclude: bool | None = None
 
     #: If not present, matches any type.
-    type_: typing.Optional[str] = None
+    type_: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
+        json: T_JSON_DICT = {}
         if self.exclude is not None:
-            json["exclude"] = self.exclude
+            json['exclude'] = self.exclude
         if self.type_ is not None:
-            json["type"] = self.type_
+            json['type'] = self.type_
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FilterEntry:
         return cls(
-            exclude=bool(json["exclude"])
-            if json.get("exclude", None) is not None
-            else None,
-            type_=str(json["type"]) if json.get("type", None) is not None else None,
+            exclude=None if json.get('exclude') is None else bool(json['exclude']),
+            type_=None if json.get('type') is None else str(json['type']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FilterEntry | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class TargetFilter(list):
@@ -157,15 +192,21 @@ class TargetFilter(list):
     (i.e. include everything but ``browser`` and ``tab``).
     """
 
-    def to_json(self) -> typing.List[FilterEntry]:
+    def to_json(self) -> list[FilterEntry]:
         return self
 
     @classmethod
-    def from_json(cls, json: typing.List[FilterEntry]) -> TargetFilter:
+    def from_json(cls, json: list[FilterEntry]) -> TargetFilter:
         return cls(json)
 
-    def __repr__(self):
-        return "TargetFilter({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: list[FilterEntry] | None) -> TargetFilter | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'TargetFilter({super().__repr__()})'
 
 
 @dataclass
@@ -175,17 +216,23 @@ class RemoteLocation:
     port: int
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["host"] = self.host
-        json["port"] = self.port
+        json: T_JSON_DICT = {}
+        json['host'] = self.host
+        json['port'] = self.port
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> RemoteLocation:
         return cls(
-            host=str(json["host"]),
-            port=int(json["port"]),
+            host=str(json['host']),
+            port=int(json['port']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> RemoteLocation | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class WindowState(enum.Enum):
@@ -193,10 +240,10 @@ class WindowState(enum.Enum):
     The state of the target window.
     """
 
-    NORMAL = "normal"
-    MINIMIZED = "minimized"
-    MAXIMIZED = "maximized"
-    FULLSCREEN = "fullscreen"
+    NORMAL = 'normal'
+    MINIMIZED = 'minimized'
+    MAXIMIZED = 'maximized'
+    FULLSCREEN = 'fullscreen'
 
     def to_json(self) -> str:
         return self.value
@@ -205,85 +252,103 @@ class WindowState(enum.Enum):
     def from_json(cls, json: str) -> WindowState:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> WindowState | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 def activate_target(
     target_id: TargetID,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Activates (focuses) the target.
 
     :param target_id:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["targetId"] = target_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['targetId'] = target_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.activateTarget",
-        "params": params,
+        'method': 'Target.activateTarget',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def attach_to_target(
-    target_id: TargetID, flatten: typing.Optional[bool] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, SessionID]:
+    target_id: TargetID,
+    *,
+    flatten: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, SessionID]:
     """
     Attaches to the target with given id.
 
     :param target_id:
     :param flatten: *(Optional)* Enables "flat" access to the session via specifying sessionId attribute in the commands. We plan to make this the default, deprecate non-flattened mode, and eventually retire it. See crbug.com/991325.
-    :returns: Id assigned to the session.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, SessionID]
     """
-    params: T_JSON_DICT = dict()
-    params["targetId"] = target_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['targetId'] = target_id.to_json()
     if flatten is not None:
-        params["flatten"] = flatten
+        params['flatten'] = flatten
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.attachToTarget",
-        "params": params,
+        'method': 'Target.attachToTarget',
+        'params': params,
     }
     json = yield cmd_dict
-    return SessionID.from_json(json["sessionId"])
+    return SessionID.from_json(json['sessionId'])
 
 
-def attach_to_browser_target() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, SessionID]:
+def attach_to_browser_target() -> Generator[T_JSON_DICT, T_JSON_DICT, SessionID]:
     """
     Attaches to the browser target, only uses flat sessionId mode.
 
     **EXPERIMENTAL**
 
-    :returns: Id assigned to the session.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, SessionID]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.attachToBrowserTarget",
+        'method': 'Target.attachToBrowserTarget',
     }
     json = yield cmd_dict
-    return SessionID.from_json(json["sessionId"])
+    return SessionID.from_json(json['sessionId'])
 
 
 def close_target(
     target_id: TargetID,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, bool]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, bool]:
     """
     Closes the target. If the target is a page that gets closed too.
 
     :param target_id:
-    :returns: Always set to true. If an error occurs, the response indicates protocol error.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, bool]
     """
-    params: T_JSON_DICT = dict()
-    params["targetId"] = target_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['targetId'] = target_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.closeTarget",
-        "params": params,
+        'method': 'Target.closeTarget',
+        'params': params,
     }
     json = yield cmd_dict
-    return bool(json["success"])
+    return bool(json['success'])
 
 
 def expose_dev_tools_protocol(
     target_id: TargetID,
-    binding_name: typing.Optional[str] = None,
-    inherit_permissions: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    binding_name: str | None = None,
+    inherit_permissions: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Inject object to the target's main frame that provides a communication
     channel with browser target.
@@ -299,26 +364,30 @@ def expose_dev_tools_protocol(
     :param target_id:
     :param binding_name: *(Optional)* Binding name, 'cdp' if not specified.
     :param inherit_permissions: *(Optional)* If true, inherits the current root session's permissions (default: false).
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["targetId"] = target_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['targetId'] = target_id.to_json()
     if binding_name is not None:
-        params["bindingName"] = binding_name
+        params['bindingName'] = binding_name
     if inherit_permissions is not None:
-        params["inheritPermissions"] = inherit_permissions
+        params['inheritPermissions'] = inherit_permissions
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.exposeDevToolsProtocol",
-        "params": params,
+        'method': 'Target.exposeDevToolsProtocol',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def create_browser_context(
-    dispose_on_detach: typing.Optional[bool] = None,
-    proxy_server: typing.Optional[str] = None,
-    proxy_bypass_list: typing.Optional[str] = None,
-    origins_with_universal_network_access: typing.Optional[typing.List[str]] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, browser.BrowserContextID]:
+    *,
+    dispose_on_detach: bool | None = None,
+    proxy_server: str | None = None,
+    proxy_bypass_list: str | None = None,
+    origins_with_universal_network_access: list[str] | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, browser.BrowserContextID]:
     """
     Creates a new empty BrowserContext. Similar to an incognito profile but you can have more than
     one.
@@ -327,56 +396,57 @@ def create_browser_context(
     :param proxy_server: **(EXPERIMENTAL)** *(Optional)* Proxy server, similar to the one passed to --proxy-server
     :param proxy_bypass_list: **(EXPERIMENTAL)** *(Optional)* Proxy bypass list, similar to the one passed to --proxy-bypass-list
     :param origins_with_universal_network_access: **(EXPERIMENTAL)** *(Optional)* An optional list of origins to grant unlimited cross-origin access to. Parts of the URL other than those constituting origin are ignored.
-    :returns: The id of the context created.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, browser.BrowserContextID]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if dispose_on_detach is not None:
-        params["disposeOnDetach"] = dispose_on_detach
+        params['disposeOnDetach'] = dispose_on_detach
     if proxy_server is not None:
-        params["proxyServer"] = proxy_server
+        params['proxyServer'] = proxy_server
     if proxy_bypass_list is not None:
-        params["proxyBypassList"] = proxy_bypass_list
+        params['proxyBypassList'] = proxy_bypass_list
     if origins_with_universal_network_access is not None:
-        params["originsWithUniversalNetworkAccess"] = [
-            i for i in origins_with_universal_network_access
-        ]
+        params['originsWithUniversalNetworkAccess'] = origins_with_universal_network_access
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.createBrowserContext",
-        "params": params,
+        'method': 'Target.createBrowserContext',
+        'params': params,
     }
     json = yield cmd_dict
-    return browser.BrowserContextID.from_json(json["browserContextId"])
+    return browser.BrowserContextID.from_json(json['browserContextId'])
 
 
-def get_browser_contexts() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[browser.BrowserContextID]]
-):
+def get_browser_contexts() -> Generator[T_JSON_DICT, T_JSON_DICT, list[browser.BrowserContextID]]:
     """
     Returns all browser contexts created with ``Target.createBrowserContext`` method.
 
-    :returns: An array of browser context ids.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[browser.BrowserContextID]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.getBrowserContexts",
+        'method': 'Target.getBrowserContexts',
     }
     json = yield cmd_dict
-    return [browser.BrowserContextID.from_json(i) for i in json["browserContextIds"]]
+    return [browser.BrowserContextID.from_json(i) for i in json.get('browserContextIds', [])]
 
 
 def create_target(
     url: str,
-    left: typing.Optional[int] = None,
-    top: typing.Optional[int] = None,
-    width: typing.Optional[int] = None,
-    height: typing.Optional[int] = None,
-    window_state: typing.Optional[WindowState] = None,
-    browser_context_id: typing.Optional[browser.BrowserContextID] = None,
-    enable_begin_frame_control: typing.Optional[bool] = None,
-    new_window: typing.Optional[bool] = None,
-    background: typing.Optional[bool] = None,
-    for_tab: typing.Optional[bool] = None,
-    hidden: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, TargetID]:
+    *,
+    left: int | None = None,
+    top: int | None = None,
+    width: int | None = None,
+    height: int | None = None,
+    window_state: WindowState | None = None,
+    browser_context_id: browser.BrowserContextID | None = None,
+    enable_begin_frame_control: bool | None = None,
+    new_window: bool | None = None,
+    background: bool | None = None,
+    for_tab: bool | None = None,
+    hidden: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, TargetID]:
     """
     Creates a new page.
 
@@ -392,128 +462,142 @@ def create_target(
     :param background: *(Optional)* Whether to create the target in background or foreground (false by default, not supported by headless shell).
     :param for_tab: **(EXPERIMENTAL)** *(Optional)* Whether to create the target of type "tab".
     :param hidden: **(EXPERIMENTAL)** *(Optional)* Whether to create a hidden target. The hidden target is observable via protocol, but not present in the tab UI strip. Cannot be created with ```forTab: true````, ````newWindow: true```` or ````background: false```. The life-time of the tab is limited to the life-time of the session.
-    :returns: The id of the page opened.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, TargetID]
     """
-    params: T_JSON_DICT = dict()
-    params["url"] = url
+
+    params: T_JSON_DICT = {}
+    params['url'] = url
     if left is not None:
-        params["left"] = left
+        params['left'] = left
     if top is not None:
-        params["top"] = top
+        params['top'] = top
     if width is not None:
-        params["width"] = width
+        params['width'] = width
     if height is not None:
-        params["height"] = height
+        params['height'] = height
     if window_state is not None:
-        params["windowState"] = window_state.to_json()
+        params['windowState'] = window_state.to_json()
     if browser_context_id is not None:
-        params["browserContextId"] = browser_context_id.to_json()
+        params['browserContextId'] = browser_context_id.to_json()
     if enable_begin_frame_control is not None:
-        params["enableBeginFrameControl"] = enable_begin_frame_control
+        params['enableBeginFrameControl'] = enable_begin_frame_control
     if new_window is not None:
-        params["newWindow"] = new_window
+        params['newWindow'] = new_window
     if background is not None:
-        params["background"] = background
+        params['background'] = background
     if for_tab is not None:
-        params["forTab"] = for_tab
+        params['forTab'] = for_tab
     if hidden is not None:
-        params["hidden"] = hidden
+        params['hidden'] = hidden
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.createTarget",
-        "params": params,
+        'method': 'Target.createTarget',
+        'params': params,
     }
     json = yield cmd_dict
-    return TargetID.from_json(json["targetId"])
+    return TargetID.from_json(json['targetId'])
 
 
 def detach_from_target(
-    session_id: typing.Optional[SessionID] = None,
-    target_id: typing.Optional[TargetID] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    session_id: SessionID | None = None,
+    target_id: TargetID | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Detaches session with given id.
 
     :param session_id: *(Optional)* Session to detach.
     :param target_id: **(DEPRECATED)** *(Optional)* Deprecated.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if session_id is not None:
-        params["sessionId"] = session_id.to_json()
+        params['sessionId'] = session_id.to_json()
     if target_id is not None:
-        params["targetId"] = target_id.to_json()
+        params['targetId'] = target_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.detachFromTarget",
-        "params": params,
+        'method': 'Target.detachFromTarget',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def dispose_browser_context(
     browser_context_id: browser.BrowserContextID,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Deletes a BrowserContext. All the belonging pages will be closed without calling their
     beforeunload hooks.
 
     :param browser_context_id:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["browserContextId"] = browser_context_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['browserContextId'] = browser_context_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.disposeBrowserContext",
-        "params": params,
+        'method': 'Target.disposeBrowserContext',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def get_target_info(
-    target_id: typing.Optional[TargetID] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, TargetInfo]:
+    target_id: TargetID | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, TargetInfo]:
     """
     Returns information about a target.
 
     **EXPERIMENTAL**
 
     :param target_id: *(Optional)*
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, TargetInfo]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if target_id is not None:
-        params["targetId"] = target_id.to_json()
+        params['targetId'] = target_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.getTargetInfo",
-        "params": params,
+        'method': 'Target.getTargetInfo',
+        'params': params,
     }
     json = yield cmd_dict
-    return TargetInfo.from_json(json["targetInfo"])
+    return TargetInfo.from_json(json['targetInfo'])
 
 
 def get_targets(
-    filter_: typing.Optional[TargetFilter] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[TargetInfo]]:
+    filter_: TargetFilter | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[TargetInfo]]:
     """
     Retrieves a list of available targets.
 
     :param filter_: **(EXPERIMENTAL)** *(Optional)* Only targets matching filter will be reported. If filter is not specified and target discovery is currently enabled, a filter used for target discovery is used for consistency.
-    :returns: The list of targets.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[TargetInfo]]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if filter_ is not None:
-        params["filter"] = filter_.to_json()
+        params['filter'] = filter_.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.getTargets",
-        "params": params,
+        'method': 'Target.getTargets',
+        'params': params,
     }
     json = yield cmd_dict
-    return [TargetInfo.from_json(i) for i in json["targetInfos"]]
+    return [TargetInfo.from_json(i) for i in json.get('targetInfos', [])]
 
 
-@deprecated(version="1.3")
+@deprecated(version='1.3')
 def send_message_to_target(
     message: str,
-    session_id: typing.Optional[SessionID] = None,
-    target_id: typing.Optional[TargetID] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    session_id: SessionID | None = None,
+    target_id: TargetID | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sends protocol message over session with given id.
     Consider using flat mode instead; see commands attachToTarget, setAutoAttach,
@@ -524,26 +608,30 @@ def send_message_to_target(
     :param message:
     :param session_id: *(Optional)* Identifier of the session.
     :param target_id: **(DEPRECATED)** *(Optional)* Deprecated.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["message"] = message
+
+    params: T_JSON_DICT = {}
+    params['message'] = message
     if session_id is not None:
-        params["sessionId"] = session_id.to_json()
+        params['sessionId'] = session_id.to_json()
     if target_id is not None:
-        params["targetId"] = target_id.to_json()
+        params['targetId'] = target_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.sendMessageToTarget",
-        "params": params,
+        'method': 'Target.sendMessageToTarget',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_auto_attach(
+    *,
     auto_attach: bool,
     wait_for_debugger_on_start: bool,
-    flatten: typing.Optional[bool] = None,
-    filter_: typing.Optional[TargetFilter] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    flatten: bool | None = None,
+    filter_: TargetFilter | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Controls whether to automatically attach to new targets which are considered
     to be directly related to this one (for example, iframes or workers).
@@ -558,26 +646,30 @@ def set_auto_attach(
     :param wait_for_debugger_on_start: Whether to pause new targets when attaching to them. Use ```Runtime.runIfWaitingForDebugger``` to run paused targets.
     :param flatten: **(EXPERIMENTAL)** *(Optional)* Enables "flat" access to the session via specifying sessionId attribute in the commands. We plan to make this the default, deprecate non-flattened mode, and eventually retire it. See crbug.com/991325.
     :param filter_: **(EXPERIMENTAL)** *(Optional)* Only targets matching filter will be attached.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["autoAttach"] = auto_attach
-    params["waitForDebuggerOnStart"] = wait_for_debugger_on_start
+
+    params: T_JSON_DICT = {}
+    params['autoAttach'] = auto_attach
+    params['waitForDebuggerOnStart'] = wait_for_debugger_on_start
     if flatten is not None:
-        params["flatten"] = flatten
+        params['flatten'] = flatten
     if filter_ is not None:
-        params["filter"] = filter_.to_json()
+        params['filter'] = filter_.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.setAutoAttach",
-        "params": params,
+        'method': 'Target.setAutoAttach',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def auto_attach_related(
     target_id: TargetID,
+    *,
     wait_for_debugger_on_start: bool,
-    filter_: typing.Optional[TargetFilter] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    filter_: TargetFilter | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Adds the specified target to the list of targets that will be monitored for any related target
     creation (such as child frames, child workers and new versions of service worker) and reported
@@ -590,43 +682,51 @@ def auto_attach_related(
     :param target_id:
     :param wait_for_debugger_on_start: Whether to pause new targets when attaching to them. Use ```Runtime.runIfWaitingForDebugger``` to run paused targets.
     :param filter_: **(EXPERIMENTAL)** *(Optional)* Only targets matching filter will be attached.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["targetId"] = target_id.to_json()
-    params["waitForDebuggerOnStart"] = wait_for_debugger_on_start
+
+    params: T_JSON_DICT = {}
+    params['targetId'] = target_id.to_json()
+    params['waitForDebuggerOnStart'] = wait_for_debugger_on_start
     if filter_ is not None:
-        params["filter"] = filter_.to_json()
+        params['filter'] = filter_.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.autoAttachRelated",
-        "params": params,
+        'method': 'Target.autoAttachRelated',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_discover_targets(
-    discover: bool, filter_: typing.Optional[TargetFilter] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    discover: bool,
+    filter_: TargetFilter | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Controls whether to discover available targets and notify via
     ``targetCreated/targetInfoChanged/targetDestroyed`` events.
 
     :param discover: Whether to discover available targets.
     :param filter_: **(EXPERIMENTAL)** *(Optional)* Only targets matching filter will be attached. If ```discover```` is false, ````filter``` must be omitted or empty.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["discover"] = discover
+
+    params: T_JSON_DICT = {}
+    params['discover'] = discover
     if filter_ is not None:
-        params["filter"] = filter_.to_json()
+        params['filter'] = filter_.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.setDiscoverTargets",
-        "params": params,
+        'method': 'Target.setDiscoverTargets',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_remote_locations(
-    locations: typing.List[RemoteLocation],
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    locations: list[RemoteLocation],
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables target discovery for the specified locations, when ``setDiscoverTargets`` was set to
     ``true``.
@@ -634,17 +734,43 @@ def set_remote_locations(
     **EXPERIMENTAL**
 
     :param locations: List of remote locations.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["locations"] = [i.to_json() for i in locations]
+
+    params: T_JSON_DICT = {}
+    params['locations'] = [i.to_json() for i in locations]
     cmd_dict: T_JSON_DICT = {
-        "method": "Target.setRemoteLocations",
-        "params": params,
+        'method': 'Target.setRemoteLocations',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@event_class("Target.attachedToTarget")
+def open_dev_tools(
+    target_id: TargetID,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, TargetID]:
+    """
+    Opens a DevTools window for the target.
+
+    **EXPERIMENTAL**
+
+    :param target_id: This can be the page or tab target ID.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, TargetID]
+    """
+
+    params: T_JSON_DICT = {}
+    params['targetId'] = target_id.to_json()
+    cmd_dict: T_JSON_DICT = {
+        'method': 'Target.openDevTools',
+        'params': params,
+    }
+    json = yield cmd_dict
+    return TargetID.from_json(json['targetId'])
+
+
+@event_type('Target.attachedToTarget')
 @dataclass
 class AttachedToTarget:
     """
@@ -661,13 +787,19 @@ class AttachedToTarget:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttachedToTarget:
         return cls(
-            session_id=SessionID.from_json(json["sessionId"]),
-            target_info=TargetInfo.from_json(json["targetInfo"]),
-            waiting_for_debugger=bool(json["waitingForDebugger"]),
+            session_id=SessionID.from_json(json['sessionId']),
+            target_info=TargetInfo.from_json(json['targetInfo']),
+            waiting_for_debugger=bool(json['waitingForDebugger']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttachedToTarget | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Target.detachedFromTarget")
+
+@event_type('Target.detachedFromTarget')
 @dataclass
 class DetachedFromTarget:
     """
@@ -680,19 +812,23 @@ class DetachedFromTarget:
     #: Detached session identifier.
     session_id: SessionID
     #: Deprecated.
-    target_id: typing.Optional[TargetID]
+    target_id: TargetID | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DetachedFromTarget:
         return cls(
-            session_id=SessionID.from_json(json["sessionId"]),
-            target_id=TargetID.from_json(json["targetId"])
-            if json.get("targetId", None) is not None
-            else None,
+            session_id=SessionID.from_json(json['sessionId']),
+            target_id=TargetID.from_json_optional(json.get('targetId')),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DetachedFromTarget | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Target.receivedMessageFromTarget")
+
+@event_type('Target.receivedMessageFromTarget')
 @dataclass
 class ReceivedMessageFromTarget:
     """
@@ -704,20 +840,24 @@ class ReceivedMessageFromTarget:
     session_id: SessionID
     message: str
     #: Deprecated.
-    target_id: typing.Optional[TargetID]
+    target_id: TargetID | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ReceivedMessageFromTarget:
         return cls(
-            session_id=SessionID.from_json(json["sessionId"]),
-            message=str(json["message"]),
-            target_id=TargetID.from_json(json["targetId"])
-            if json.get("targetId", None) is not None
-            else None,
+            session_id=SessionID.from_json(json['sessionId']),
+            message=str(json['message']),
+            target_id=TargetID.from_json_optional(json.get('targetId')),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ReceivedMessageFromTarget | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Target.targetCreated")
+
+@event_type('Target.targetCreated')
 @dataclass
 class TargetCreated:
     """
@@ -728,10 +868,16 @@ class TargetCreated:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> TargetCreated:
-        return cls(target_info=TargetInfo.from_json(json["targetInfo"]))
+        return cls(target_info=TargetInfo.from_json(json['targetInfo']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> TargetCreated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Target.targetDestroyed")
+@event_type('Target.targetDestroyed')
 @dataclass
 class TargetDestroyed:
     """
@@ -742,10 +888,16 @@ class TargetDestroyed:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> TargetDestroyed:
-        return cls(target_id=TargetID.from_json(json["targetId"]))
+        return cls(target_id=TargetID.from_json(json['targetId']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> TargetDestroyed | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Target.targetCrashed")
+@event_type('Target.targetCrashed')
 @dataclass
 class TargetCrashed:
     """
@@ -761,13 +913,19 @@ class TargetCrashed:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> TargetCrashed:
         return cls(
-            target_id=TargetID.from_json(json["targetId"]),
-            status=str(json["status"]),
-            error_code=int(json["errorCode"]),
+            target_id=TargetID.from_json(json['targetId']),
+            status=str(json['status']),
+            error_code=int(json['errorCode']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> TargetCrashed | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Target.targetInfoChanged")
+
+@event_type('Target.targetInfoChanged')
 @dataclass
 class TargetInfoChanged:
     """
@@ -779,4 +937,10 @@ class TargetInfoChanged:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> TargetInfoChanged:
-        return cls(target_info=TargetInfo.from_json(json["targetInfo"]))
+        return cls(target_info=TargetInfo.from_json(json['targetInfo']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> TargetInfoChanged | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

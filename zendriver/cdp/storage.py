@@ -3,21 +3,36 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Storage (experimental)
 
 from __future__ import annotations
+
 import enum
 import typing
-from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+from dataclasses import dataclass, field
 
-from . import browser
-from . import network
-from . import page
-from . import target
+from deprecated.sphinx import deprecated
+
+from . import network, page, target
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from . import browser
+    from .util import T_JSON_DICT
+
+
+# ruff: noqa: FURB189
 
 
 class SerializedStorageKey(str):
+    __slots__ = ()
+
     def to_json(self) -> str:
         return self
 
@@ -25,8 +40,14 @@ class SerializedStorageKey(str):
     def from_json(cls, json: str) -> SerializedStorageKey:
         return cls(json)
 
-    def __repr__(self):
-        return "SerializedStorageKey({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> SerializedStorageKey | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'SerializedStorageKey({super().__repr__()})'
 
 
 class StorageType(enum.Enum):
@@ -34,19 +55,19 @@ class StorageType(enum.Enum):
     Enum of possible storage types.
     """
 
-    COOKIES = "cookies"
-    FILE_SYSTEMS = "file_systems"
-    INDEXEDDB = "indexeddb"
-    LOCAL_STORAGE = "local_storage"
-    SHADER_CACHE = "shader_cache"
-    WEBSQL = "websql"
-    SERVICE_WORKERS = "service_workers"
-    CACHE_STORAGE = "cache_storage"
-    INTEREST_GROUPS = "interest_groups"
-    SHARED_STORAGE = "shared_storage"
-    STORAGE_BUCKETS = "storage_buckets"
-    ALL_ = "all"
-    OTHER = "other"
+    COOKIES = 'cookies'
+    FILE_SYSTEMS = 'file_systems'
+    INDEXEDDB = 'indexeddb'
+    LOCAL_STORAGE = 'local_storage'
+    SHADER_CACHE = 'shader_cache'
+    WEBSQL = 'websql'
+    SERVICE_WORKERS = 'service_workers'
+    CACHE_STORAGE = 'cache_storage'
+    INTEREST_GROUPS = 'interest_groups'
+    SHARED_STORAGE = 'shared_storage'
+    STORAGE_BUCKETS = 'storage_buckets'
+    ALL_ = 'all'
+    OTHER = 'other'
 
     def to_json(self) -> str:
         return self.value
@@ -54,6 +75,12 @@ class StorageType(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> StorageType:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> StorageType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -69,17 +96,23 @@ class UsageForType:
     usage: float
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["storageType"] = self.storage_type.to_json()
-        json["usage"] = self.usage
+        json: T_JSON_DICT = {}
+        json['storageType'] = self.storage_type.to_json()
+        json['usage'] = self.usage
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> UsageForType:
         return cls(
-            storage_type=StorageType.from_json(json["storageType"]),
-            usage=float(json["usage"]),
+            storage_type=StorageType.from_json(json['storageType']),
+            usage=float(json['usage']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> UsageForType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -94,23 +127,31 @@ class TrustTokens:
     count: float
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["issuerOrigin"] = self.issuer_origin
-        json["count"] = self.count
+        json: T_JSON_DICT = {}
+        json['issuerOrigin'] = self.issuer_origin
+        json['count'] = self.count
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> TrustTokens:
         return cls(
-            issuer_origin=str(json["issuerOrigin"]),
-            count=float(json["count"]),
+            issuer_origin=str(json['issuerOrigin']),
+            count=float(json['count']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> TrustTokens | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class InterestGroupAuctionId(str):
     """
     Protected audience interest group auction identifier.
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -119,8 +160,14 @@ class InterestGroupAuctionId(str):
     def from_json(cls, json: str) -> InterestGroupAuctionId:
         return cls(json)
 
-    def __repr__(self):
-        return "InterestGroupAuctionId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> InterestGroupAuctionId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'InterestGroupAuctionId({super().__repr__()})'
 
 
 class InterestGroupAccessType(enum.Enum):
@@ -128,17 +175,17 @@ class InterestGroupAccessType(enum.Enum):
     Enum of interest group access types.
     """
 
-    JOIN = "join"
-    LEAVE = "leave"
-    UPDATE = "update"
-    LOADED = "loaded"
-    BID = "bid"
-    WIN = "win"
-    ADDITIONAL_BID = "additionalBid"
-    ADDITIONAL_BID_WIN = "additionalBidWin"
-    TOP_LEVEL_BID = "topLevelBid"
-    TOP_LEVEL_ADDITIONAL_BID = "topLevelAdditionalBid"
-    CLEAR = "clear"
+    JOIN = 'join'
+    LEAVE = 'leave'
+    UPDATE = 'update'
+    LOADED = 'loaded'
+    BID = 'bid'
+    WIN = 'win'
+    ADDITIONAL_BID = 'additionalBid'
+    ADDITIONAL_BID_WIN = 'additionalBidWin'
+    TOP_LEVEL_BID = 'topLevelBid'
+    TOP_LEVEL_ADDITIONAL_BID = 'topLevelAdditionalBid'
+    CLEAR = 'clear'
 
     def to_json(self) -> str:
         return self.value
@@ -147,14 +194,20 @@ class InterestGroupAccessType(enum.Enum):
     def from_json(cls, json: str) -> InterestGroupAccessType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> InterestGroupAccessType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class InterestGroupAuctionEventType(enum.Enum):
     """
     Enum of auction events.
     """
 
-    STARTED = "started"
-    CONFIG_RESOLVED = "configResolved"
+    STARTED = 'started'
+    CONFIG_RESOLVED = 'configResolved'
 
     def to_json(self) -> str:
         return self.value
@@ -163,17 +216,23 @@ class InterestGroupAuctionEventType(enum.Enum):
     def from_json(cls, json: str) -> InterestGroupAuctionEventType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> InterestGroupAuctionEventType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class InterestGroupAuctionFetchType(enum.Enum):
     """
     Enum of network fetches auctions can do.
     """
 
-    BIDDER_JS = "bidderJs"
-    BIDDER_WASM = "bidderWasm"
-    SELLER_JS = "sellerJs"
-    BIDDER_TRUSTED_SIGNALS = "bidderTrustedSignals"
-    SELLER_TRUSTED_SIGNALS = "sellerTrustedSignals"
+    BIDDER_JS = 'bidderJs'
+    BIDDER_WASM = 'bidderWasm'
+    SELLER_JS = 'sellerJs'
+    BIDDER_TRUSTED_SIGNALS = 'bidderTrustedSignals'
+    SELLER_TRUSTED_SIGNALS = 'sellerTrustedSignals'
 
     def to_json(self) -> str:
         return self.value
@@ -182,16 +241,22 @@ class InterestGroupAuctionFetchType(enum.Enum):
     def from_json(cls, json: str) -> InterestGroupAuctionFetchType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> InterestGroupAuctionFetchType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class SharedStorageAccessScope(enum.Enum):
     """
     Enum of shared storage access scopes.
     """
 
-    WINDOW = "window"
-    SHARED_STORAGE_WORKLET = "sharedStorageWorklet"
-    PROTECTED_AUDIENCE_WORKLET = "protectedAudienceWorklet"
-    HEADER = "header"
+    WINDOW = 'window'
+    SHARED_STORAGE_WORKLET = 'sharedStorageWorklet'
+    PROTECTED_AUDIENCE_WORKLET = 'protectedAudienceWorklet'
+    HEADER = 'header'
 
     def to_json(self) -> str:
         return self.value
@@ -200,27 +265,33 @@ class SharedStorageAccessScope(enum.Enum):
     def from_json(cls, json: str) -> SharedStorageAccessScope:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> SharedStorageAccessScope | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class SharedStorageAccessMethod(enum.Enum):
     """
     Enum of shared storage access methods.
     """
 
-    ADD_MODULE = "addModule"
-    CREATE_WORKLET = "createWorklet"
-    SELECT_URL = "selectURL"
-    RUN = "run"
-    BATCH_UPDATE = "batchUpdate"
-    SET_ = "set"
-    APPEND = "append"
-    DELETE = "delete"
-    CLEAR = "clear"
-    GET = "get"
-    KEYS = "keys"
-    VALUES = "values"
-    ENTRIES = "entries"
-    LENGTH = "length"
-    REMAINING_BUDGET = "remainingBudget"
+    ADD_MODULE = 'addModule'
+    CREATE_WORKLET = 'createWorklet'
+    SELECT_URL = 'selectURL'
+    RUN = 'run'
+    BATCH_UPDATE = 'batchUpdate'
+    SET_ = 'set'
+    APPEND = 'append'
+    DELETE = 'delete'
+    CLEAR = 'clear'
+    GET = 'get'
+    KEYS = 'keys'
+    VALUES = 'values'
+    ENTRIES = 'entries'
+    LENGTH = 'length'
+    REMAINING_BUDGET = 'remainingBudget'
 
     def to_json(self) -> str:
         return self.value
@@ -228,6 +299,12 @@ class SharedStorageAccessMethod(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> SharedStorageAccessMethod:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> SharedStorageAccessMethod | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -241,17 +318,23 @@ class SharedStorageEntry:
     value: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["key"] = self.key
-        json["value"] = self.value
+        json: T_JSON_DICT = {}
+        json['key'] = self.key
+        json['value'] = self.value
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SharedStorageEntry:
         return cls(
-            key=str(json["key"]),
-            value=str(json["value"]),
+            key=str(json['key']),
+            value=str(json['value']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SharedStorageEntry | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -274,21 +357,27 @@ class SharedStorageMetadata:
     bytes_used: int
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["creationTime"] = self.creation_time.to_json()
-        json["length"] = self.length
-        json["remainingBudget"] = self.remaining_budget
-        json["bytesUsed"] = self.bytes_used
+        json: T_JSON_DICT = {}
+        json['creationTime'] = self.creation_time.to_json()
+        json['length'] = self.length
+        json['remainingBudget'] = self.remaining_budget
+        json['bytesUsed'] = self.bytes_used
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SharedStorageMetadata:
         return cls(
-            creation_time=network.TimeSinceEpoch.from_json(json["creationTime"]),
-            length=int(json["length"]),
-            remaining_budget=float(json["remainingBudget"]),
-            bytes_used=int(json["bytesUsed"]),
+            creation_time=network.TimeSinceEpoch.from_json(json['creationTime']),
+            length=int(json['length']),
+            remaining_budget=float(json['remainingBudget']),
+            bytes_used=int(json['bytesUsed']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SharedStorageMetadata | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -302,39 +391,41 @@ class SharedStoragePrivateAggregationConfig:
     filtering_id_max_bytes: int
 
     #: The chosen aggregation service deployment.
-    aggregation_coordinator_origin: typing.Optional[str] = None
+    aggregation_coordinator_origin: str | None = None
 
     #: The context ID provided.
-    context_id: typing.Optional[str] = None
+    context_id: str | None = None
 
     #: The limit on the number of contributions in the final report.
-    max_contributions: typing.Optional[int] = None
+    max_contributions: int | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["filteringIdMaxBytes"] = self.filtering_id_max_bytes
+        json: T_JSON_DICT = {}
+        json['filteringIdMaxBytes'] = self.filtering_id_max_bytes
         if self.aggregation_coordinator_origin is not None:
-            json["aggregationCoordinatorOrigin"] = self.aggregation_coordinator_origin
+            json['aggregationCoordinatorOrigin'] = self.aggregation_coordinator_origin
         if self.context_id is not None:
-            json["contextId"] = self.context_id
+            json['contextId'] = self.context_id
         if self.max_contributions is not None:
-            json["maxContributions"] = self.max_contributions
+            json['maxContributions'] = self.max_contributions
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SharedStoragePrivateAggregationConfig:
         return cls(
-            filtering_id_max_bytes=int(json["filteringIdMaxBytes"]),
-            aggregation_coordinator_origin=str(json["aggregationCoordinatorOrigin"])
-            if json.get("aggregationCoordinatorOrigin", None) is not None
-            else None,
-            context_id=str(json["contextId"])
-            if json.get("contextId", None) is not None
-            else None,
-            max_contributions=int(json["maxContributions"])
-            if json.get("maxContributions", None) is not None
-            else None,
+            filtering_id_max_bytes=int(json['filteringIdMaxBytes']),
+            aggregation_coordinator_origin=None
+            if json.get('aggregationCoordinatorOrigin') is None
+            else str(json['aggregationCoordinatorOrigin']),
+            context_id=None if json.get('contextId') is None else str(json['contextId']),
+            max_contributions=None if json.get('maxContributions') is None else int(json['maxContributions']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SharedStoragePrivateAggregationConfig | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -348,17 +439,23 @@ class SharedStorageReportingMetadata:
     reporting_url: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["eventType"] = self.event_type
-        json["reportingUrl"] = self.reporting_url
+        json: T_JSON_DICT = {}
+        json['eventType'] = self.event_type
+        json['reportingUrl'] = self.reporting_url
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SharedStorageReportingMetadata:
         return cls(
-            event_type=str(json["eventType"]),
-            reporting_url=str(json["reportingUrl"]),
+            event_type=str(json['eventType']),
+            reporting_url=str(json['reportingUrl']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SharedStorageReportingMetadata | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -371,23 +468,26 @@ class SharedStorageUrlWithMetadata:
     url: str
 
     #: Any associated reporting metadata.
-    reporting_metadata: typing.List[SharedStorageReportingMetadata]
+    reporting_metadata: list[SharedStorageReportingMetadata]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["url"] = self.url
-        json["reportingMetadata"] = [i.to_json() for i in self.reporting_metadata]
+        json: T_JSON_DICT = {}
+        json['url'] = self.url
+        json['reportingMetadata'] = [i.to_json() for i in self.reporting_metadata]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SharedStorageUrlWithMetadata:
         return cls(
-            url=str(json["url"]),
-            reporting_metadata=[
-                SharedStorageReportingMetadata.from_json(i)
-                for i in json["reportingMetadata"]
-            ],
+            url=str(json['url']),
+            reporting_metadata=[SharedStorageReportingMetadata.from_json(i) for i in json.get('reportingMetadata', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SharedStorageUrlWithMetadata | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -400,187 +500,156 @@ class SharedStorageAccessParams:
     #: Spec of the module script URL.
     #: Present only for SharedStorageAccessMethods: addModule and
     #: createWorklet.
-    script_source_url: typing.Optional[str] = None
+    script_source_url: str | None = None
 
     #: String denoting "context-origin", "script-origin", or a custom
     #: origin to be used as the worklet's data origin.
     #: Present only for SharedStorageAccessMethod: createWorklet.
-    data_origin: typing.Optional[str] = None
+    data_origin: str | None = None
 
     #: Name of the registered operation to be run.
     #: Present only for SharedStorageAccessMethods: run and selectURL.
-    operation_name: typing.Optional[str] = None
+    operation_name: str | None = None
 
     #: ID of the operation call.
     #: Present only for SharedStorageAccessMethods: run and selectURL.
-    operation_id: typing.Optional[str] = None
+    operation_id: str | None = None
 
     #: Whether or not to keep the worket alive for future run or selectURL
     #: calls.
     #: Present only for SharedStorageAccessMethods: run and selectURL.
-    keep_alive: typing.Optional[bool] = None
+    keep_alive: bool | None = None
 
     #: Configures the private aggregation options.
     #: Present only for SharedStorageAccessMethods: run and selectURL.
-    private_aggregation_config: typing.Optional[
-        SharedStoragePrivateAggregationConfig
-    ] = None
+    private_aggregation_config: SharedStoragePrivateAggregationConfig | None = None
 
     #: The operation's serialized data in bytes (converted to a string).
     #: Present only for SharedStorageAccessMethods: run and selectURL.
     #: TODO(crbug.com/401011862): Consider updating this parameter to binary.
-    serialized_data: typing.Optional[str] = None
+    serialized_data: str | None = None
 
     #: Array of candidate URLs' specs, along with any associated metadata.
     #: Present only for SharedStorageAccessMethod: selectURL.
-    urls_with_metadata: typing.Optional[typing.List[SharedStorageUrlWithMetadata]] = (
-        None
-    )
+    urls_with_metadata: list[SharedStorageUrlWithMetadata] = field(default_factory=list)
 
     #: Spec of the URN:UUID generated for a selectURL call.
     #: Present only for SharedStorageAccessMethod: selectURL.
-    urn_uuid: typing.Optional[str] = None
+    urn_uuid: str | None = None
 
     #: Key for a specific entry in an origin's shared storage.
     #: Present only for SharedStorageAccessMethods: set, append, delete, and
     #: get.
-    key: typing.Optional[str] = None
+    key: str | None = None
 
     #: Value for a specific entry in an origin's shared storage.
     #: Present only for SharedStorageAccessMethods: set and append.
-    value: typing.Optional[str] = None
+    value: str | None = None
 
     #: Whether or not to set an entry for a key if that key is already present.
     #: Present only for SharedStorageAccessMethod: set.
-    ignore_if_present: typing.Optional[bool] = None
+    ignore_if_present: bool | None = None
 
     #: A number denoting the (0-based) order of the worklet's
     #: creation relative to all other shared storage worklets created by
     #: documents using the current storage partition.
     #: Present only for SharedStorageAccessMethods: addModule, createWorklet.
-    worklet_ordinal: typing.Optional[int] = None
+    worklet_ordinal: int | None = None
 
     #: Hex representation of the DevTools token used as the TargetID for the
     #: associated shared storage worklet.
     #: Present only for SharedStorageAccessMethods: addModule, createWorklet,
     #: run, selectURL, and any other SharedStorageAccessMethod when the
     #: SharedStorageAccessScope is sharedStorageWorklet.
-    worklet_target_id: typing.Optional[target.TargetID] = None
+    worklet_target_id: target.TargetID | None = None
 
     #: Name of the lock to be acquired, if present.
     #: Optionally present only for SharedStorageAccessMethods: batchUpdate,
     #: set, append, delete, and clear.
-    with_lock: typing.Optional[str] = None
+    with_lock: str | None = None
 
     #: If the method has been called as part of a batchUpdate, then this
     #: number identifies the batch to which it belongs.
     #: Optionally present only for SharedStorageAccessMethods:
     #: batchUpdate (required), set, append, delete, and clear.
-    batch_update_id: typing.Optional[str] = None
+    batch_update_id: str | None = None
 
     #: Number of modifier methods sent in batch.
     #: Present only for SharedStorageAccessMethod: batchUpdate.
-    batch_size: typing.Optional[int] = None
+    batch_size: int | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
+        json: T_JSON_DICT = {}
         if self.script_source_url is not None:
-            json["scriptSourceUrl"] = self.script_source_url
+            json['scriptSourceUrl'] = self.script_source_url
         if self.data_origin is not None:
-            json["dataOrigin"] = self.data_origin
+            json['dataOrigin'] = self.data_origin
         if self.operation_name is not None:
-            json["operationName"] = self.operation_name
+            json['operationName'] = self.operation_name
         if self.operation_id is not None:
-            json["operationId"] = self.operation_id
+            json['operationId'] = self.operation_id
         if self.keep_alive is not None:
-            json["keepAlive"] = self.keep_alive
+            json['keepAlive'] = self.keep_alive
         if self.private_aggregation_config is not None:
-            json["privateAggregationConfig"] = self.private_aggregation_config.to_json()
+            json['privateAggregationConfig'] = self.private_aggregation_config.to_json()
         if self.serialized_data is not None:
-            json["serializedData"] = self.serialized_data
+            json['serializedData'] = self.serialized_data
         if self.urls_with_metadata is not None:
-            json["urlsWithMetadata"] = [i.to_json() for i in self.urls_with_metadata]
+            json['urlsWithMetadata'] = [i.to_json() for i in self.urls_with_metadata]
         if self.urn_uuid is not None:
-            json["urnUuid"] = self.urn_uuid
+            json['urnUuid'] = self.urn_uuid
         if self.key is not None:
-            json["key"] = self.key
+            json['key'] = self.key
         if self.value is not None:
-            json["value"] = self.value
+            json['value'] = self.value
         if self.ignore_if_present is not None:
-            json["ignoreIfPresent"] = self.ignore_if_present
+            json['ignoreIfPresent'] = self.ignore_if_present
         if self.worklet_ordinal is not None:
-            json["workletOrdinal"] = self.worklet_ordinal
+            json['workletOrdinal'] = self.worklet_ordinal
         if self.worklet_target_id is not None:
-            json["workletTargetId"] = self.worklet_target_id.to_json()
+            json['workletTargetId'] = self.worklet_target_id.to_json()
         if self.with_lock is not None:
-            json["withLock"] = self.with_lock
+            json['withLock'] = self.with_lock
         if self.batch_update_id is not None:
-            json["batchUpdateId"] = self.batch_update_id
+            json['batchUpdateId'] = self.batch_update_id
         if self.batch_size is not None:
-            json["batchSize"] = self.batch_size
+            json['batchSize'] = self.batch_size
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SharedStorageAccessParams:
         return cls(
-            script_source_url=str(json["scriptSourceUrl"])
-            if json.get("scriptSourceUrl", None) is not None
-            else None,
-            data_origin=str(json["dataOrigin"])
-            if json.get("dataOrigin", None) is not None
-            else None,
-            operation_name=str(json["operationName"])
-            if json.get("operationName", None) is not None
-            else None,
-            operation_id=str(json["operationId"])
-            if json.get("operationId", None) is not None
-            else None,
-            keep_alive=bool(json["keepAlive"])
-            if json.get("keepAlive", None) is not None
-            else None,
-            private_aggregation_config=SharedStoragePrivateAggregationConfig.from_json(
-                json["privateAggregationConfig"]
-            )
-            if json.get("privateAggregationConfig", None) is not None
-            else None,
-            serialized_data=str(json["serializedData"])
-            if json.get("serializedData", None) is not None
-            else None,
-            urls_with_metadata=[
-                SharedStorageUrlWithMetadata.from_json(i)
-                for i in json["urlsWithMetadata"]
-            ]
-            if json.get("urlsWithMetadata", None) is not None
-            else None,
-            urn_uuid=str(json["urnUuid"])
-            if json.get("urnUuid", None) is not None
-            else None,
-            key=str(json["key"]) if json.get("key", None) is not None else None,
-            value=str(json["value"]) if json.get("value", None) is not None else None,
-            ignore_if_present=bool(json["ignoreIfPresent"])
-            if json.get("ignoreIfPresent", None) is not None
-            else None,
-            worklet_ordinal=int(json["workletOrdinal"])
-            if json.get("workletOrdinal", None) is not None
-            else None,
-            worklet_target_id=target.TargetID.from_json(json["workletTargetId"])
-            if json.get("workletTargetId", None) is not None
-            else None,
-            with_lock=str(json["withLock"])
-            if json.get("withLock", None) is not None
-            else None,
-            batch_update_id=str(json["batchUpdateId"])
-            if json.get("batchUpdateId", None) is not None
-            else None,
-            batch_size=int(json["batchSize"])
-            if json.get("batchSize", None) is not None
-            else None,
+            script_source_url=None if json.get('scriptSourceUrl') is None else str(json['scriptSourceUrl']),
+            data_origin=None if json.get('dataOrigin') is None else str(json['dataOrigin']),
+            operation_name=None if json.get('operationName') is None else str(json['operationName']),
+            operation_id=None if json.get('operationId') is None else str(json['operationId']),
+            keep_alive=None if json.get('keepAlive') is None else bool(json['keepAlive']),
+            private_aggregation_config=SharedStoragePrivateAggregationConfig.from_json_optional(
+                json.get('privateAggregationConfig'),
+            ),
+            serialized_data=None if json.get('serializedData') is None else str(json['serializedData']),
+            urls_with_metadata=[SharedStorageUrlWithMetadata.from_json(i) for i in json.get('urlsWithMetadata', [])],
+            urn_uuid=None if json.get('urnUuid') is None else str(json['urnUuid']),
+            key=None if json.get('key') is None else str(json['key']),
+            value=None if json.get('value') is None else str(json['value']),
+            ignore_if_present=None if json.get('ignoreIfPresent') is None else bool(json['ignoreIfPresent']),
+            worklet_ordinal=None if json.get('workletOrdinal') is None else int(json['workletOrdinal']),
+            worklet_target_id=target.TargetID.from_json_optional(json.get('workletTargetId')),
+            with_lock=None if json.get('withLock') is None else str(json['withLock']),
+            batch_update_id=None if json.get('batchUpdateId') is None else str(json['batchUpdateId']),
+            batch_size=None if json.get('batchSize') is None else int(json['batchSize']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SharedStorageAccessParams | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class StorageBucketsDurability(enum.Enum):
-    RELAXED = "relaxed"
-    STRICT = "strict"
+    RELAXED = 'relaxed'
+    STRICT = 'strict'
 
     def to_json(self) -> str:
         return self.value
@@ -589,27 +658,39 @@ class StorageBucketsDurability(enum.Enum):
     def from_json(cls, json: str) -> StorageBucketsDurability:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> StorageBucketsDurability | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 @dataclass
 class StorageBucket:
     storage_key: SerializedStorageKey
 
     #: If not specified, it is the default bucket of the storageKey.
-    name: typing.Optional[str] = None
+    name: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["storageKey"] = self.storage_key.to_json()
+        json: T_JSON_DICT = {}
+        json['storageKey'] = self.storage_key.to_json()
         if self.name is not None:
-            json["name"] = self.name
+            json['name'] = self.name
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> StorageBucket:
         return cls(
-            storage_key=SerializedStorageKey.from_json(json["storageKey"]),
-            name=str(json["name"]) if json.get("name", None) is not None else None,
+            storage_key=SerializedStorageKey.from_json(json['storageKey']),
+            name=None if json.get('name') is None else str(json['name']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> StorageBucket | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -628,30 +709,36 @@ class StorageBucketInfo:
     durability: StorageBucketsDurability
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["bucket"] = self.bucket.to_json()
-        json["id"] = self.id_
-        json["expiration"] = self.expiration.to_json()
-        json["quota"] = self.quota
-        json["persistent"] = self.persistent
-        json["durability"] = self.durability.to_json()
+        json: T_JSON_DICT = {}
+        json['bucket'] = self.bucket.to_json()
+        json['id'] = self.id_
+        json['expiration'] = self.expiration.to_json()
+        json['quota'] = self.quota
+        json['persistent'] = self.persistent
+        json['durability'] = self.durability.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> StorageBucketInfo:
         return cls(
-            bucket=StorageBucket.from_json(json["bucket"]),
-            id_=str(json["id"]),
-            expiration=network.TimeSinceEpoch.from_json(json["expiration"]),
-            quota=float(json["quota"]),
-            persistent=bool(json["persistent"]),
-            durability=StorageBucketsDurability.from_json(json["durability"]),
+            bucket=StorageBucket.from_json(json['bucket']),
+            id_=str(json['id']),
+            expiration=network.TimeSinceEpoch.from_json(json['expiration']),
+            quota=float(json['quota']),
+            persistent=bool(json['persistent']),
+            durability=StorageBucketsDurability.from_json(json['durability']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> StorageBucketInfo | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class AttributionReportingSourceType(enum.Enum):
-    NAVIGATION = "navigation"
-    EVENT = "event"
+    NAVIGATION = 'navigation'
+    EVENT = 'event'
 
     def to_json(self) -> str:
         return self.value
@@ -660,8 +747,16 @@ class AttributionReportingSourceType(enum.Enum):
     def from_json(cls, json: str) -> AttributionReportingSourceType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AttributionReportingSourceType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class UnsignedInt64AsBase10(str):
+    __slots__ = ()
+
     def to_json(self) -> str:
         return self
 
@@ -669,11 +764,19 @@ class UnsignedInt64AsBase10(str):
     def from_json(cls, json: str) -> UnsignedInt64AsBase10:
         return cls(json)
 
-    def __repr__(self):
-        return "UnsignedInt64AsBase10({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> UnsignedInt64AsBase10 | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'UnsignedInt64AsBase10({super().__repr__()})'
 
 
 class UnsignedInt128AsBase16(str):
+    __slots__ = ()
+
     def to_json(self) -> str:
         return self
 
@@ -681,11 +784,19 @@ class UnsignedInt128AsBase16(str):
     def from_json(cls, json: str) -> UnsignedInt128AsBase16:
         return cls(json)
 
-    def __repr__(self):
-        return "UnsignedInt128AsBase16({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> UnsignedInt128AsBase16 | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'UnsignedInt128AsBase16({super().__repr__()})'
 
 
 class SignedInt64AsBase10(str):
+    __slots__ = ()
+
     def to_json(self) -> str:
         return self
 
@@ -693,80 +804,94 @@ class SignedInt64AsBase10(str):
     def from_json(cls, json: str) -> SignedInt64AsBase10:
         return cls(json)
 
-    def __repr__(self):
-        return "SignedInt64AsBase10({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> SignedInt64AsBase10 | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'SignedInt64AsBase10({super().__repr__()})'
 
 
 @dataclass
 class AttributionReportingFilterDataEntry:
     key: str
 
-    values: typing.List[str]
+    values: list[str]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["key"] = self.key
-        json["values"] = [i for i in self.values]
+        json: T_JSON_DICT = {}
+        json['key'] = self.key
+        json['values'] = self.values
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionReportingFilterDataEntry:
         return cls(
-            key=str(json["key"]),
-            values=[str(i) for i in json["values"]],
+            key=str(json['key']),
+            values=[str(i) for i in json.get('values', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingFilterDataEntry | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
 class AttributionReportingFilterConfig:
-    filter_values: typing.List[AttributionReportingFilterDataEntry]
+    filter_values: list[AttributionReportingFilterDataEntry]
 
     #: duration in seconds
-    lookback_window: typing.Optional[int] = None
+    lookback_window: int | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["filterValues"] = [i.to_json() for i in self.filter_values]
+        json: T_JSON_DICT = {}
+        json['filterValues'] = [i.to_json() for i in self.filter_values]
         if self.lookback_window is not None:
-            json["lookbackWindow"] = self.lookback_window
+            json['lookbackWindow'] = self.lookback_window
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionReportingFilterConfig:
         return cls(
-            filter_values=[
-                AttributionReportingFilterDataEntry.from_json(i)
-                for i in json["filterValues"]
-            ],
-            lookback_window=int(json["lookbackWindow"])
-            if json.get("lookbackWindow", None) is not None
-            else None,
+            filter_values=[AttributionReportingFilterDataEntry.from_json(i) for i in json.get('filterValues', [])],
+            lookback_window=None if json.get('lookbackWindow') is None else int(json['lookbackWindow']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingFilterConfig | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
 class AttributionReportingFilterPair:
-    filters: typing.List[AttributionReportingFilterConfig]
+    filters: list[AttributionReportingFilterConfig]
 
-    not_filters: typing.List[AttributionReportingFilterConfig]
+    not_filters: list[AttributionReportingFilterConfig]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["filters"] = [i.to_json() for i in self.filters]
-        json["notFilters"] = [i.to_json() for i in self.not_filters]
+        json: T_JSON_DICT = {}
+        json['filters'] = [i.to_json() for i in self.filters]
+        json['notFilters'] = [i.to_json() for i in self.not_filters]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionReportingFilterPair:
         return cls(
-            filters=[
-                AttributionReportingFilterConfig.from_json(i) for i in json["filters"]
-            ],
-            not_filters=[
-                AttributionReportingFilterConfig.from_json(i)
-                for i in json["notFilters"]
-            ],
+            filters=[AttributionReportingFilterConfig.from_json(i) for i in json.get('filters', [])],
+            not_filters=[AttributionReportingFilterConfig.from_json(i) for i in json.get('notFilters', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingFilterPair | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -776,17 +901,23 @@ class AttributionReportingAggregationKeysEntry:
     value: UnsignedInt128AsBase16
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["key"] = self.key
-        json["value"] = self.value.to_json()
+        json: T_JSON_DICT = {}
+        json['key'] = self.key
+        json['value'] = self.value.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionReportingAggregationKeysEntry:
         return cls(
-            key=str(json["key"]),
-            value=UnsignedInt128AsBase16.from_json(json["value"]),
+            key=str(json['key']),
+            value=UnsignedInt128AsBase16.from_json(json['value']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingAggregationKeysEntry | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -795,25 +926,31 @@ class AttributionReportingEventReportWindows:
     start: int
 
     #: duration in seconds
-    ends: typing.List[int]
+    ends: list[int]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["start"] = self.start
-        json["ends"] = [i for i in self.ends]
+        json: T_JSON_DICT = {}
+        json['start'] = self.start
+        json['ends'] = self.ends
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionReportingEventReportWindows:
         return cls(
-            start=int(json["start"]),
-            ends=[int(i) for i in json["ends"]],
+            start=int(json['start']),
+            ends=[int(i) for i in json.get('ends', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingEventReportWindows | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class AttributionReportingTriggerDataMatching(enum.Enum):
-    EXACT = "exact"
-    MODULUS = "modulus"
+    EXACT = 'exact'
+    MODULUS = 'modulus'
 
     def to_json(self) -> str:
         return self.value
@@ -821,6 +958,12 @@ class AttributionReportingTriggerDataMatching(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> AttributionReportingTriggerDataMatching:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AttributionReportingTriggerDataMatching | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -831,70 +974,78 @@ class AttributionReportingAggregatableDebugReportingData:
     #: int
     value: float
 
-    types: typing.List[str]
+    types: list[str]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["keyPiece"] = self.key_piece.to_json()
-        json["value"] = self.value
-        json["types"] = [i for i in self.types]
+        json: T_JSON_DICT = {}
+        json['keyPiece'] = self.key_piece.to_json()
+        json['value'] = self.value
+        json['types'] = self.types
         return json
 
     @classmethod
-    def from_json(
-        cls, json: T_JSON_DICT
-    ) -> AttributionReportingAggregatableDebugReportingData:
+    def from_json(cls, json: T_JSON_DICT) -> AttributionReportingAggregatableDebugReportingData:
         return cls(
-            key_piece=UnsignedInt128AsBase16.from_json(json["keyPiece"]),
-            value=float(json["value"]),
-            types=[str(i) for i in json["types"]],
+            key_piece=UnsignedInt128AsBase16.from_json(json['keyPiece']),
+            value=float(json['value']),
+            types=[str(i) for i in json.get('types', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingAggregatableDebugReportingData | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
 class AttributionReportingAggregatableDebugReportingConfig:
     key_piece: UnsignedInt128AsBase16
 
-    debug_data: typing.List[AttributionReportingAggregatableDebugReportingData]
+    debug_data: list[AttributionReportingAggregatableDebugReportingData]
 
     #: number instead of integer because not all uint32 can be represented by
     #: int, only present for source registrations
-    budget: typing.Optional[float] = None
+    budget: float | None = None
 
-    aggregation_coordinator_origin: typing.Optional[str] = None
+    aggregation_coordinator_origin: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["keyPiece"] = self.key_piece.to_json()
-        json["debugData"] = [i.to_json() for i in self.debug_data]
+        json: T_JSON_DICT = {}
+        json['keyPiece'] = self.key_piece.to_json()
+        json['debugData'] = [i.to_json() for i in self.debug_data]
         if self.budget is not None:
-            json["budget"] = self.budget
+            json['budget'] = self.budget
         if self.aggregation_coordinator_origin is not None:
-            json["aggregationCoordinatorOrigin"] = self.aggregation_coordinator_origin
+            json['aggregationCoordinatorOrigin'] = self.aggregation_coordinator_origin
         return json
 
     @classmethod
-    def from_json(
-        cls, json: T_JSON_DICT
-    ) -> AttributionReportingAggregatableDebugReportingConfig:
+    def from_json(cls, json: T_JSON_DICT) -> AttributionReportingAggregatableDebugReportingConfig:
         return cls(
-            key_piece=UnsignedInt128AsBase16.from_json(json["keyPiece"]),
+            key_piece=UnsignedInt128AsBase16.from_json(json['keyPiece']),
             debug_data=[
-                AttributionReportingAggregatableDebugReportingData.from_json(i)
-                for i in json["debugData"]
+                AttributionReportingAggregatableDebugReportingData.from_json(i) for i in json.get('debugData', [])
             ],
-            budget=float(json["budget"])
-            if json.get("budget", None) is not None
-            else None,
-            aggregation_coordinator_origin=str(json["aggregationCoordinatorOrigin"])
-            if json.get("aggregationCoordinatorOrigin", None) is not None
-            else None,
+            budget=None if json.get('budget') is None else float(json['budget']),
+            aggregation_coordinator_origin=None
+            if json.get('aggregationCoordinatorOrigin') is None
+            else str(json['aggregationCoordinatorOrigin']),
         )
+
+    @classmethod
+    def from_json_optional(
+        cls,
+        json: T_JSON_DICT | None,
+    ) -> AttributionReportingAggregatableDebugReportingConfig | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
 class AttributionScopesData:
-    values: typing.List[str]
+    values: list[str]
 
     #: number instead of integer because not all uint32 can be represented by
     #: int
@@ -903,19 +1054,25 @@ class AttributionScopesData:
     max_event_states: float
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["values"] = [i for i in self.values]
-        json["limit"] = self.limit
-        json["maxEventStates"] = self.max_event_states
+        json: T_JSON_DICT = {}
+        json['values'] = self.values
+        json['limit'] = self.limit
+        json['maxEventStates'] = self.max_event_states
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionScopesData:
         return cls(
-            values=[str(i) for i in json["values"]],
-            limit=float(json["limit"]),
-            max_event_states=float(json["maxEventStates"]),
+            values=[str(i) for i in json.get('values', [])],
+            limit=float(json['limit']),
+            max_event_states=float(json['maxEventStates']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionScopesData | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -925,17 +1082,23 @@ class AttributionReportingNamedBudgetDef:
     budget: int
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
-        json["budget"] = self.budget
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
+        json['budget'] = self.budget
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionReportingNamedBudgetDef:
         return cls(
-            name=str(json["name"]),
-            budget=int(json["budget"]),
+            name=str(json['name']),
+            budget=int(json['budget']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingNamedBudgetDef | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -947,7 +1110,7 @@ class AttributionReportingSourceRegistration:
 
     #: number instead of integer because not all uint32 can be represented by
     #: int
-    trigger_data: typing.List[float]
+    trigger_data: list[float]
 
     event_report_windows: AttributionReportingEventReportWindows
 
@@ -960,134 +1123,117 @@ class AttributionReportingSourceRegistration:
 
     reporting_origin: str
 
-    destination_sites: typing.List[str]
+    destination_sites: list[str]
 
     event_id: UnsignedInt64AsBase10
 
     priority: SignedInt64AsBase10
 
-    filter_data: typing.List[AttributionReportingFilterDataEntry]
+    filter_data: list[AttributionReportingFilterDataEntry]
 
-    aggregation_keys: typing.List[AttributionReportingAggregationKeysEntry]
+    aggregation_keys: list[AttributionReportingAggregationKeysEntry]
 
     trigger_data_matching: AttributionReportingTriggerDataMatching
 
     destination_limit_priority: SignedInt64AsBase10
 
-    aggregatable_debug_reporting_config: (
-        AttributionReportingAggregatableDebugReportingConfig
-    )
+    aggregatable_debug_reporting_config: AttributionReportingAggregatableDebugReportingConfig
 
     max_event_level_reports: int
 
-    named_budgets: typing.List[AttributionReportingNamedBudgetDef]
+    named_budgets: list[AttributionReportingNamedBudgetDef]
 
     debug_reporting: bool
 
     event_level_epsilon: float
 
-    debug_key: typing.Optional[UnsignedInt64AsBase10] = None
+    debug_key: UnsignedInt64AsBase10 | None = None
 
-    scopes_data: typing.Optional[AttributionScopesData] = None
+    scopes_data: AttributionScopesData | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["time"] = self.time.to_json()
-        json["expiry"] = self.expiry
-        json["triggerData"] = [i for i in self.trigger_data]
-        json["eventReportWindows"] = self.event_report_windows.to_json()
-        json["aggregatableReportWindow"] = self.aggregatable_report_window
-        json["type"] = self.type_.to_json()
-        json["sourceOrigin"] = self.source_origin
-        json["reportingOrigin"] = self.reporting_origin
-        json["destinationSites"] = [i for i in self.destination_sites]
-        json["eventId"] = self.event_id.to_json()
-        json["priority"] = self.priority.to_json()
-        json["filterData"] = [i.to_json() for i in self.filter_data]
-        json["aggregationKeys"] = [i.to_json() for i in self.aggregation_keys]
-        json["triggerDataMatching"] = self.trigger_data_matching.to_json()
-        json["destinationLimitPriority"] = self.destination_limit_priority.to_json()
-        json["aggregatableDebugReportingConfig"] = (
-            self.aggregatable_debug_reporting_config.to_json()
-        )
-        json["maxEventLevelReports"] = self.max_event_level_reports
-        json["namedBudgets"] = [i.to_json() for i in self.named_budgets]
-        json["debugReporting"] = self.debug_reporting
-        json["eventLevelEpsilon"] = self.event_level_epsilon
+        json: T_JSON_DICT = {}
+        json['time'] = self.time.to_json()
+        json['expiry'] = self.expiry
+        json['triggerData'] = self.trigger_data
+        json['eventReportWindows'] = self.event_report_windows.to_json()
+        json['aggregatableReportWindow'] = self.aggregatable_report_window
+        json['type'] = self.type_.to_json()
+        json['sourceOrigin'] = self.source_origin
+        json['reportingOrigin'] = self.reporting_origin
+        json['destinationSites'] = self.destination_sites
+        json['eventId'] = self.event_id.to_json()
+        json['priority'] = self.priority.to_json()
+        json['filterData'] = [i.to_json() for i in self.filter_data]
+        json['aggregationKeys'] = [i.to_json() for i in self.aggregation_keys]
+        json['triggerDataMatching'] = self.trigger_data_matching.to_json()
+        json['destinationLimitPriority'] = self.destination_limit_priority.to_json()
+        json['aggregatableDebugReportingConfig'] = self.aggregatable_debug_reporting_config.to_json()
+        json['maxEventLevelReports'] = self.max_event_level_reports
+        json['namedBudgets'] = [i.to_json() for i in self.named_budgets]
+        json['debugReporting'] = self.debug_reporting
+        json['eventLevelEpsilon'] = self.event_level_epsilon
         if self.debug_key is not None:
-            json["debugKey"] = self.debug_key.to_json()
+            json['debugKey'] = self.debug_key.to_json()
         if self.scopes_data is not None:
-            json["scopesData"] = self.scopes_data.to_json()
+            json['scopesData'] = self.scopes_data.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionReportingSourceRegistration:
         return cls(
-            time=network.TimeSinceEpoch.from_json(json["time"]),
-            expiry=int(json["expiry"]),
-            trigger_data=[float(i) for i in json["triggerData"]],
-            event_report_windows=AttributionReportingEventReportWindows.from_json(
-                json["eventReportWindows"]
-            ),
-            aggregatable_report_window=int(json["aggregatableReportWindow"]),
-            type_=AttributionReportingSourceType.from_json(json["type"]),
-            source_origin=str(json["sourceOrigin"]),
-            reporting_origin=str(json["reportingOrigin"]),
-            destination_sites=[str(i) for i in json["destinationSites"]],
-            event_id=UnsignedInt64AsBase10.from_json(json["eventId"]),
-            priority=SignedInt64AsBase10.from_json(json["priority"]),
-            filter_data=[
-                AttributionReportingFilterDataEntry.from_json(i)
-                for i in json["filterData"]
-            ],
+            time=network.TimeSinceEpoch.from_json(json['time']),
+            expiry=int(json['expiry']),
+            trigger_data=[float(i) for i in json.get('triggerData', [])],
+            event_report_windows=AttributionReportingEventReportWindows.from_json(json['eventReportWindows']),
+            aggregatable_report_window=int(json['aggregatableReportWindow']),
+            type_=AttributionReportingSourceType.from_json(json['type']),
+            source_origin=str(json['sourceOrigin']),
+            reporting_origin=str(json['reportingOrigin']),
+            destination_sites=[str(i) for i in json.get('destinationSites', [])],
+            event_id=UnsignedInt64AsBase10.from_json(json['eventId']),
+            priority=SignedInt64AsBase10.from_json(json['priority']),
+            filter_data=[AttributionReportingFilterDataEntry.from_json(i) for i in json.get('filterData', [])],
             aggregation_keys=[
-                AttributionReportingAggregationKeysEntry.from_json(i)
-                for i in json["aggregationKeys"]
+                AttributionReportingAggregationKeysEntry.from_json(i) for i in json.get('aggregationKeys', [])
             ],
-            trigger_data_matching=AttributionReportingTriggerDataMatching.from_json(
-                json["triggerDataMatching"]
-            ),
-            destination_limit_priority=SignedInt64AsBase10.from_json(
-                json["destinationLimitPriority"]
-            ),
+            trigger_data_matching=AttributionReportingTriggerDataMatching.from_json(json['triggerDataMatching']),
+            destination_limit_priority=SignedInt64AsBase10.from_json(json['destinationLimitPriority']),
             aggregatable_debug_reporting_config=AttributionReportingAggregatableDebugReportingConfig.from_json(
-                json["aggregatableDebugReportingConfig"]
+                json['aggregatableDebugReportingConfig'],
             ),
-            max_event_level_reports=int(json["maxEventLevelReports"]),
-            named_budgets=[
-                AttributionReportingNamedBudgetDef.from_json(i)
-                for i in json["namedBudgets"]
-            ],
-            debug_reporting=bool(json["debugReporting"]),
-            event_level_epsilon=float(json["eventLevelEpsilon"]),
-            debug_key=UnsignedInt64AsBase10.from_json(json["debugKey"])
-            if json.get("debugKey", None) is not None
-            else None,
-            scopes_data=AttributionScopesData.from_json(json["scopesData"])
-            if json.get("scopesData", None) is not None
-            else None,
+            max_event_level_reports=int(json['maxEventLevelReports']),
+            named_budgets=[AttributionReportingNamedBudgetDef.from_json(i) for i in json.get('namedBudgets', [])],
+            debug_reporting=bool(json['debugReporting']),
+            event_level_epsilon=float(json['eventLevelEpsilon']),
+            debug_key=UnsignedInt64AsBase10.from_json_optional(json.get('debugKey')),
+            scopes_data=AttributionScopesData.from_json_optional(json.get('scopesData')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingSourceRegistration | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class AttributionReportingSourceRegistrationResult(enum.Enum):
-    SUCCESS = "success"
-    INTERNAL_ERROR = "internalError"
-    INSUFFICIENT_SOURCE_CAPACITY = "insufficientSourceCapacity"
-    INSUFFICIENT_UNIQUE_DESTINATION_CAPACITY = "insufficientUniqueDestinationCapacity"
-    EXCESSIVE_REPORTING_ORIGINS = "excessiveReportingOrigins"
-    PROHIBITED_BY_BROWSER_POLICY = "prohibitedByBrowserPolicy"
-    SUCCESS_NOISED = "successNoised"
-    DESTINATION_REPORTING_LIMIT_REACHED = "destinationReportingLimitReached"
-    DESTINATION_GLOBAL_LIMIT_REACHED = "destinationGlobalLimitReached"
-    DESTINATION_BOTH_LIMITS_REACHED = "destinationBothLimitsReached"
-    REPORTING_ORIGINS_PER_SITE_LIMIT_REACHED = "reportingOriginsPerSiteLimitReached"
-    EXCEEDS_MAX_CHANNEL_CAPACITY = "exceedsMaxChannelCapacity"
-    EXCEEDS_MAX_SCOPES_CHANNEL_CAPACITY = "exceedsMaxScopesChannelCapacity"
-    EXCEEDS_MAX_TRIGGER_STATE_CARDINALITY = "exceedsMaxTriggerStateCardinality"
-    EXCEEDS_MAX_EVENT_STATES_LIMIT = "exceedsMaxEventStatesLimit"
-    DESTINATION_PER_DAY_REPORTING_LIMIT_REACHED = (
-        "destinationPerDayReportingLimitReached"
-    )
+    SUCCESS = 'success'
+    INTERNAL_ERROR = 'internalError'
+    INSUFFICIENT_SOURCE_CAPACITY = 'insufficientSourceCapacity'
+    INSUFFICIENT_UNIQUE_DESTINATION_CAPACITY = 'insufficientUniqueDestinationCapacity'
+    EXCESSIVE_REPORTING_ORIGINS = 'excessiveReportingOrigins'
+    PROHIBITED_BY_BROWSER_POLICY = 'prohibitedByBrowserPolicy'
+    SUCCESS_NOISED = 'successNoised'
+    DESTINATION_REPORTING_LIMIT_REACHED = 'destinationReportingLimitReached'
+    DESTINATION_GLOBAL_LIMIT_REACHED = 'destinationGlobalLimitReached'
+    DESTINATION_BOTH_LIMITS_REACHED = 'destinationBothLimitsReached'
+    REPORTING_ORIGINS_PER_SITE_LIMIT_REACHED = 'reportingOriginsPerSiteLimitReached'
+    EXCEEDS_MAX_CHANNEL_CAPACITY = 'exceedsMaxChannelCapacity'
+    EXCEEDS_MAX_SCOPES_CHANNEL_CAPACITY = 'exceedsMaxScopesChannelCapacity'
+    EXCEEDS_MAX_TRIGGER_STATE_CARDINALITY = 'exceedsMaxTriggerStateCardinality'
+    EXCEEDS_MAX_EVENT_STATES_LIMIT = 'exceedsMaxEventStatesLimit'
+    DESTINATION_PER_DAY_REPORTING_LIMIT_REACHED = 'destinationPerDayReportingLimitReached'
 
     def to_json(self) -> str:
         return self.value
@@ -1096,10 +1242,16 @@ class AttributionReportingSourceRegistrationResult(enum.Enum):
     def from_json(cls, json: str) -> AttributionReportingSourceRegistrationResult:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AttributionReportingSourceRegistrationResult | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class AttributionReportingSourceRegistrationTimeConfig(enum.Enum):
-    INCLUDE = "include"
-    EXCLUDE = "exclude"
+    INCLUDE = 'include'
+    EXCLUDE = 'exclude'
 
     def to_json(self) -> str:
         return self.value
@@ -1107,6 +1259,12 @@ class AttributionReportingSourceRegistrationTimeConfig(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> AttributionReportingSourceRegistrationTimeConfig:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AttributionReportingSourceRegistrationTimeConfig | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1120,44 +1278,51 @@ class AttributionReportingAggregatableValueDictEntry:
     filtering_id: UnsignedInt64AsBase10
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["key"] = self.key
-        json["value"] = self.value
-        json["filteringId"] = self.filtering_id.to_json()
+        json: T_JSON_DICT = {}
+        json['key'] = self.key
+        json['value'] = self.value
+        json['filteringId'] = self.filtering_id.to_json()
         return json
 
     @classmethod
-    def from_json(
-        cls, json: T_JSON_DICT
-    ) -> AttributionReportingAggregatableValueDictEntry:
+    def from_json(cls, json: T_JSON_DICT) -> AttributionReportingAggregatableValueDictEntry:
         return cls(
-            key=str(json["key"]),
-            value=float(json["value"]),
-            filtering_id=UnsignedInt64AsBase10.from_json(json["filteringId"]),
+            key=str(json['key']),
+            value=float(json['value']),
+            filtering_id=UnsignedInt64AsBase10.from_json(json['filteringId']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingAggregatableValueDictEntry | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
 class AttributionReportingAggregatableValueEntry:
-    values: typing.List[AttributionReportingAggregatableValueDictEntry]
+    values: list[AttributionReportingAggregatableValueDictEntry]
 
     filters: AttributionReportingFilterPair
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["values"] = [i.to_json() for i in self.values]
-        json["filters"] = self.filters.to_json()
+        json: T_JSON_DICT = {}
+        json['values'] = [i.to_json() for i in self.values]
+        json['filters'] = self.filters.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionReportingAggregatableValueEntry:
         return cls(
-            values=[
-                AttributionReportingAggregatableValueDictEntry.from_json(i)
-                for i in json["values"]
-            ],
-            filters=AttributionReportingFilterPair.from_json(json["filters"]),
+            values=[AttributionReportingAggregatableValueDictEntry.from_json(i) for i in json.get('values', [])],
+            filters=AttributionReportingFilterPair.from_json(json['filters']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingAggregatableValueEntry | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1168,110 +1333,128 @@ class AttributionReportingEventTriggerData:
 
     filters: AttributionReportingFilterPair
 
-    dedup_key: typing.Optional[UnsignedInt64AsBase10] = None
+    dedup_key: UnsignedInt64AsBase10 | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["data"] = self.data.to_json()
-        json["priority"] = self.priority.to_json()
-        json["filters"] = self.filters.to_json()
+        json: T_JSON_DICT = {}
+        json['data'] = self.data.to_json()
+        json['priority'] = self.priority.to_json()
+        json['filters'] = self.filters.to_json()
         if self.dedup_key is not None:
-            json["dedupKey"] = self.dedup_key.to_json()
+            json['dedupKey'] = self.dedup_key.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionReportingEventTriggerData:
         return cls(
-            data=UnsignedInt64AsBase10.from_json(json["data"]),
-            priority=SignedInt64AsBase10.from_json(json["priority"]),
-            filters=AttributionReportingFilterPair.from_json(json["filters"]),
-            dedup_key=UnsignedInt64AsBase10.from_json(json["dedupKey"])
-            if json.get("dedupKey", None) is not None
-            else None,
+            data=UnsignedInt64AsBase10.from_json(json['data']),
+            priority=SignedInt64AsBase10.from_json(json['priority']),
+            filters=AttributionReportingFilterPair.from_json(json['filters']),
+            dedup_key=UnsignedInt64AsBase10.from_json_optional(json.get('dedupKey')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingEventTriggerData | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
 class AttributionReportingAggregatableTriggerData:
     key_piece: UnsignedInt128AsBase16
 
-    source_keys: typing.List[str]
+    source_keys: list[str]
 
     filters: AttributionReportingFilterPair
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["keyPiece"] = self.key_piece.to_json()
-        json["sourceKeys"] = [i for i in self.source_keys]
-        json["filters"] = self.filters.to_json()
+        json: T_JSON_DICT = {}
+        json['keyPiece'] = self.key_piece.to_json()
+        json['sourceKeys'] = self.source_keys
+        json['filters'] = self.filters.to_json()
         return json
 
     @classmethod
-    def from_json(
-        cls, json: T_JSON_DICT
-    ) -> AttributionReportingAggregatableTriggerData:
+    def from_json(cls, json: T_JSON_DICT) -> AttributionReportingAggregatableTriggerData:
         return cls(
-            key_piece=UnsignedInt128AsBase16.from_json(json["keyPiece"]),
-            source_keys=[str(i) for i in json["sourceKeys"]],
-            filters=AttributionReportingFilterPair.from_json(json["filters"]),
+            key_piece=UnsignedInt128AsBase16.from_json(json['keyPiece']),
+            source_keys=[str(i) for i in json.get('sourceKeys', [])],
+            filters=AttributionReportingFilterPair.from_json(json['filters']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingAggregatableTriggerData | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
 class AttributionReportingAggregatableDedupKey:
     filters: AttributionReportingFilterPair
 
-    dedup_key: typing.Optional[UnsignedInt64AsBase10] = None
+    dedup_key: UnsignedInt64AsBase10 | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["filters"] = self.filters.to_json()
+        json: T_JSON_DICT = {}
+        json['filters'] = self.filters.to_json()
         if self.dedup_key is not None:
-            json["dedupKey"] = self.dedup_key.to_json()
+            json['dedupKey'] = self.dedup_key.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionReportingAggregatableDedupKey:
         return cls(
-            filters=AttributionReportingFilterPair.from_json(json["filters"]),
-            dedup_key=UnsignedInt64AsBase10.from_json(json["dedupKey"])
-            if json.get("dedupKey", None) is not None
-            else None,
+            filters=AttributionReportingFilterPair.from_json(json['filters']),
+            dedup_key=UnsignedInt64AsBase10.from_json_optional(json.get('dedupKey')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingAggregatableDedupKey | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
 class AttributionReportingNamedBudgetCandidate:
     filters: AttributionReportingFilterPair
 
-    name: typing.Optional[str] = None
+    name: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["filters"] = self.filters.to_json()
+        json: T_JSON_DICT = {}
+        json['filters'] = self.filters.to_json()
         if self.name is not None:
-            json["name"] = self.name
+            json['name'] = self.name
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionReportingNamedBudgetCandidate:
         return cls(
-            filters=AttributionReportingFilterPair.from_json(json["filters"]),
-            name=str(json["name"]) if json.get("name", None) is not None else None,
+            filters=AttributionReportingFilterPair.from_json(json['filters']),
+            name=None if json.get('name') is None else str(json['name']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingNamedBudgetCandidate | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
 class AttributionReportingTriggerRegistration:
     filters: AttributionReportingFilterPair
 
-    aggregatable_dedup_keys: typing.List[AttributionReportingAggregatableDedupKey]
+    aggregatable_dedup_keys: list[AttributionReportingAggregatableDedupKey]
 
-    event_trigger_data: typing.List[AttributionReportingEventTriggerData]
+    event_trigger_data: list[AttributionReportingEventTriggerData]
 
-    aggregatable_trigger_data: typing.List[AttributionReportingAggregatableTriggerData]
+    aggregatable_trigger_data: list[AttributionReportingAggregatableTriggerData]
 
-    aggregatable_values: typing.List[AttributionReportingAggregatableValueEntry]
+    aggregatable_values: list[AttributionReportingAggregatableValueEntry]
 
     aggregatable_filtering_id_max_bytes: int
 
@@ -1279,118 +1462,100 @@ class AttributionReportingTriggerRegistration:
 
     source_registration_time_config: AttributionReportingSourceRegistrationTimeConfig
 
-    aggregatable_debug_reporting_config: (
-        AttributionReportingAggregatableDebugReportingConfig
-    )
+    aggregatable_debug_reporting_config: AttributionReportingAggregatableDebugReportingConfig
 
-    scopes: typing.List[str]
+    scopes: list[str]
 
-    named_budgets: typing.List[AttributionReportingNamedBudgetCandidate]
+    named_budgets: list[AttributionReportingNamedBudgetCandidate]
 
-    debug_key: typing.Optional[UnsignedInt64AsBase10] = None
+    debug_key: UnsignedInt64AsBase10 | None = None
 
-    aggregation_coordinator_origin: typing.Optional[str] = None
+    aggregation_coordinator_origin: str | None = None
 
-    trigger_context_id: typing.Optional[str] = None
+    trigger_context_id: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["filters"] = self.filters.to_json()
-        json["aggregatableDedupKeys"] = [
-            i.to_json() for i in self.aggregatable_dedup_keys
-        ]
-        json["eventTriggerData"] = [i.to_json() for i in self.event_trigger_data]
-        json["aggregatableTriggerData"] = [
-            i.to_json() for i in self.aggregatable_trigger_data
-        ]
-        json["aggregatableValues"] = [i.to_json() for i in self.aggregatable_values]
-        json["aggregatableFilteringIdMaxBytes"] = (
-            self.aggregatable_filtering_id_max_bytes
-        )
-        json["debugReporting"] = self.debug_reporting
-        json["sourceRegistrationTimeConfig"] = (
-            self.source_registration_time_config.to_json()
-        )
-        json["aggregatableDebugReportingConfig"] = (
-            self.aggregatable_debug_reporting_config.to_json()
-        )
-        json["scopes"] = [i for i in self.scopes]
-        json["namedBudgets"] = [i.to_json() for i in self.named_budgets]
+        json: T_JSON_DICT = {}
+        json['filters'] = self.filters.to_json()
+        json['aggregatableDedupKeys'] = [i.to_json() for i in self.aggregatable_dedup_keys]
+        json['eventTriggerData'] = [i.to_json() for i in self.event_trigger_data]
+        json['aggregatableTriggerData'] = [i.to_json() for i in self.aggregatable_trigger_data]
+        json['aggregatableValues'] = [i.to_json() for i in self.aggregatable_values]
+        json['aggregatableFilteringIdMaxBytes'] = self.aggregatable_filtering_id_max_bytes
+        json['debugReporting'] = self.debug_reporting
+        json['sourceRegistrationTimeConfig'] = self.source_registration_time_config.to_json()
+        json['aggregatableDebugReportingConfig'] = self.aggregatable_debug_reporting_config.to_json()
+        json['scopes'] = self.scopes
+        json['namedBudgets'] = [i.to_json() for i in self.named_budgets]
         if self.debug_key is not None:
-            json["debugKey"] = self.debug_key.to_json()
+            json['debugKey'] = self.debug_key.to_json()
         if self.aggregation_coordinator_origin is not None:
-            json["aggregationCoordinatorOrigin"] = self.aggregation_coordinator_origin
+            json['aggregationCoordinatorOrigin'] = self.aggregation_coordinator_origin
         if self.trigger_context_id is not None:
-            json["triggerContextId"] = self.trigger_context_id
+            json['triggerContextId'] = self.trigger_context_id
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionReportingTriggerRegistration:
         return cls(
-            filters=AttributionReportingFilterPair.from_json(json["filters"]),
+            filters=AttributionReportingFilterPair.from_json(json['filters']),
             aggregatable_dedup_keys=[
-                AttributionReportingAggregatableDedupKey.from_json(i)
-                for i in json["aggregatableDedupKeys"]
+                AttributionReportingAggregatableDedupKey.from_json(i) for i in json.get('aggregatableDedupKeys', [])
             ],
             event_trigger_data=[
-                AttributionReportingEventTriggerData.from_json(i)
-                for i in json["eventTriggerData"]
+                AttributionReportingEventTriggerData.from_json(i) for i in json.get('eventTriggerData', [])
             ],
             aggregatable_trigger_data=[
                 AttributionReportingAggregatableTriggerData.from_json(i)
-                for i in json["aggregatableTriggerData"]
+                for i in json.get('aggregatableTriggerData', [])
             ],
             aggregatable_values=[
-                AttributionReportingAggregatableValueEntry.from_json(i)
-                for i in json["aggregatableValues"]
+                AttributionReportingAggregatableValueEntry.from_json(i) for i in json.get('aggregatableValues', [])
             ],
-            aggregatable_filtering_id_max_bytes=int(
-                json["aggregatableFilteringIdMaxBytes"]
-            ),
-            debug_reporting=bool(json["debugReporting"]),
+            aggregatable_filtering_id_max_bytes=int(json['aggregatableFilteringIdMaxBytes']),
+            debug_reporting=bool(json['debugReporting']),
             source_registration_time_config=AttributionReportingSourceRegistrationTimeConfig.from_json(
-                json["sourceRegistrationTimeConfig"]
+                json['sourceRegistrationTimeConfig'],
             ),
             aggregatable_debug_reporting_config=AttributionReportingAggregatableDebugReportingConfig.from_json(
-                json["aggregatableDebugReportingConfig"]
+                json['aggregatableDebugReportingConfig'],
             ),
-            scopes=[str(i) for i in json["scopes"]],
-            named_budgets=[
-                AttributionReportingNamedBudgetCandidate.from_json(i)
-                for i in json["namedBudgets"]
-            ],
-            debug_key=UnsignedInt64AsBase10.from_json(json["debugKey"])
-            if json.get("debugKey", None) is not None
-            else None,
-            aggregation_coordinator_origin=str(json["aggregationCoordinatorOrigin"])
-            if json.get("aggregationCoordinatorOrigin", None) is not None
-            else None,
-            trigger_context_id=str(json["triggerContextId"])
-            if json.get("triggerContextId", None) is not None
-            else None,
+            scopes=[str(i) for i in json.get('scopes', [])],
+            named_budgets=[AttributionReportingNamedBudgetCandidate.from_json(i) for i in json.get('namedBudgets', [])],
+            debug_key=UnsignedInt64AsBase10.from_json_optional(json.get('debugKey')),
+            aggregation_coordinator_origin=None
+            if json.get('aggregationCoordinatorOrigin') is None
+            else str(json['aggregationCoordinatorOrigin']),
+            trigger_context_id=None if json.get('triggerContextId') is None else str(json['triggerContextId']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingTriggerRegistration | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class AttributionReportingEventLevelResult(enum.Enum):
-    SUCCESS = "success"
-    SUCCESS_DROPPED_LOWER_PRIORITY = "successDroppedLowerPriority"
-    INTERNAL_ERROR = "internalError"
-    NO_CAPACITY_FOR_ATTRIBUTION_DESTINATION = "noCapacityForAttributionDestination"
-    NO_MATCHING_SOURCES = "noMatchingSources"
-    DEDUPLICATED = "deduplicated"
-    EXCESSIVE_ATTRIBUTIONS = "excessiveAttributions"
-    PRIORITY_TOO_LOW = "priorityTooLow"
-    NEVER_ATTRIBUTED_SOURCE = "neverAttributedSource"
-    EXCESSIVE_REPORTING_ORIGINS = "excessiveReportingOrigins"
-    NO_MATCHING_SOURCE_FILTER_DATA = "noMatchingSourceFilterData"
-    PROHIBITED_BY_BROWSER_POLICY = "prohibitedByBrowserPolicy"
-    NO_MATCHING_CONFIGURATIONS = "noMatchingConfigurations"
-    EXCESSIVE_REPORTS = "excessiveReports"
-    FALSELY_ATTRIBUTED_SOURCE = "falselyAttributedSource"
-    REPORT_WINDOW_PASSED = "reportWindowPassed"
-    NOT_REGISTERED = "notRegistered"
-    REPORT_WINDOW_NOT_STARTED = "reportWindowNotStarted"
-    NO_MATCHING_TRIGGER_DATA = "noMatchingTriggerData"
+    SUCCESS = 'success'
+    SUCCESS_DROPPED_LOWER_PRIORITY = 'successDroppedLowerPriority'
+    INTERNAL_ERROR = 'internalError'
+    NO_CAPACITY_FOR_ATTRIBUTION_DESTINATION = 'noCapacityForAttributionDestination'
+    NO_MATCHING_SOURCES = 'noMatchingSources'
+    DEDUPLICATED = 'deduplicated'
+    EXCESSIVE_ATTRIBUTIONS = 'excessiveAttributions'
+    PRIORITY_TOO_LOW = 'priorityTooLow'
+    NEVER_ATTRIBUTED_SOURCE = 'neverAttributedSource'
+    EXCESSIVE_REPORTING_ORIGINS = 'excessiveReportingOrigins'
+    NO_MATCHING_SOURCE_FILTER_DATA = 'noMatchingSourceFilterData'
+    PROHIBITED_BY_BROWSER_POLICY = 'prohibitedByBrowserPolicy'
+    NO_MATCHING_CONFIGURATIONS = 'noMatchingConfigurations'
+    EXCESSIVE_REPORTS = 'excessiveReports'
+    FALSELY_ATTRIBUTED_SOURCE = 'falselyAttributedSource'
+    REPORT_WINDOW_PASSED = 'reportWindowPassed'
+    NOT_REGISTERED = 'notRegistered'
+    REPORT_WINDOW_NOT_STARTED = 'reportWindowNotStarted'
+    NO_MATCHING_TRIGGER_DATA = 'noMatchingTriggerData'
 
     def to_json(self) -> str:
         return self.value
@@ -1399,23 +1564,29 @@ class AttributionReportingEventLevelResult(enum.Enum):
     def from_json(cls, json: str) -> AttributionReportingEventLevelResult:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AttributionReportingEventLevelResult | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class AttributionReportingAggregatableResult(enum.Enum):
-    SUCCESS = "success"
-    INTERNAL_ERROR = "internalError"
-    NO_CAPACITY_FOR_ATTRIBUTION_DESTINATION = "noCapacityForAttributionDestination"
-    NO_MATCHING_SOURCES = "noMatchingSources"
-    EXCESSIVE_ATTRIBUTIONS = "excessiveAttributions"
-    EXCESSIVE_REPORTING_ORIGINS = "excessiveReportingOrigins"
-    NO_HISTOGRAMS = "noHistograms"
-    INSUFFICIENT_BUDGET = "insufficientBudget"
-    INSUFFICIENT_NAMED_BUDGET = "insufficientNamedBudget"
-    NO_MATCHING_SOURCE_FILTER_DATA = "noMatchingSourceFilterData"
-    NOT_REGISTERED = "notRegistered"
-    PROHIBITED_BY_BROWSER_POLICY = "prohibitedByBrowserPolicy"
-    DEDUPLICATED = "deduplicated"
-    REPORT_WINDOW_PASSED = "reportWindowPassed"
-    EXCESSIVE_REPORTS = "excessiveReports"
+    SUCCESS = 'success'
+    INTERNAL_ERROR = 'internalError'
+    NO_CAPACITY_FOR_ATTRIBUTION_DESTINATION = 'noCapacityForAttributionDestination'
+    NO_MATCHING_SOURCES = 'noMatchingSources'
+    EXCESSIVE_ATTRIBUTIONS = 'excessiveAttributions'
+    EXCESSIVE_REPORTING_ORIGINS = 'excessiveReportingOrigins'
+    NO_HISTOGRAMS = 'noHistograms'
+    INSUFFICIENT_BUDGET = 'insufficientBudget'
+    INSUFFICIENT_NAMED_BUDGET = 'insufficientNamedBudget'
+    NO_MATCHING_SOURCE_FILTER_DATA = 'noMatchingSourceFilterData'
+    NOT_REGISTERED = 'notRegistered'
+    PROHIBITED_BY_BROWSER_POLICY = 'prohibitedByBrowserPolicy'
+    DEDUPLICATED = 'deduplicated'
+    REPORT_WINDOW_PASSED = 'reportWindowPassed'
+    EXCESSIVE_REPORTS = 'excessiveReports'
 
     def to_json(self) -> str:
         return self.value
@@ -1424,12 +1595,18 @@ class AttributionReportingAggregatableResult(enum.Enum):
     def from_json(cls, json: str) -> AttributionReportingAggregatableResult:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AttributionReportingAggregatableResult | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class AttributionReportingReportResult(enum.Enum):
-    SENT = "sent"
-    PROHIBITED = "prohibited"
-    FAILED_TO_ASSEMBLE = "failedToAssemble"
-    EXPIRED = "expired"
+    SENT = 'sent'
+    PROHIBITED = 'prohibited'
+    FAILED_TO_ASSEMBLE = 'failedToAssemble'
+    EXPIRED = 'expired'
 
     def to_json(self) -> str:
         return self.value
@@ -1437,6 +1614,12 @@ class AttributionReportingReportResult(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> AttributionReportingReportResult:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AttributionReportingReportResult | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1446,182 +1629,231 @@ class RelatedWebsiteSet:
     """
 
     #: The primary site of this set, along with the ccTLDs if there is any.
-    primary_sites: typing.List[str]
+    primary_sites: list[str]
 
     #: The associated sites of this set, along with the ccTLDs if there is any.
-    associated_sites: typing.List[str]
+    associated_sites: list[str]
 
     #: The service sites of this set, along with the ccTLDs if there is any.
-    service_sites: typing.List[str]
+    service_sites: list[str]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["primarySites"] = [i for i in self.primary_sites]
-        json["associatedSites"] = [i for i in self.associated_sites]
-        json["serviceSites"] = [i for i in self.service_sites]
+        json: T_JSON_DICT = {}
+        json['primarySites'] = self.primary_sites
+        json['associatedSites'] = self.associated_sites
+        json['serviceSites'] = self.service_sites
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> RelatedWebsiteSet:
         return cls(
-            primary_sites=[str(i) for i in json["primarySites"]],
-            associated_sites=[str(i) for i in json["associatedSites"]],
-            service_sites=[str(i) for i in json["serviceSites"]],
+            primary_sites=[str(i) for i in json.get('primarySites', [])],
+            associated_sites=[str(i) for i in json.get('associatedSites', [])],
+            service_sites=[str(i) for i in json.get('serviceSites', [])],
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> RelatedWebsiteSet | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
+
+@deprecated(version='1.3')
 def get_storage_key_for_frame(
     frame_id: page.FrameId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, SerializedStorageKey]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, SerializedStorageKey]:
     """
     Returns a storage key given a frame id.
+    Deprecated. Please use Storage.getStorageKey instead.
+
+    .. deprecated:: 1.3
 
     :param frame_id:
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, SerializedStorageKey]
     """
-    params: T_JSON_DICT = dict()
-    params["frameId"] = frame_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['frameId'] = frame_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.getStorageKeyForFrame",
-        "params": params,
+        'method': 'Storage.getStorageKeyForFrame',
+        'params': params,
     }
     json = yield cmd_dict
-    return SerializedStorageKey.from_json(json["storageKey"])
+    return SerializedStorageKey.from_json(json['storageKey'])
+
+
+def get_storage_key(
+    frame_id: page.FrameId | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, SerializedStorageKey]:
+    """
+    Returns storage key for the given frame. If no frame ID is provided,
+    the storage key of the target executing this command is returned.
+
+    **EXPERIMENTAL**
+
+    :param frame_id: *(Optional)*
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, SerializedStorageKey]
+    """
+
+    params: T_JSON_DICT = {}
+    if frame_id is not None:
+        params['frameId'] = frame_id.to_json()
+    cmd_dict: T_JSON_DICT = {
+        'method': 'Storage.getStorageKey',
+        'params': params,
+    }
+    json = yield cmd_dict
+    return SerializedStorageKey.from_json(json['storageKey'])
 
 
 def clear_data_for_origin(
-    origin: str, storage_types: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    origin: str,
+    storage_types: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Clears storage for origin.
 
     :param origin: Security origin.
     :param storage_types: Comma separated list of StorageType to clear.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["origin"] = origin
-    params["storageTypes"] = storage_types
+
+    params: T_JSON_DICT = {}
+    params['origin'] = origin
+    params['storageTypes'] = storage_types
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.clearDataForOrigin",
-        "params": params,
+        'method': 'Storage.clearDataForOrigin',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def clear_data_for_storage_key(
-    storage_key: str, storage_types: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    storage_key: str,
+    storage_types: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Clears storage for storage key.
 
     :param storage_key: Storage key.
     :param storage_types: Comma separated list of StorageType to clear.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["storageKey"] = storage_key
-    params["storageTypes"] = storage_types
+
+    params: T_JSON_DICT = {}
+    params['storageKey'] = storage_key
+    params['storageTypes'] = storage_types
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.clearDataForStorageKey",
-        "params": params,
+        'method': 'Storage.clearDataForStorageKey',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def get_cookies(
-    browser_context_id: typing.Optional[browser.BrowserContextID] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[network.Cookie]]:
+    browser_context_id: browser.BrowserContextID | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[network.Cookie]]:
     """
     Returns all browser cookies.
 
     :param browser_context_id: *(Optional)* Browser context to use when called on the browser endpoint.
-    :returns: Array of cookie objects.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[network.Cookie]]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if browser_context_id is not None:
-        params["browserContextId"] = browser_context_id.to_json()
+        params['browserContextId'] = browser_context_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.getCookies",
-        "params": params,
+        'method': 'Storage.getCookies',
+        'params': params,
     }
     json = yield cmd_dict
-    return [network.Cookie.from_json(i) for i in json["cookies"]]
+    return [network.Cookie.from_json(i) for i in json.get('cookies', [])]
 
 
 def set_cookies(
-    cookies: typing.List[network.CookieParam],
-    browser_context_id: typing.Optional[browser.BrowserContextID] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    cookies: list[network.CookieParam],
+    *,
+    browser_context_id: browser.BrowserContextID | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets given cookies.
 
     :param cookies: Cookies to be set.
     :param browser_context_id: *(Optional)* Browser context to use when called on the browser endpoint.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["cookies"] = [i.to_json() for i in cookies]
+
+    params: T_JSON_DICT = {}
+    params['cookies'] = [i.to_json() for i in cookies]
     if browser_context_id is not None:
-        params["browserContextId"] = browser_context_id.to_json()
+        params['browserContextId'] = browser_context_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.setCookies",
-        "params": params,
+        'method': 'Storage.setCookies',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def clear_cookies(
-    browser_context_id: typing.Optional[browser.BrowserContextID] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    browser_context_id: browser.BrowserContextID | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Clears cookies.
 
     :param browser_context_id: *(Optional)* Browser context to use when called on the browser endpoint.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if browser_context_id is not None:
-        params["browserContextId"] = browser_context_id.to_json()
+        params['browserContextId'] = browser_context_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.clearCookies",
-        "params": params,
+        'method': 'Storage.clearCookies',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def get_usage_and_quota(
     origin: str,
-) -> typing.Generator[
-    T_JSON_DICT,
-    T_JSON_DICT,
-    typing.Tuple[float, float, bool, typing.List[UsageForType]],
-]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[float, float, bool, list[UsageForType]]]:
     """
     Returns usage and quota in bytes.
 
     :param origin: Security origin.
-    :returns: A tuple with the following items:
-
-        0. **usage** - Storage usage (bytes).
-        1. **quota** - Storage quota (bytes).
-        2. **overrideActive** - Whether or not the origin has an active storage quota override
-        3. **usageBreakdown** - Storage usage per type (bytes).
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[float, float, bool, list[UsageForType]]]
     """
-    params: T_JSON_DICT = dict()
-    params["origin"] = origin
+
+    params: T_JSON_DICT = {}
+    params['origin'] = origin
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.getUsageAndQuota",
-        "params": params,
+        'method': 'Storage.getUsageAndQuota',
+        'params': params,
     }
     json = yield cmd_dict
     return (
-        float(json["usage"]),
-        float(json["quota"]),
-        bool(json["overrideActive"]),
-        [UsageForType.from_json(i) for i in json["usageBreakdown"]],
+        float(json['usage']),
+        float(json['quota']),
+        bool(json['overrideActive']),
+        [UsageForType.from_json(i) for i in json.get('usageBreakdown', [])],
     )
 
 
 def override_quota_for_origin(
-    origin: str, quota_size: typing.Optional[float] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    origin: str,
+    *,
+    quota_size: float | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Override quota for the specified origin
 
@@ -1629,175 +1861,202 @@ def override_quota_for_origin(
 
     :param origin: Security origin.
     :param quota_size: *(Optional)* The quota size (in bytes) to override the original quota with. If this is called multiple times, the overridden quota will be equal to the quotaSize provided in the final call. If this is called without specifying a quotaSize, the quota will be reset to the default value for the specified origin. If this is called multiple times with different origins, the override will be maintained for each origin until it is disabled (called without a quotaSize).
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["origin"] = origin
+
+    params: T_JSON_DICT = {}
+    params['origin'] = origin
     if quota_size is not None:
-        params["quotaSize"] = quota_size
+        params['quotaSize'] = quota_size
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.overrideQuotaForOrigin",
-        "params": params,
+        'method': 'Storage.overrideQuotaForOrigin',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def track_cache_storage_for_origin(
     origin: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Registers origin to be notified when an update occurs to its cache storage list.
 
     :param origin: Security origin.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["origin"] = origin
+
+    params: T_JSON_DICT = {}
+    params['origin'] = origin
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.trackCacheStorageForOrigin",
-        "params": params,
+        'method': 'Storage.trackCacheStorageForOrigin',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def track_cache_storage_for_storage_key(
     storage_key: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Registers storage key to be notified when an update occurs to its cache storage list.
 
     :param storage_key: Storage key.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["storageKey"] = storage_key
+
+    params: T_JSON_DICT = {}
+    params['storageKey'] = storage_key
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.trackCacheStorageForStorageKey",
-        "params": params,
+        'method': 'Storage.trackCacheStorageForStorageKey',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def track_indexed_db_for_origin(
     origin: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Registers origin to be notified when an update occurs to its IndexedDB.
 
     :param origin: Security origin.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["origin"] = origin
+
+    params: T_JSON_DICT = {}
+    params['origin'] = origin
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.trackIndexedDBForOrigin",
-        "params": params,
+        'method': 'Storage.trackIndexedDBForOrigin',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def track_indexed_db_for_storage_key(
     storage_key: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Registers storage key to be notified when an update occurs to its IndexedDB.
 
     :param storage_key: Storage key.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["storageKey"] = storage_key
+
+    params: T_JSON_DICT = {}
+    params['storageKey'] = storage_key
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.trackIndexedDBForStorageKey",
-        "params": params,
+        'method': 'Storage.trackIndexedDBForStorageKey',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def untrack_cache_storage_for_origin(
     origin: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Unregisters origin from receiving notifications for cache storage.
 
     :param origin: Security origin.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["origin"] = origin
+
+    params: T_JSON_DICT = {}
+    params['origin'] = origin
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.untrackCacheStorageForOrigin",
-        "params": params,
+        'method': 'Storage.untrackCacheStorageForOrigin',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def untrack_cache_storage_for_storage_key(
     storage_key: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Unregisters storage key from receiving notifications for cache storage.
 
     :param storage_key: Storage key.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["storageKey"] = storage_key
+
+    params: T_JSON_DICT = {}
+    params['storageKey'] = storage_key
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.untrackCacheStorageForStorageKey",
-        "params": params,
+        'method': 'Storage.untrackCacheStorageForStorageKey',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def untrack_indexed_db_for_origin(
     origin: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Unregisters origin from receiving notifications for IndexedDB.
 
     :param origin: Security origin.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["origin"] = origin
+
+    params: T_JSON_DICT = {}
+    params['origin'] = origin
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.untrackIndexedDBForOrigin",
-        "params": params,
+        'method': 'Storage.untrackIndexedDBForOrigin',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def untrack_indexed_db_for_storage_key(
     storage_key: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Unregisters storage key from receiving notifications for IndexedDB.
 
     :param storage_key: Storage key.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["storageKey"] = storage_key
+
+    params: T_JSON_DICT = {}
+    params['storageKey'] = storage_key
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.untrackIndexedDBForStorageKey",
-        "params": params,
+        'method': 'Storage.untrackIndexedDBForStorageKey',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def get_trust_tokens() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[TrustTokens]]
-):
+def get_trust_tokens() -> Generator[T_JSON_DICT, T_JSON_DICT, list[TrustTokens]]:
     """
     Returns the number of stored Trust Tokens per issuer for the
     current browsing context.
 
     **EXPERIMENTAL**
 
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[TrustTokens]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.getTrustTokens",
+        'method': 'Storage.getTrustTokens',
     }
     json = yield cmd_dict
-    return [TrustTokens.from_json(i) for i in json["tokens"]]
+    return [TrustTokens.from_json(i) for i in json.get('tokens', [])]
 
 
 def clear_trust_tokens(
     issuer_origin: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, bool]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, bool]:
     """
     Removes all Trust Tokens issued by the provided issuerOrigin.
     Leaves other stored data, including the issuer's Redemption Records, intact.
@@ -1805,21 +2064,24 @@ def clear_trust_tokens(
     **EXPERIMENTAL**
 
     :param issuer_origin:
-    :returns: True if any tokens were deleted, false otherwise.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, bool]
     """
-    params: T_JSON_DICT = dict()
-    params["issuerOrigin"] = issuer_origin
+
+    params: T_JSON_DICT = {}
+    params['issuerOrigin'] = issuer_origin
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.clearTrustTokens",
-        "params": params,
+        'method': 'Storage.clearTrustTokens',
+        'params': params,
     }
     json = yield cmd_dict
-    return bool(json["didDeleteTokens"])
+    return bool(json['didDeleteTokens'])
 
 
 def get_interest_group_details(
-    owner_origin: str, name: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, dict]:
+    owner_origin: str,
+    name: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, dict]:
     """
     Gets details for a named interest group.
 
@@ -1827,41 +2089,48 @@ def get_interest_group_details(
 
     :param owner_origin:
     :param name:
-    :returns: This largely corresponds to: https://wicg.github.io/turtledove/#dictdef-generatebidinterestgroup but has absolute expirationTime instead of relative lifetimeMs and also adds joiningOrigin.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, dict]
     """
-    params: T_JSON_DICT = dict()
-    params["ownerOrigin"] = owner_origin
-    params["name"] = name
+
+    params: T_JSON_DICT = {}
+    params['ownerOrigin'] = owner_origin
+    params['name'] = name
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.getInterestGroupDetails",
-        "params": params,
+        'method': 'Storage.getInterestGroupDetails',
+        'params': params,
     }
     json = yield cmd_dict
-    return dict(json["details"])
+    return dict(json['details'])
 
 
 def set_interest_group_tracking(
+    *,
     enable: bool,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables/Disables issuing of interestGroupAccessed events.
 
     **EXPERIMENTAL**
 
     :param enable:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["enable"] = enable
+
+    params: T_JSON_DICT = {}
+    params['enable'] = enable
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.setInterestGroupTracking",
-        "params": params,
+        'method': 'Storage.setInterestGroupTracking',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_interest_group_auction_tracking(
+    *,
     enable: bool,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables/Disables issuing of interestGroupAuctionEventOccurred and
     interestGroupAuctionNetworkRequestCreated.
@@ -1869,64 +2138,72 @@ def set_interest_group_auction_tracking(
     **EXPERIMENTAL**
 
     :param enable:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["enable"] = enable
+
+    params: T_JSON_DICT = {}
+    params['enable'] = enable
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.setInterestGroupAuctionTracking",
-        "params": params,
+        'method': 'Storage.setInterestGroupAuctionTracking',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def get_shared_storage_metadata(
     owner_origin: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, SharedStorageMetadata]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, SharedStorageMetadata]:
     """
     Gets metadata for an origin's shared storage.
 
     **EXPERIMENTAL**
 
     :param owner_origin:
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, SharedStorageMetadata]
     """
-    params: T_JSON_DICT = dict()
-    params["ownerOrigin"] = owner_origin
+
+    params: T_JSON_DICT = {}
+    params['ownerOrigin'] = owner_origin
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.getSharedStorageMetadata",
-        "params": params,
+        'method': 'Storage.getSharedStorageMetadata',
+        'params': params,
     }
     json = yield cmd_dict
-    return SharedStorageMetadata.from_json(json["metadata"])
+    return SharedStorageMetadata.from_json(json['metadata'])
 
 
 def get_shared_storage_entries(
     owner_origin: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[SharedStorageEntry]]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[SharedStorageEntry]]:
     """
     Gets the entries in an given origin's shared storage.
 
     **EXPERIMENTAL**
 
     :param owner_origin:
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[SharedStorageEntry]]
     """
-    params: T_JSON_DICT = dict()
-    params["ownerOrigin"] = owner_origin
+
+    params: T_JSON_DICT = {}
+    params['ownerOrigin'] = owner_origin
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.getSharedStorageEntries",
-        "params": params,
+        'method': 'Storage.getSharedStorageEntries',
+        'params': params,
     }
     json = yield cmd_dict
-    return [SharedStorageEntry.from_json(i) for i in json["entries"]]
+    return [SharedStorageEntry.from_json(i) for i in json.get('entries', [])]
 
 
 def set_shared_storage_entry(
     owner_origin: str,
     key: str,
     value: str,
-    ignore_if_present: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    ignore_if_present: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets entry with ``key`` and ``value`` for a given origin's shared storage.
 
@@ -1936,23 +2213,27 @@ def set_shared_storage_entry(
     :param key:
     :param value:
     :param ignore_if_present: *(Optional)* If ```ignoreIfPresent```` is included and true, then only sets the entry if ````key``` doesn't already exist.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["ownerOrigin"] = owner_origin
-    params["key"] = key
-    params["value"] = value
+
+    params: T_JSON_DICT = {}
+    params['ownerOrigin'] = owner_origin
+    params['key'] = key
+    params['value'] = value
     if ignore_if_present is not None:
-        params["ignoreIfPresent"] = ignore_if_present
+        params['ignoreIfPresent'] = ignore_if_present
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.setSharedStorageEntry",
-        "params": params,
+        'method': 'Storage.setSharedStorageEntry',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def delete_shared_storage_entry(
-    owner_origin: str, key: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    owner_origin: str,
+    key: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Deletes entry for ``key`` (if it exists) for a given origin's shared storage.
 
@@ -1960,77 +2241,92 @@ def delete_shared_storage_entry(
 
     :param owner_origin:
     :param key:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["ownerOrigin"] = owner_origin
-    params["key"] = key
+
+    params: T_JSON_DICT = {}
+    params['ownerOrigin'] = owner_origin
+    params['key'] = key
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.deleteSharedStorageEntry",
-        "params": params,
+        'method': 'Storage.deleteSharedStorageEntry',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def clear_shared_storage_entries(
     owner_origin: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Clears all entries for a given origin's shared storage.
 
     **EXPERIMENTAL**
 
     :param owner_origin:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["ownerOrigin"] = owner_origin
+
+    params: T_JSON_DICT = {}
+    params['ownerOrigin'] = owner_origin
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.clearSharedStorageEntries",
-        "params": params,
+        'method': 'Storage.clearSharedStorageEntries',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def reset_shared_storage_budget(
     owner_origin: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Resets the budget for ``ownerOrigin`` by clearing all budget withdrawals.
 
     **EXPERIMENTAL**
 
     :param owner_origin:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["ownerOrigin"] = owner_origin
+
+    params: T_JSON_DICT = {}
+    params['ownerOrigin'] = owner_origin
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.resetSharedStorageBudget",
-        "params": params,
+        'method': 'Storage.resetSharedStorageBudget',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_shared_storage_tracking(
+    *,
     enable: bool,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables/disables issuing of sharedStorageAccessed events.
 
     **EXPERIMENTAL**
 
     :param enable:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["enable"] = enable
+
+    params: T_JSON_DICT = {}
+    params['enable'] = enable
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.setSharedStorageTracking",
-        "params": params,
+        'method': 'Storage.setSharedStorageTracking',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_storage_bucket_tracking(
-    storage_key: str, enable: bool
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    storage_key: str,
+    *,
+    enable: bool,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Set tracking for a storage key's buckets.
 
@@ -2038,130 +2334,145 @@ def set_storage_bucket_tracking(
 
     :param storage_key:
     :param enable:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["storageKey"] = storage_key
-    params["enable"] = enable
+
+    params: T_JSON_DICT = {}
+    params['storageKey'] = storage_key
+    params['enable'] = enable
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.setStorageBucketTracking",
-        "params": params,
+        'method': 'Storage.setStorageBucketTracking',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def delete_storage_bucket(
     bucket: StorageBucket,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Deletes the Storage Bucket with the given storage key and bucket name.
 
     **EXPERIMENTAL**
 
     :param bucket:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["bucket"] = bucket.to_json()
+
+    params: T_JSON_DICT = {}
+    params['bucket'] = bucket.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.deleteStorageBucket",
-        "params": params,
+        'method': 'Storage.deleteStorageBucket',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def run_bounce_tracking_mitigations() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[str]]
-):
+def run_bounce_tracking_mitigations() -> Generator[T_JSON_DICT, T_JSON_DICT, list[str]]:
     """
     Deletes state for sites identified as potential bounce trackers, immediately.
 
     **EXPERIMENTAL**
 
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[str]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.runBounceTrackingMitigations",
+        'method': 'Storage.runBounceTrackingMitigations',
     }
     json = yield cmd_dict
-    return [str(i) for i in json["deletedSites"]]
+    return [str(i) for i in json.get('deletedSites', [])]
 
 
 def set_attribution_reporting_local_testing_mode(
+    *,
     enabled: bool,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     https://wicg.github.io/attribution-reporting-api/
 
     **EXPERIMENTAL**
 
     :param enabled: If enabled, noise is suppressed and reports are sent immediately.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["enabled"] = enabled
+
+    params: T_JSON_DICT = {}
+    params['enabled'] = enabled
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.setAttributionReportingLocalTestingMode",
-        "params": params,
+        'method': 'Storage.setAttributionReportingLocalTestingMode',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_attribution_reporting_tracking(
+    *,
     enable: bool,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables/disables issuing of Attribution Reporting events.
 
     **EXPERIMENTAL**
 
     :param enable:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["enable"] = enable
+
+    params: T_JSON_DICT = {}
+    params['enable'] = enable
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.setAttributionReportingTracking",
-        "params": params,
+        'method': 'Storage.setAttributionReportingTracking',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def send_pending_attribution_reports() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, int]
-):
+def send_pending_attribution_reports() -> Generator[T_JSON_DICT, T_JSON_DICT, int]:
     """
     Sends all pending Attribution Reports immediately, regardless of their
     scheduled report time.
 
     **EXPERIMENTAL**
 
-    :returns: The number of reports that were sent.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, int]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.sendPendingAttributionReports",
+        'method': 'Storage.sendPendingAttributionReports',
     }
     json = yield cmd_dict
-    return int(json["numSent"])
+    return int(json['numSent'])
 
 
-def get_related_website_sets() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[RelatedWebsiteSet]]
-):
+def get_related_website_sets() -> Generator[T_JSON_DICT, T_JSON_DICT, list[RelatedWebsiteSet]]:
     """
     Returns the effective Related Website Sets in use by this profile for the browser
     session. The effective Related Website Sets will not change during a browser session.
 
     **EXPERIMENTAL**
 
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[RelatedWebsiteSet]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.getRelatedWebsiteSets",
+        'method': 'Storage.getRelatedWebsiteSets',
     }
     json = yield cmd_dict
-    return [RelatedWebsiteSet.from_json(i) for i in json["sets"]]
+    return [RelatedWebsiteSet.from_json(i) for i in json.get('sets', [])]
 
 
 def get_affected_urls_for_third_party_cookie_metadata(
-    first_party_url: str, third_party_urls: typing.List[str]
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[str]]:
+    first_party_url: str,
+    third_party_urls: list[str],
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[str]]:
     """
     Returns the list of URLs from a page and its embedded resources that match
     existing grace period URL pattern rules.
@@ -2171,39 +2482,46 @@ def get_affected_urls_for_third_party_cookie_metadata(
 
     :param first_party_url: The URL of the page currently being visited.
     :param third_party_urls: The list of embedded resource URLs from the page.
-    :returns: Array of matching URLs. If there is a primary pattern match for the first- party URL, only the first-party URL is returned in the array.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[str]]
     """
-    params: T_JSON_DICT = dict()
-    params["firstPartyUrl"] = first_party_url
-    params["thirdPartyUrls"] = [i for i in third_party_urls]
+
+    params: T_JSON_DICT = {}
+    params['firstPartyUrl'] = first_party_url
+    params['thirdPartyUrls'] = third_party_urls
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.getAffectedUrlsForThirdPartyCookieMetadata",
-        "params": params,
+        'method': 'Storage.getAffectedUrlsForThirdPartyCookieMetadata',
+        'params': params,
     }
     json = yield cmd_dict
-    return [str(i) for i in json["matchedUrls"]]
+    return [str(i) for i in json.get('matchedUrls', [])]
 
 
 def set_protected_audience_k_anonymity(
-    owner: str, name: str, hashes: typing.List[str]
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    owner: str,
+    name: str,
+    hashes: list[str],
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param owner:
     :param name:
     :param hashes:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["owner"] = owner
-    params["name"] = name
-    params["hashes"] = [i for i in hashes]
+
+    params: T_JSON_DICT = {}
+    params['owner'] = owner
+    params['name'] = name
+    params['hashes'] = hashes
     cmd_dict: T_JSON_DICT = {
-        "method": "Storage.setProtectedAudienceKAnonymity",
-        "params": params,
+        'method': 'Storage.setProtectedAudienceKAnonymity',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@event_class("Storage.cacheStorageContentUpdated")
+@event_type('Storage.cacheStorageContentUpdated')
 @dataclass
 class CacheStorageContentUpdated:
     """
@@ -2222,14 +2540,20 @@ class CacheStorageContentUpdated:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CacheStorageContentUpdated:
         return cls(
-            origin=str(json["origin"]),
-            storage_key=str(json["storageKey"]),
-            bucket_id=str(json["bucketId"]),
-            cache_name=str(json["cacheName"]),
+            origin=str(json['origin']),
+            storage_key=str(json['storageKey']),
+            bucket_id=str(json['bucketId']),
+            cache_name=str(json['cacheName']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CacheStorageContentUpdated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Storage.cacheStorageListUpdated")
+
+@event_type('Storage.cacheStorageListUpdated')
 @dataclass
 class CacheStorageListUpdated:
     """
@@ -2246,13 +2570,19 @@ class CacheStorageListUpdated:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CacheStorageListUpdated:
         return cls(
-            origin=str(json["origin"]),
-            storage_key=str(json["storageKey"]),
-            bucket_id=str(json["bucketId"]),
+            origin=str(json['origin']),
+            storage_key=str(json['storageKey']),
+            bucket_id=str(json['bucketId']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CacheStorageListUpdated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Storage.indexedDBContentUpdated")
+
+@event_type('Storage.indexedDBContentUpdated')
 @dataclass
 class IndexedDBContentUpdated:
     """
@@ -2273,15 +2603,21 @@ class IndexedDBContentUpdated:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> IndexedDBContentUpdated:
         return cls(
-            origin=str(json["origin"]),
-            storage_key=str(json["storageKey"]),
-            bucket_id=str(json["bucketId"]),
-            database_name=str(json["databaseName"]),
-            object_store_name=str(json["objectStoreName"]),
+            origin=str(json['origin']),
+            storage_key=str(json['storageKey']),
+            bucket_id=str(json['bucketId']),
+            database_name=str(json['databaseName']),
+            object_store_name=str(json['objectStoreName']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> IndexedDBContentUpdated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Storage.indexedDBListUpdated")
+
+@event_type('Storage.indexedDBListUpdated')
 @dataclass
 class IndexedDBListUpdated:
     """
@@ -2298,13 +2634,19 @@ class IndexedDBListUpdated:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> IndexedDBListUpdated:
         return cls(
-            origin=str(json["origin"]),
-            storage_key=str(json["storageKey"]),
-            bucket_id=str(json["bucketId"]),
+            origin=str(json['origin']),
+            storage_key=str(json['storageKey']),
+            bucket_id=str(json['bucketId']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> IndexedDBListUpdated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Storage.interestGroupAccessed")
+
+@event_type('Storage.interestGroupAccessed')
 @dataclass
 class InterestGroupAccessed:
     """
@@ -2318,34 +2660,36 @@ class InterestGroupAccessed:
     name: str
     #: For topLevelBid/topLevelAdditionalBid, and when appropriate,
     #: win and additionalBidWin
-    component_seller_origin: typing.Optional[str]
+    component_seller_origin: str | None
     #: For bid or somethingBid event, if done locally and not on a server.
-    bid: typing.Optional[float]
-    bid_currency: typing.Optional[str]
+    bid: float | None
+    bid_currency: str | None
     #: For non-global events --- links to interestGroupAuctionEvent
-    unique_auction_id: typing.Optional[InterestGroupAuctionId]
+    unique_auction_id: InterestGroupAuctionId | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> InterestGroupAccessed:
         return cls(
-            access_time=network.TimeSinceEpoch.from_json(json["accessTime"]),
-            type_=InterestGroupAccessType.from_json(json["type"]),
-            owner_origin=str(json["ownerOrigin"]),
-            name=str(json["name"]),
-            component_seller_origin=str(json["componentSellerOrigin"])
-            if json.get("componentSellerOrigin", None) is not None
-            else None,
-            bid=float(json["bid"]) if json.get("bid", None) is not None else None,
-            bid_currency=str(json["bidCurrency"])
-            if json.get("bidCurrency", None) is not None
-            else None,
-            unique_auction_id=InterestGroupAuctionId.from_json(json["uniqueAuctionId"])
-            if json.get("uniqueAuctionId", None) is not None
-            else None,
+            access_time=network.TimeSinceEpoch.from_json(json['accessTime']),
+            type_=InterestGroupAccessType.from_json(json['type']),
+            owner_origin=str(json['ownerOrigin']),
+            name=str(json['name']),
+            component_seller_origin=None
+            if json.get('componentSellerOrigin') is None
+            else str(json['componentSellerOrigin']),
+            bid=None if json.get('bid') is None else float(json['bid']),
+            bid_currency=None if json.get('bidCurrency') is None else str(json['bidCurrency']),
+            unique_auction_id=InterestGroupAuctionId.from_json_optional(json.get('uniqueAuctionId')),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> InterestGroupAccessed | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Storage.interestGroupAuctionEventOccurred")
+
+@event_type('Storage.interestGroupAuctionEventOccurred')
 @dataclass
 class InterestGroupAuctionEventOccurred:
     """
@@ -2357,26 +2701,28 @@ class InterestGroupAuctionEventOccurred:
     type_: InterestGroupAuctionEventType
     unique_auction_id: InterestGroupAuctionId
     #: Set for child auctions.
-    parent_auction_id: typing.Optional[InterestGroupAuctionId]
+    parent_auction_id: InterestGroupAuctionId | None
     #: Set for started and configResolved
-    auction_config: typing.Optional[dict]
+    auction_config: dict | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> InterestGroupAuctionEventOccurred:
         return cls(
-            event_time=network.TimeSinceEpoch.from_json(json["eventTime"]),
-            type_=InterestGroupAuctionEventType.from_json(json["type"]),
-            unique_auction_id=InterestGroupAuctionId.from_json(json["uniqueAuctionId"]),
-            parent_auction_id=InterestGroupAuctionId.from_json(json["parentAuctionId"])
-            if json.get("parentAuctionId", None) is not None
-            else None,
-            auction_config=dict(json["auctionConfig"])
-            if json.get("auctionConfig", None) is not None
-            else None,
+            event_time=network.TimeSinceEpoch.from_json(json['eventTime']),
+            type_=InterestGroupAuctionEventType.from_json(json['type']),
+            unique_auction_id=InterestGroupAuctionId.from_json(json['uniqueAuctionId']),
+            parent_auction_id=InterestGroupAuctionId.from_json_optional(json.get('parentAuctionId')),
+            auction_config=None if json.get('auctionConfig') is None else dict(json['auctionConfig']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> InterestGroupAuctionEventOccurred | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Storage.interestGroupAuctionNetworkRequestCreated")
+
+@event_type('Storage.interestGroupAuctionNetworkRequestCreated')
 @dataclass
 class InterestGroupAuctionNetworkRequestCreated:
     """
@@ -2391,18 +2737,24 @@ class InterestGroupAuctionNetworkRequestCreated:
     #: This is the set of the auctions using the worklet that issued this
     #: request.  In the case of trusted signals, it's possible that only some of
     #: them actually care about the keys being queried.
-    auctions: typing.List[InterestGroupAuctionId]
+    auctions: list[InterestGroupAuctionId]
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> InterestGroupAuctionNetworkRequestCreated:
         return cls(
-            type_=InterestGroupAuctionFetchType.from_json(json["type"]),
-            request_id=network.RequestId.from_json(json["requestId"]),
-            auctions=[InterestGroupAuctionId.from_json(i) for i in json["auctions"]],
+            type_=InterestGroupAuctionFetchType.from_json(json['type']),
+            request_id=network.RequestId.from_json(json['requestId']),
+            auctions=[InterestGroupAuctionId.from_json(i) for i in json.get('auctions', [])],
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> InterestGroupAuctionNetworkRequestCreated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Storage.sharedStorageAccessed")
+
+@event_type('Storage.sharedStorageAccessed')
 @dataclass
 class SharedStorageAccessed:
     """
@@ -2429,17 +2781,23 @@ class SharedStorageAccessed:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SharedStorageAccessed:
         return cls(
-            access_time=network.TimeSinceEpoch.from_json(json["accessTime"]),
-            scope=SharedStorageAccessScope.from_json(json["scope"]),
-            method=SharedStorageAccessMethod.from_json(json["method"]),
-            main_frame_id=page.FrameId.from_json(json["mainFrameId"]),
-            owner_origin=str(json["ownerOrigin"]),
-            owner_site=str(json["ownerSite"]),
-            params=SharedStorageAccessParams.from_json(json["params"]),
+            access_time=network.TimeSinceEpoch.from_json(json['accessTime']),
+            scope=SharedStorageAccessScope.from_json(json['scope']),
+            method=SharedStorageAccessMethod.from_json(json['method']),
+            main_frame_id=page.FrameId.from_json(json['mainFrameId']),
+            owner_origin=str(json['ownerOrigin']),
+            owner_site=str(json['ownerSite']),
+            params=SharedStorageAccessParams.from_json(json['params']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SharedStorageAccessed | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Storage.sharedStorageWorkletOperationExecutionFinished")
+
+@event_type('Storage.sharedStorageWorkletOperationExecutionFinished')
 @dataclass
 class SharedStorageWorkletOperationExecutionFinished:
     """
@@ -2465,41 +2823,59 @@ class SharedStorageWorkletOperationExecutionFinished:
     owner_origin: str
 
     @classmethod
-    def from_json(
-        cls, json: T_JSON_DICT
-    ) -> SharedStorageWorkletOperationExecutionFinished:
+    def from_json(cls, json: T_JSON_DICT) -> SharedStorageWorkletOperationExecutionFinished:
         return cls(
-            finished_time=network.TimeSinceEpoch.from_json(json["finishedTime"]),
-            execution_time=int(json["executionTime"]),
-            method=SharedStorageAccessMethod.from_json(json["method"]),
-            operation_id=str(json["operationId"]),
-            worklet_target_id=target.TargetID.from_json(json["workletTargetId"]),
-            main_frame_id=page.FrameId.from_json(json["mainFrameId"]),
-            owner_origin=str(json["ownerOrigin"]),
+            finished_time=network.TimeSinceEpoch.from_json(json['finishedTime']),
+            execution_time=int(json['executionTime']),
+            method=SharedStorageAccessMethod.from_json(json['method']),
+            operation_id=str(json['operationId']),
+            worklet_target_id=target.TargetID.from_json(json['workletTargetId']),
+            main_frame_id=page.FrameId.from_json(json['mainFrameId']),
+            owner_origin=str(json['ownerOrigin']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SharedStorageWorkletOperationExecutionFinished | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Storage.storageBucketCreatedOrUpdated")
+
+@event_type('Storage.storageBucketCreatedOrUpdated')
 @dataclass
 class StorageBucketCreatedOrUpdated:
     bucket_info: StorageBucketInfo
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> StorageBucketCreatedOrUpdated:
-        return cls(bucket_info=StorageBucketInfo.from_json(json["bucketInfo"]))
+        return cls(
+            bucket_info=StorageBucketInfo.from_json(json['bucketInfo']),
+        )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> StorageBucketCreatedOrUpdated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Storage.storageBucketDeleted")
+@event_type('Storage.storageBucketDeleted')
 @dataclass
 class StorageBucketDeleted:
     bucket_id: str
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> StorageBucketDeleted:
-        return cls(bucket_id=str(json["bucketId"]))
+        return cls(bucket_id=str(json['bucketId']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> StorageBucketDeleted | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Storage.attributionReportingSourceRegistered")
+@event_type('Storage.attributionReportingSourceRegistered')
 @dataclass
 class AttributionReportingSourceRegistered:
     """
@@ -2514,16 +2890,18 @@ class AttributionReportingSourceRegistered:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionReportingSourceRegistered:
         return cls(
-            registration=AttributionReportingSourceRegistration.from_json(
-                json["registration"]
-            ),
-            result=AttributionReportingSourceRegistrationResult.from_json(
-                json["result"]
-            ),
+            registration=AttributionReportingSourceRegistration.from_json(json['registration']),
+            result=AttributionReportingSourceRegistrationResult.from_json(json['result']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingSourceRegistered | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Storage.attributionReportingTriggerRegistered")
+
+@event_type('Storage.attributionReportingTriggerRegistered')
 @dataclass
 class AttributionReportingTriggerRegistered:
     """
@@ -2539,19 +2917,19 @@ class AttributionReportingTriggerRegistered:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionReportingTriggerRegistered:
         return cls(
-            registration=AttributionReportingTriggerRegistration.from_json(
-                json["registration"]
-            ),
-            event_level=AttributionReportingEventLevelResult.from_json(
-                json["eventLevel"]
-            ),
-            aggregatable=AttributionReportingAggregatableResult.from_json(
-                json["aggregatable"]
-            ),
+            registration=AttributionReportingTriggerRegistration.from_json(json['registration']),
+            event_level=AttributionReportingEventLevelResult.from_json(json['eventLevel']),
+            aggregatable=AttributionReportingAggregatableResult.from_json(json['aggregatable']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingTriggerRegistered | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Storage.attributionReportingReportSent")
+
+@event_type('Storage.attributionReportingReportSent')
 @dataclass
 class AttributionReportingReportSent:
     """
@@ -2564,29 +2942,29 @@ class AttributionReportingReportSent:
     body: dict
     result: AttributionReportingReportResult
     #: If result is ``sent``, populated with net/HTTP status.
-    net_error: typing.Optional[int]
-    net_error_name: typing.Optional[str]
-    http_status_code: typing.Optional[int]
+    net_error: int | None
+    net_error_name: str | None
+    http_status_code: int | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionReportingReportSent:
         return cls(
-            url=str(json["url"]),
-            body=dict(json["body"]),
-            result=AttributionReportingReportResult.from_json(json["result"]),
-            net_error=int(json["netError"])
-            if json.get("netError", None) is not None
-            else None,
-            net_error_name=str(json["netErrorName"])
-            if json.get("netErrorName", None) is not None
-            else None,
-            http_status_code=int(json["httpStatusCode"])
-            if json.get("httpStatusCode", None) is not None
-            else None,
+            url=str(json['url']),
+            body=dict(json['body']),
+            result=AttributionReportingReportResult.from_json(json['result']),
+            net_error=None if json.get('netError') is None else int(json['netError']),
+            net_error_name=None if json.get('netErrorName') is None else str(json['netErrorName']),
+            http_status_code=None if json.get('httpStatusCode') is None else int(json['httpStatusCode']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingReportSent | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Storage.attributionReportingVerboseDebugReportSent")
+
+@event_type('Storage.attributionReportingVerboseDebugReportSent')
 @dataclass
 class AttributionReportingVerboseDebugReportSent:
     """
@@ -2596,25 +2974,23 @@ class AttributionReportingVerboseDebugReportSent:
     """
 
     url: str
-    body: typing.Optional[typing.List[dict]]
-    net_error: typing.Optional[int]
-    net_error_name: typing.Optional[str]
-    http_status_code: typing.Optional[int]
+    body: list[dict]
+    net_error: int | None
+    net_error_name: str | None
+    http_status_code: int | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AttributionReportingVerboseDebugReportSent:
         return cls(
-            url=str(json["url"]),
-            body=[dict(i) for i in json["body"]]
-            if json.get("body", None) is not None
-            else None,
-            net_error=int(json["netError"])
-            if json.get("netError", None) is not None
-            else None,
-            net_error_name=str(json["netErrorName"])
-            if json.get("netErrorName", None) is not None
-            else None,
-            http_status_code=int(json["httpStatusCode"])
-            if json.get("httpStatusCode", None) is not None
-            else None,
+            url=str(json['url']),
+            body=[dict(i) for i in json.get('body', [])],
+            net_error=None if json.get('netError') is None else int(json['netError']),
+            net_error_name=None if json.get('netErrorName') is None else str(json['netErrorName']),
+            http_status_code=None if json.get('httpStatusCode') is None else int(json['httpStatusCode']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AttributionReportingVerboseDebugReportSent | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

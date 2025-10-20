@@ -3,13 +3,23 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Console
 
 from __future__ import annotations
-import enum
+
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 @dataclass
@@ -28,73 +38,86 @@ class ConsoleMessage:
     text: str
 
     #: URL of the message origin.
-    url: typing.Optional[str] = None
+    url: str | None = None
 
     #: Line number in the resource that generated this message (1-based).
-    line: typing.Optional[int] = None
+    line: int | None = None
 
     #: Column number in the resource that generated this message (1-based).
-    column: typing.Optional[int] = None
+    column: int | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["source"] = self.source
-        json["level"] = self.level
-        json["text"] = self.text
+        json: T_JSON_DICT = {}
+        json['source'] = self.source
+        json['level'] = self.level
+        json['text'] = self.text
         if self.url is not None:
-            json["url"] = self.url
+            json['url'] = self.url
         if self.line is not None:
-            json["line"] = self.line
+            json['line'] = self.line
         if self.column is not None:
-            json["column"] = self.column
+            json['column'] = self.column
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ConsoleMessage:
         return cls(
-            source=str(json["source"]),
-            level=str(json["level"]),
-            text=str(json["text"]),
-            url=str(json["url"]) if json.get("url", None) is not None else None,
-            line=int(json["line"]) if json.get("line", None) is not None else None,
-            column=int(json["column"])
-            if json.get("column", None) is not None
-            else None,
+            source=str(json['source']),
+            level=str(json['level']),
+            text=str(json['text']),
+            url=None if json.get('url') is None else str(json['url']),
+            line=None if json.get('line') is None else int(json['line']),
+            column=None if json.get('column') is None else int(json['column']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ConsoleMessage | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-def clear_messages() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+
+def clear_messages() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Does nothing.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Console.clearMessages",
+        'method': 'Console.clearMessages',
     }
     json = yield cmd_dict
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disables console domain, prevents further console messages from being reported to the client.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Console.disable",
+        'method': 'Console.disable',
     }
     json = yield cmd_dict
 
 
-def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def enable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables console domain, sends the messages collected so far to the client by means of the
     ``messageAdded`` notification.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Console.enable",
+        'method': 'Console.enable',
     }
     json = yield cmd_dict
 
 
-@event_class("Console.messageAdded")
+@event_type('Console.messageAdded')
 @dataclass
 class MessageAdded:
     """
@@ -106,4 +129,10 @@ class MessageAdded:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> MessageAdded:
-        return cls(message=ConsoleMessage.from_json(json["message"]))
+        return cls(message=ConsoleMessage.from_json(json['message']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> MessageAdded | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

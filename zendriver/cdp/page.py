@@ -3,27 +3,39 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Page
 
 from __future__ import annotations
+
 import enum
 import typing
-from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+from dataclasses import dataclass, field
 
-from . import debugger
-from . import dom
-from . import emulation
-from . import io
-from . import network
-from . import runtime
-from deprecated.sphinx import deprecated  # type: ignore
+from deprecated.sphinx import deprecated
+
+from . import debugger, dom, io, network, runtime
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from . import emulation
+    from .util import T_JSON_DICT
+
+
+# ruff: noqa: FURB189, S105
 
 
 class FrameId(str):
     """
     Unique frame identifier.
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -32,8 +44,14 @@ class FrameId(str):
     def from_json(cls, json: str) -> FrameId:
         return cls(json)
 
-    def __repr__(self):
-        return "FrameId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> FrameId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'FrameId({super().__repr__()})'
 
 
 class AdFrameType(enum.Enum):
@@ -41,9 +59,9 @@ class AdFrameType(enum.Enum):
     Indicates whether a frame has been identified as an ad.
     """
 
-    NONE = "none"
-    CHILD = "child"
-    ROOT = "root"
+    NONE = 'none'
+    CHILD = 'child'
+    ROOT = 'root'
 
     def to_json(self) -> str:
         return self.value
@@ -52,11 +70,17 @@ class AdFrameType(enum.Enum):
     def from_json(cls, json: str) -> AdFrameType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AdFrameType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class AdFrameExplanation(enum.Enum):
-    PARENT_IS_AD = "ParentIsAd"
-    CREATED_BY_AD_SCRIPT = "CreatedByAdScript"
-    MATCHED_BLOCKING_RULE = "MatchedBlockingRule"
+    PARENT_IS_AD = 'ParentIsAd'
+    CREATED_BY_AD_SCRIPT = 'CreatedByAdScript'
+    MATCHED_BLOCKING_RULE = 'MatchedBlockingRule'
 
     def to_json(self) -> str:
         return self.value
@@ -64,6 +88,12 @@ class AdFrameExplanation(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> AdFrameExplanation:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AdFrameExplanation | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -74,23 +104,27 @@ class AdFrameStatus:
 
     ad_frame_type: AdFrameType
 
-    explanations: typing.Optional[typing.List[AdFrameExplanation]] = None
+    explanations: list[AdFrameExplanation] = field(default_factory=list)
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["adFrameType"] = self.ad_frame_type.to_json()
+        json: T_JSON_DICT = {}
+        json['adFrameType'] = self.ad_frame_type.to_json()
         if self.explanations is not None:
-            json["explanations"] = [i.to_json() for i in self.explanations]
+            json['explanations'] = [i.to_json() for i in self.explanations]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AdFrameStatus:
         return cls(
-            ad_frame_type=AdFrameType.from_json(json["adFrameType"]),
-            explanations=[AdFrameExplanation.from_json(i) for i in json["explanations"]]
-            if json.get("explanations", None) is not None
-            else None,
+            ad_frame_type=AdFrameType.from_json(json['adFrameType']),
+            explanations=[AdFrameExplanation.from_json(i) for i in json.get('explanations', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AdFrameStatus | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -108,17 +142,23 @@ class AdScriptId:
     debugger_id: runtime.UniqueDebuggerId
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["scriptId"] = self.script_id.to_json()
-        json["debuggerId"] = self.debugger_id.to_json()
+        json: T_JSON_DICT = {}
+        json['scriptId'] = self.script_id.to_json()
+        json['debuggerId'] = self.debugger_id.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AdScriptId:
         return cls(
-            script_id=runtime.ScriptId.from_json(json["scriptId"]),
-            debugger_id=runtime.UniqueDebuggerId.from_json(json["debuggerId"]),
+            script_id=runtime.ScriptId.from_json(json['scriptId']),
+            debugger_id=runtime.UniqueDebuggerId.from_json(json['debuggerId']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AdScriptId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -133,28 +173,34 @@ class AdScriptAncestry:
     #: led to the creation of a frame. The chain is ordered from the script
     #: itself (lower level) up to its root ancestor that was flagged by
     #: filterlist.
-    ancestry_chain: typing.List[AdScriptId]
+    ancestry_chain: list[AdScriptId]
 
     #: The filterlist rule that caused the root (last) script in
     #: ``ancestryChain`` to be ad-tagged. Only populated if the rule is
     #: available.
-    root_script_filterlist_rule: typing.Optional[str] = None
+    root_script_filterlist_rule: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["ancestryChain"] = [i.to_json() for i in self.ancestry_chain]
+        json: T_JSON_DICT = {}
+        json['ancestryChain'] = [i.to_json() for i in self.ancestry_chain]
         if self.root_script_filterlist_rule is not None:
-            json["rootScriptFilterlistRule"] = self.root_script_filterlist_rule
+            json['rootScriptFilterlistRule'] = self.root_script_filterlist_rule
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AdScriptAncestry:
         return cls(
-            ancestry_chain=[AdScriptId.from_json(i) for i in json["ancestryChain"]],
-            root_script_filterlist_rule=str(json["rootScriptFilterlistRule"])
-            if json.get("rootScriptFilterlistRule", None) is not None
-            else None,
+            ancestry_chain=[AdScriptId.from_json(i) for i in json.get('ancestryChain', [])],
+            root_script_filterlist_rule=None
+            if json.get('rootScriptFilterlistRule') is None
+            else str(json['rootScriptFilterlistRule']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AdScriptAncestry | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class SecureContextType(enum.Enum):
@@ -162,10 +208,10 @@ class SecureContextType(enum.Enum):
     Indicates whether the frame is a secure context and why it is the case.
     """
 
-    SECURE = "Secure"
-    SECURE_LOCALHOST = "SecureLocalhost"
-    INSECURE_SCHEME = "InsecureScheme"
-    INSECURE_ANCESTOR = "InsecureAncestor"
+    SECURE = 'Secure'
+    SECURE_LOCALHOST = 'SecureLocalhost'
+    INSECURE_SCHEME = 'InsecureScheme'
+    INSECURE_ANCESTOR = 'InsecureAncestor'
 
     def to_json(self) -> str:
         return self.value
@@ -174,15 +220,21 @@ class SecureContextType(enum.Enum):
     def from_json(cls, json: str) -> SecureContextType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> SecureContextType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class CrossOriginIsolatedContextType(enum.Enum):
     """
     Indicates whether the frame is cross-origin isolated and why it is the case.
     """
 
-    ISOLATED = "Isolated"
-    NOT_ISOLATED = "NotIsolated"
-    NOT_ISOLATED_FEATURE_DISABLED = "NotIsolatedFeatureDisabled"
+    ISOLATED = 'Isolated'
+    NOT_ISOLATED = 'NotIsolated'
+    NOT_ISOLATED_FEATURE_DISABLED = 'NotIsolatedFeatureDisabled'
 
     def to_json(self) -> str:
         return self.value
@@ -191,12 +243,18 @@ class CrossOriginIsolatedContextType(enum.Enum):
     def from_json(cls, json: str) -> CrossOriginIsolatedContextType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> CrossOriginIsolatedContextType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class GatedAPIFeatures(enum.Enum):
-    SHARED_ARRAY_BUFFERS = "SharedArrayBuffers"
-    SHARED_ARRAY_BUFFERS_TRANSFER_ALLOWED = "SharedArrayBuffersTransferAllowed"
-    PERFORMANCE_MEASURE_MEMORY = "PerformanceMeasureMemory"
-    PERFORMANCE_PROFILE = "PerformanceProfile"
+    SHARED_ARRAY_BUFFERS = 'SharedArrayBuffers'
+    SHARED_ARRAY_BUFFERS_TRANSFER_ALLOWED = 'SharedArrayBuffersTransferAllowed'
+    PERFORMANCE_MEASURE_MEMORY = 'PerformanceMeasureMemory'
+    PERFORMANCE_PROFILE = 'PerformanceProfile'
 
     def to_json(self) -> str:
         return self.value
@@ -204,6 +262,12 @@ class GatedAPIFeatures(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> GatedAPIFeatures:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> GatedAPIFeatures | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class PermissionsPolicyFeature(enum.Enum):
@@ -213,112 +277,114 @@ class PermissionsPolicyFeature(enum.Enum):
     LINT.IfChange(PermissionsPolicyFeature)
     """
 
-    ACCELEROMETER = "accelerometer"
-    ALL_SCREENS_CAPTURE = "all-screens-capture"
-    AMBIENT_LIGHT_SENSOR = "ambient-light-sensor"
-    ARIA_NOTIFY = "aria-notify"
-    ATTRIBUTION_REPORTING = "attribution-reporting"
-    AUTOPLAY = "autoplay"
-    BLUETOOTH = "bluetooth"
-    BROWSING_TOPICS = "browsing-topics"
-    CAMERA = "camera"
-    CAPTURED_SURFACE_CONTROL = "captured-surface-control"
-    CH_DPR = "ch-dpr"
-    CH_DEVICE_MEMORY = "ch-device-memory"
-    CH_DOWNLINK = "ch-downlink"
-    CH_ECT = "ch-ect"
-    CH_PREFERS_COLOR_SCHEME = "ch-prefers-color-scheme"
-    CH_PREFERS_REDUCED_MOTION = "ch-prefers-reduced-motion"
-    CH_PREFERS_REDUCED_TRANSPARENCY = "ch-prefers-reduced-transparency"
-    CH_RTT = "ch-rtt"
-    CH_SAVE_DATA = "ch-save-data"
-    CH_UA = "ch-ua"
-    CH_UA_ARCH = "ch-ua-arch"
-    CH_UA_BITNESS = "ch-ua-bitness"
-    CH_UA_HIGH_ENTROPY_VALUES = "ch-ua-high-entropy-values"
-    CH_UA_PLATFORM = "ch-ua-platform"
-    CH_UA_MODEL = "ch-ua-model"
-    CH_UA_MOBILE = "ch-ua-mobile"
-    CH_UA_FORM_FACTORS = "ch-ua-form-factors"
-    CH_UA_FULL_VERSION = "ch-ua-full-version"
-    CH_UA_FULL_VERSION_LIST = "ch-ua-full-version-list"
-    CH_UA_PLATFORM_VERSION = "ch-ua-platform-version"
-    CH_UA_WOW64 = "ch-ua-wow64"
-    CH_VIEWPORT_HEIGHT = "ch-viewport-height"
-    CH_VIEWPORT_WIDTH = "ch-viewport-width"
-    CH_WIDTH = "ch-width"
-    CLIPBOARD_READ = "clipboard-read"
-    CLIPBOARD_WRITE = "clipboard-write"
-    COMPUTE_PRESSURE = "compute-pressure"
-    CONTROLLED_FRAME = "controlled-frame"
-    CROSS_ORIGIN_ISOLATED = "cross-origin-isolated"
-    DEFERRED_FETCH = "deferred-fetch"
-    DEFERRED_FETCH_MINIMAL = "deferred-fetch-minimal"
-    DEVICE_ATTRIBUTES = "device-attributes"
-    DIGITAL_CREDENTIALS_GET = "digital-credentials-get"
-    DIRECT_SOCKETS = "direct-sockets"
-    DIRECT_SOCKETS_PRIVATE = "direct-sockets-private"
-    DISPLAY_CAPTURE = "display-capture"
-    DOCUMENT_DOMAIN = "document-domain"
-    ENCRYPTED_MEDIA = "encrypted-media"
-    EXECUTION_WHILE_OUT_OF_VIEWPORT = "execution-while-out-of-viewport"
-    EXECUTION_WHILE_NOT_RENDERED = "execution-while-not-rendered"
-    FENCED_UNPARTITIONED_STORAGE_READ = "fenced-unpartitioned-storage-read"
-    FOCUS_WITHOUT_USER_ACTIVATION = "focus-without-user-activation"
-    FULLSCREEN = "fullscreen"
-    FROBULATE = "frobulate"
-    GAMEPAD = "gamepad"
-    GEOLOCATION = "geolocation"
-    GYROSCOPE = "gyroscope"
-    HID = "hid"
-    IDENTITY_CREDENTIALS_GET = "identity-credentials-get"
-    IDLE_DETECTION = "idle-detection"
-    INTEREST_COHORT = "interest-cohort"
-    JOIN_AD_INTEREST_GROUP = "join-ad-interest-group"
-    KEYBOARD_MAP = "keyboard-map"
-    LANGUAGE_DETECTOR = "language-detector"
-    LANGUAGE_MODEL = "language-model"
-    LOCAL_FONTS = "local-fonts"
-    LOCAL_NETWORK_ACCESS = "local-network-access"
-    MAGNETOMETER = "magnetometer"
-    MEDIA_PLAYBACK_WHILE_NOT_VISIBLE = "media-playback-while-not-visible"
-    MICROPHONE = "microphone"
-    MIDI = "midi"
-    ON_DEVICE_SPEECH_RECOGNITION = "on-device-speech-recognition"
-    OTP_CREDENTIALS = "otp-credentials"
-    PAYMENT = "payment"
-    PICTURE_IN_PICTURE = "picture-in-picture"
-    POPINS = "popins"
-    PRIVATE_AGGREGATION = "private-aggregation"
-    PRIVATE_STATE_TOKEN_ISSUANCE = "private-state-token-issuance"
-    PRIVATE_STATE_TOKEN_REDEMPTION = "private-state-token-redemption"
-    PUBLICKEY_CREDENTIALS_CREATE = "publickey-credentials-create"
-    PUBLICKEY_CREDENTIALS_GET = "publickey-credentials-get"
-    RECORD_AD_AUCTION_EVENTS = "record-ad-auction-events"
-    REWRITER = "rewriter"
-    RUN_AD_AUCTION = "run-ad-auction"
-    SCREEN_WAKE_LOCK = "screen-wake-lock"
-    SERIAL = "serial"
-    SHARED_AUTOFILL = "shared-autofill"
-    SHARED_STORAGE = "shared-storage"
-    SHARED_STORAGE_SELECT_URL = "shared-storage-select-url"
-    SMART_CARD = "smart-card"
-    SPEAKER_SELECTION = "speaker-selection"
-    STORAGE_ACCESS = "storage-access"
-    SUB_APPS = "sub-apps"
-    SUMMARIZER = "summarizer"
-    SYNC_XHR = "sync-xhr"
-    TRANSLATOR = "translator"
-    UNLOAD = "unload"
-    USB = "usb"
-    USB_UNRESTRICTED = "usb-unrestricted"
-    VERTICAL_SCROLL = "vertical-scroll"
-    WEB_APP_INSTALLATION = "web-app-installation"
-    WEB_PRINTING = "web-printing"
-    WEB_SHARE = "web-share"
-    WINDOW_MANAGEMENT = "window-management"
-    WRITER = "writer"
-    XR_SPATIAL_TRACKING = "xr-spatial-tracking"
+    ACCELEROMETER = 'accelerometer'
+    ALL_SCREENS_CAPTURE = 'all-screens-capture'
+    AMBIENT_LIGHT_SENSOR = 'ambient-light-sensor'
+    ARIA_NOTIFY = 'aria-notify'
+    ATTRIBUTION_REPORTING = 'attribution-reporting'
+    AUTOPLAY = 'autoplay'
+    BLUETOOTH = 'bluetooth'
+    BROWSING_TOPICS = 'browsing-topics'
+    CAMERA = 'camera'
+    CAPTURED_SURFACE_CONTROL = 'captured-surface-control'
+    CH_DPR = 'ch-dpr'
+    CH_DEVICE_MEMORY = 'ch-device-memory'
+    CH_DOWNLINK = 'ch-downlink'
+    CH_ECT = 'ch-ect'
+    CH_PREFERS_COLOR_SCHEME = 'ch-prefers-color-scheme'
+    CH_PREFERS_REDUCED_MOTION = 'ch-prefers-reduced-motion'
+    CH_PREFERS_REDUCED_TRANSPARENCY = 'ch-prefers-reduced-transparency'
+    CH_RTT = 'ch-rtt'
+    CH_SAVE_DATA = 'ch-save-data'
+    CH_UA = 'ch-ua'
+    CH_UA_ARCH = 'ch-ua-arch'
+    CH_UA_BITNESS = 'ch-ua-bitness'
+    CH_UA_HIGH_ENTROPY_VALUES = 'ch-ua-high-entropy-values'
+    CH_UA_PLATFORM = 'ch-ua-platform'
+    CH_UA_MODEL = 'ch-ua-model'
+    CH_UA_MOBILE = 'ch-ua-mobile'
+    CH_UA_FORM_FACTORS = 'ch-ua-form-factors'
+    CH_UA_FULL_VERSION = 'ch-ua-full-version'
+    CH_UA_FULL_VERSION_LIST = 'ch-ua-full-version-list'
+    CH_UA_PLATFORM_VERSION = 'ch-ua-platform-version'
+    CH_UA_WOW64 = 'ch-ua-wow64'
+    CH_VIEWPORT_HEIGHT = 'ch-viewport-height'
+    CH_VIEWPORT_WIDTH = 'ch-viewport-width'
+    CH_WIDTH = 'ch-width'
+    CLIPBOARD_READ = 'clipboard-read'
+    CLIPBOARD_WRITE = 'clipboard-write'
+    COMPUTE_PRESSURE = 'compute-pressure'
+    CONTROLLED_FRAME = 'controlled-frame'
+    CROSS_ORIGIN_ISOLATED = 'cross-origin-isolated'
+    DEFERRED_FETCH = 'deferred-fetch'
+    DEFERRED_FETCH_MINIMAL = 'deferred-fetch-minimal'
+    DEVICE_ATTRIBUTES = 'device-attributes'
+    DIGITAL_CREDENTIALS_CREATE = 'digital-credentials-create'
+    DIGITAL_CREDENTIALS_GET = 'digital-credentials-get'
+    DIRECT_SOCKETS = 'direct-sockets'
+    DIRECT_SOCKETS_MULTICAST = 'direct-sockets-multicast'
+    DIRECT_SOCKETS_PRIVATE = 'direct-sockets-private'
+    DISPLAY_CAPTURE = 'display-capture'
+    DOCUMENT_DOMAIN = 'document-domain'
+    ENCRYPTED_MEDIA = 'encrypted-media'
+    EXECUTION_WHILE_OUT_OF_VIEWPORT = 'execution-while-out-of-viewport'
+    EXECUTION_WHILE_NOT_RENDERED = 'execution-while-not-rendered'
+    FENCED_UNPARTITIONED_STORAGE_READ = 'fenced-unpartitioned-storage-read'
+    FOCUS_WITHOUT_USER_ACTIVATION = 'focus-without-user-activation'
+    FULLSCREEN = 'fullscreen'
+    FROBULATE = 'frobulate'
+    GAMEPAD = 'gamepad'
+    GEOLOCATION = 'geolocation'
+    GYROSCOPE = 'gyroscope'
+    HID = 'hid'
+    IDENTITY_CREDENTIALS_GET = 'identity-credentials-get'
+    IDLE_DETECTION = 'idle-detection'
+    INTEREST_COHORT = 'interest-cohort'
+    JOIN_AD_INTEREST_GROUP = 'join-ad-interest-group'
+    KEYBOARD_MAP = 'keyboard-map'
+    LANGUAGE_DETECTOR = 'language-detector'
+    LANGUAGE_MODEL = 'language-model'
+    LOCAL_FONTS = 'local-fonts'
+    LOCAL_NETWORK_ACCESS = 'local-network-access'
+    MAGNETOMETER = 'magnetometer'
+    MEDIA_PLAYBACK_WHILE_NOT_VISIBLE = 'media-playback-while-not-visible'
+    MICROPHONE = 'microphone'
+    MIDI = 'midi'
+    ON_DEVICE_SPEECH_RECOGNITION = 'on-device-speech-recognition'
+    OTP_CREDENTIALS = 'otp-credentials'
+    PAYMENT = 'payment'
+    PICTURE_IN_PICTURE = 'picture-in-picture'
+    POPINS = 'popins'
+    PRIVATE_AGGREGATION = 'private-aggregation'
+    PRIVATE_STATE_TOKEN_ISSUANCE = 'private-state-token-issuance'
+    PRIVATE_STATE_TOKEN_REDEMPTION = 'private-state-token-redemption'
+    PUBLICKEY_CREDENTIALS_CREATE = 'publickey-credentials-create'
+    PUBLICKEY_CREDENTIALS_GET = 'publickey-credentials-get'
+    RECORD_AD_AUCTION_EVENTS = 'record-ad-auction-events'
+    REWRITER = 'rewriter'
+    RUN_AD_AUCTION = 'run-ad-auction'
+    SCREEN_WAKE_LOCK = 'screen-wake-lock'
+    SERIAL = 'serial'
+    SHARED_AUTOFILL = 'shared-autofill'
+    SHARED_STORAGE = 'shared-storage'
+    SHARED_STORAGE_SELECT_URL = 'shared-storage-select-url'
+    SMART_CARD = 'smart-card'
+    SPEAKER_SELECTION = 'speaker-selection'
+    STORAGE_ACCESS = 'storage-access'
+    SUB_APPS = 'sub-apps'
+    SUMMARIZER = 'summarizer'
+    SYNC_XHR = 'sync-xhr'
+    TRANSLATOR = 'translator'
+    UNLOAD = 'unload'
+    USB = 'usb'
+    USB_UNRESTRICTED = 'usb-unrestricted'
+    VERTICAL_SCROLL = 'vertical-scroll'
+    WEB_APP_INSTALLATION = 'web-app-installation'
+    WEB_PRINTING = 'web-printing'
+    WEB_SHARE = 'web-share'
+    WINDOW_MANAGEMENT = 'window-management'
+    WRITER = 'writer'
+    XR_SPATIAL_TRACKING = 'xr-spatial-tracking'
 
     def to_json(self) -> str:
         return self.value
@@ -327,16 +393,22 @@ class PermissionsPolicyFeature(enum.Enum):
     def from_json(cls, json: str) -> PermissionsPolicyFeature:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> PermissionsPolicyFeature | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class PermissionsPolicyBlockReason(enum.Enum):
     """
     Reason for a permissions policy feature to be disabled.
     """
 
-    HEADER = "Header"
-    IFRAME_ATTRIBUTE = "IframeAttribute"
-    IN_FENCED_FRAME_TREE = "InFencedFrameTree"
-    IN_ISOLATED_APP = "InIsolatedApp"
+    HEADER = 'Header'
+    IFRAME_ATTRIBUTE = 'IframeAttribute'
+    IN_FENCED_FRAME_TREE = 'InFencedFrameTree'
+    IN_ISOLATED_APP = 'InIsolatedApp'
 
     def to_json(self) -> str:
         return self.value
@@ -344,6 +416,12 @@ class PermissionsPolicyBlockReason(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> PermissionsPolicyBlockReason:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> PermissionsPolicyBlockReason | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -353,17 +431,23 @@ class PermissionsPolicyBlockLocator:
     block_reason: PermissionsPolicyBlockReason
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["frameId"] = self.frame_id.to_json()
-        json["blockReason"] = self.block_reason.to_json()
+        json: T_JSON_DICT = {}
+        json['frameId'] = self.frame_id.to_json()
+        json['blockReason'] = self.block_reason.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> PermissionsPolicyBlockLocator:
         return cls(
-            frame_id=FrameId.from_json(json["frameId"]),
-            block_reason=PermissionsPolicyBlockReason.from_json(json["blockReason"]),
+            frame_id=FrameId.from_json(json['frameId']),
+            block_reason=PermissionsPolicyBlockReason.from_json(json['blockReason']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> PermissionsPolicyBlockLocator | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -372,25 +456,29 @@ class PermissionsPolicyFeatureState:
 
     allowed: bool
 
-    locator: typing.Optional[PermissionsPolicyBlockLocator] = None
+    locator: PermissionsPolicyBlockLocator | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["feature"] = self.feature.to_json()
-        json["allowed"] = self.allowed
+        json: T_JSON_DICT = {}
+        json['feature'] = self.feature.to_json()
+        json['allowed'] = self.allowed
         if self.locator is not None:
-            json["locator"] = self.locator.to_json()
+            json['locator'] = self.locator.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> PermissionsPolicyFeatureState:
         return cls(
-            feature=PermissionsPolicyFeature.from_json(json["feature"]),
-            allowed=bool(json["allowed"]),
-            locator=PermissionsPolicyBlockLocator.from_json(json["locator"])
-            if json.get("locator", None) is not None
-            else None,
+            feature=PermissionsPolicyFeature.from_json(json['feature']),
+            allowed=bool(json['allowed']),
+            locator=PermissionsPolicyBlockLocator.from_json_optional(json.get('locator')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> PermissionsPolicyFeatureState | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class OriginTrialTokenStatus(enum.Enum):
@@ -399,18 +487,18 @@ class OriginTrialTokenStatus(enum.Enum):
     Status for an Origin Trial token.
     """
 
-    SUCCESS = "Success"
-    NOT_SUPPORTED = "NotSupported"
-    INSECURE = "Insecure"
-    EXPIRED = "Expired"
-    WRONG_ORIGIN = "WrongOrigin"
-    INVALID_SIGNATURE = "InvalidSignature"
-    MALFORMED = "Malformed"
-    WRONG_VERSION = "WrongVersion"
-    FEATURE_DISABLED = "FeatureDisabled"
-    TOKEN_DISABLED = "TokenDisabled"
-    FEATURE_DISABLED_FOR_USER = "FeatureDisabledForUser"
-    UNKNOWN_TRIAL = "UnknownTrial"
+    SUCCESS = 'Success'
+    NOT_SUPPORTED = 'NotSupported'
+    INSECURE = 'Insecure'
+    EXPIRED = 'Expired'
+    WRONG_ORIGIN = 'WrongOrigin'
+    INVALID_SIGNATURE = 'InvalidSignature'
+    MALFORMED = 'Malformed'
+    WRONG_VERSION = 'WrongVersion'
+    FEATURE_DISABLED = 'FeatureDisabled'
+    TOKEN_DISABLED = 'TokenDisabled'
+    FEATURE_DISABLED_FOR_USER = 'FeatureDisabledForUser'
+    UNKNOWN_TRIAL = 'UnknownTrial'
 
     def to_json(self) -> str:
         return self.value
@@ -419,16 +507,22 @@ class OriginTrialTokenStatus(enum.Enum):
     def from_json(cls, json: str) -> OriginTrialTokenStatus:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> OriginTrialTokenStatus | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class OriginTrialStatus(enum.Enum):
     """
     Status for an Origin Trial.
     """
 
-    ENABLED = "Enabled"
-    VALID_TOKEN_NOT_PROVIDED = "ValidTokenNotProvided"
-    OS_NOT_SUPPORTED = "OSNotSupported"
-    TRIAL_NOT_ALLOWED = "TrialNotAllowed"
+    ENABLED = 'Enabled'
+    VALID_TOKEN_NOT_PROVIDED = 'ValidTokenNotProvided'
+    OS_NOT_SUPPORTED = 'OSNotSupported'
+    TRIAL_NOT_ALLOWED = 'TrialNotAllowed'
 
     def to_json(self) -> str:
         return self.value
@@ -437,10 +531,16 @@ class OriginTrialStatus(enum.Enum):
     def from_json(cls, json: str) -> OriginTrialStatus:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> OriginTrialStatus | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class OriginTrialUsageRestriction(enum.Enum):
-    NONE = "None"
-    SUBSET = "Subset"
+    NONE = 'None'
+    SUBSET = 'Subset'
 
     def to_json(self) -> str:
         return self.value
@@ -448,6 +548,12 @@ class OriginTrialUsageRestriction(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> OriginTrialUsageRestriction:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> OriginTrialUsageRestriction | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -465,27 +571,31 @@ class OriginTrialToken:
     usage_restriction: OriginTrialUsageRestriction
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["origin"] = self.origin
-        json["matchSubDomains"] = self.match_sub_domains
-        json["trialName"] = self.trial_name
-        json["expiryTime"] = self.expiry_time.to_json()
-        json["isThirdParty"] = self.is_third_party
-        json["usageRestriction"] = self.usage_restriction.to_json()
+        json: T_JSON_DICT = {}
+        json['origin'] = self.origin
+        json['matchSubDomains'] = self.match_sub_domains
+        json['trialName'] = self.trial_name
+        json['expiryTime'] = self.expiry_time.to_json()
+        json['isThirdParty'] = self.is_third_party
+        json['usageRestriction'] = self.usage_restriction.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> OriginTrialToken:
         return cls(
-            origin=str(json["origin"]),
-            match_sub_domains=bool(json["matchSubDomains"]),
-            trial_name=str(json["trialName"]),
-            expiry_time=network.TimeSinceEpoch.from_json(json["expiryTime"]),
-            is_third_party=bool(json["isThirdParty"]),
-            usage_restriction=OriginTrialUsageRestriction.from_json(
-                json["usageRestriction"]
-            ),
+            origin=str(json['origin']),
+            match_sub_domains=bool(json['matchSubDomains']),
+            trial_name=str(json['trialName']),
+            expiry_time=network.TimeSinceEpoch.from_json(json['expiryTime']),
+            is_third_party=bool(json['isThirdParty']),
+            usage_restriction=OriginTrialUsageRestriction.from_json(json['usageRestriction']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> OriginTrialToken | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -496,25 +606,29 @@ class OriginTrialTokenWithStatus:
 
     #: ``parsedToken`` is present only when the token is extractable and
     #: parsable.
-    parsed_token: typing.Optional[OriginTrialToken] = None
+    parsed_token: OriginTrialToken | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["rawTokenText"] = self.raw_token_text
-        json["status"] = self.status.to_json()
+        json: T_JSON_DICT = {}
+        json['rawTokenText'] = self.raw_token_text
+        json['status'] = self.status.to_json()
         if self.parsed_token is not None:
-            json["parsedToken"] = self.parsed_token.to_json()
+            json['parsedToken'] = self.parsed_token.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> OriginTrialTokenWithStatus:
         return cls(
-            raw_token_text=str(json["rawTokenText"]),
-            status=OriginTrialTokenStatus.from_json(json["status"]),
-            parsed_token=OriginTrialToken.from_json(json["parsedToken"])
-            if json.get("parsedToken", None) is not None
-            else None,
+            raw_token_text=str(json['rawTokenText']),
+            status=OriginTrialTokenStatus.from_json(json['status']),
+            parsed_token=OriginTrialToken.from_json_optional(json.get('parsedToken')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> OriginTrialTokenWithStatus | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -523,25 +637,28 @@ class OriginTrial:
 
     status: OriginTrialStatus
 
-    tokens_with_status: typing.List[OriginTrialTokenWithStatus]
+    tokens_with_status: list[OriginTrialTokenWithStatus]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["trialName"] = self.trial_name
-        json["status"] = self.status.to_json()
-        json["tokensWithStatus"] = [i.to_json() for i in self.tokens_with_status]
+        json: T_JSON_DICT = {}
+        json['trialName'] = self.trial_name
+        json['status'] = self.status.to_json()
+        json['tokensWithStatus'] = [i.to_json() for i in self.tokens_with_status]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> OriginTrial:
         return cls(
-            trial_name=str(json["trialName"]),
-            status=OriginTrialStatus.from_json(json["status"]),
-            tokens_with_status=[
-                OriginTrialTokenWithStatus.from_json(i)
-                for i in json["tokensWithStatus"]
-            ],
+            trial_name=str(json['trialName']),
+            status=OriginTrialStatus.from_json(json['status']),
+            tokens_with_status=[OriginTrialTokenWithStatus.from_json(i) for i in json.get('tokensWithStatus', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> OriginTrial | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -556,15 +673,21 @@ class SecurityOriginDetails:
     is_localhost: bool
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["isLocalhost"] = self.is_localhost
+        json: T_JSON_DICT = {}
+        json['isLocalhost'] = self.is_localhost
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SecurityOriginDetails:
         return cls(
-            is_localhost=bool(json["isLocalhost"]),
+            is_localhost=bool(json['isLocalhost']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SecurityOriginDetails | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -601,88 +724,78 @@ class Frame:
     cross_origin_isolated_context_type: CrossOriginIsolatedContextType
 
     #: Indicated which gated APIs / features are available.
-    gated_api_features: typing.List[GatedAPIFeatures]
+    gated_api_features: list[GatedAPIFeatures]
 
     #: Parent frame identifier.
-    parent_id: typing.Optional[FrameId] = None
+    parent_id: FrameId | None = None
 
     #: Frame's name as specified in the tag.
-    name: typing.Optional[str] = None
+    name: str | None = None
 
     #: Frame document's URL fragment including the '#'.
-    url_fragment: typing.Optional[str] = None
+    url_fragment: str | None = None
 
     #: Additional details about the frame document's security origin.
-    security_origin_details: typing.Optional[SecurityOriginDetails] = None
+    security_origin_details: SecurityOriginDetails | None = None
 
     #: If the frame failed to load, this contains the URL that could not be loaded. Note that unlike url above, this URL may contain a fragment.
-    unreachable_url: typing.Optional[str] = None
+    unreachable_url: str | None = None
 
     #: Indicates whether this frame was tagged as an ad and why.
-    ad_frame_status: typing.Optional[AdFrameStatus] = None
+    ad_frame_status: AdFrameStatus | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["id"] = self.id_.to_json()
-        json["loaderId"] = self.loader_id.to_json()
-        json["url"] = self.url
-        json["domainAndRegistry"] = self.domain_and_registry
-        json["securityOrigin"] = self.security_origin
-        json["mimeType"] = self.mime_type
-        json["secureContextType"] = self.secure_context_type.to_json()
-        json["crossOriginIsolatedContextType"] = (
-            self.cross_origin_isolated_context_type.to_json()
-        )
-        json["gatedAPIFeatures"] = [i.to_json() for i in self.gated_api_features]
+        json: T_JSON_DICT = {}
+        json['id'] = self.id_.to_json()
+        json['loaderId'] = self.loader_id.to_json()
+        json['url'] = self.url
+        json['domainAndRegistry'] = self.domain_and_registry
+        json['securityOrigin'] = self.security_origin
+        json['mimeType'] = self.mime_type
+        json['secureContextType'] = self.secure_context_type.to_json()
+        json['crossOriginIsolatedContextType'] = self.cross_origin_isolated_context_type.to_json()
+        json['gatedAPIFeatures'] = [i.to_json() for i in self.gated_api_features]
         if self.parent_id is not None:
-            json["parentId"] = self.parent_id.to_json()
+            json['parentId'] = self.parent_id.to_json()
         if self.name is not None:
-            json["name"] = self.name
+            json['name'] = self.name
         if self.url_fragment is not None:
-            json["urlFragment"] = self.url_fragment
+            json['urlFragment'] = self.url_fragment
         if self.security_origin_details is not None:
-            json["securityOriginDetails"] = self.security_origin_details.to_json()
+            json['securityOriginDetails'] = self.security_origin_details.to_json()
         if self.unreachable_url is not None:
-            json["unreachableUrl"] = self.unreachable_url
+            json['unreachableUrl'] = self.unreachable_url
         if self.ad_frame_status is not None:
-            json["adFrameStatus"] = self.ad_frame_status.to_json()
+            json['adFrameStatus'] = self.ad_frame_status.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Frame:
         return cls(
-            id_=FrameId.from_json(json["id"]),
-            loader_id=network.LoaderId.from_json(json["loaderId"]),
-            url=str(json["url"]),
-            domain_and_registry=str(json["domainAndRegistry"]),
-            security_origin=str(json["securityOrigin"]),
-            mime_type=str(json["mimeType"]),
-            secure_context_type=SecureContextType.from_json(json["secureContextType"]),
+            id_=FrameId.from_json(json['id']),
+            loader_id=network.LoaderId.from_json(json['loaderId']),
+            url=str(json['url']),
+            domain_and_registry=str(json['domainAndRegistry']),
+            security_origin=str(json['securityOrigin']),
+            mime_type=str(json['mimeType']),
+            secure_context_type=SecureContextType.from_json(json['secureContextType']),
             cross_origin_isolated_context_type=CrossOriginIsolatedContextType.from_json(
-                json["crossOriginIsolatedContextType"]
+                json['crossOriginIsolatedContextType'],
             ),
-            gated_api_features=[
-                GatedAPIFeatures.from_json(i) for i in json["gatedAPIFeatures"]
-            ],
-            parent_id=FrameId.from_json(json["parentId"])
-            if json.get("parentId", None) is not None
-            else None,
-            name=str(json["name"]) if json.get("name", None) is not None else None,
-            url_fragment=str(json["urlFragment"])
-            if json.get("urlFragment", None) is not None
-            else None,
-            security_origin_details=SecurityOriginDetails.from_json(
-                json["securityOriginDetails"]
-            )
-            if json.get("securityOriginDetails", None) is not None
-            else None,
-            unreachable_url=str(json["unreachableUrl"])
-            if json.get("unreachableUrl", None) is not None
-            else None,
-            ad_frame_status=AdFrameStatus.from_json(json["adFrameStatus"])
-            if json.get("adFrameStatus", None) is not None
-            else None,
+            gated_api_features=[GatedAPIFeatures.from_json(i) for i in json.get('gatedAPIFeatures', [])],
+            parent_id=FrameId.from_json_optional(json.get('parentId')),
+            name=None if json.get('name') is None else str(json['name']),
+            url_fragment=None if json.get('urlFragment') is None else str(json['urlFragment']),
+            security_origin_details=SecurityOriginDetails.from_json_optional(json.get('securityOriginDetails')),
+            unreachable_url=None if json.get('unreachableUrl') is None else str(json['unreachableUrl']),
+            ad_frame_status=AdFrameStatus.from_json_optional(json.get('adFrameStatus')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Frame | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -701,51 +814,49 @@ class FrameResource:
     mime_type: str
 
     #: last-modified timestamp as reported by server.
-    last_modified: typing.Optional[network.TimeSinceEpoch] = None
+    last_modified: network.TimeSinceEpoch | None = None
 
     #: Resource content size.
-    content_size: typing.Optional[float] = None
+    content_size: float | None = None
 
     #: True if the resource failed to load.
-    failed: typing.Optional[bool] = None
+    failed: bool | None = None
 
     #: True if the resource was canceled during loading.
-    canceled: typing.Optional[bool] = None
+    canceled: bool | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["url"] = self.url
-        json["type"] = self.type_.to_json()
-        json["mimeType"] = self.mime_type
+        json: T_JSON_DICT = {}
+        json['url'] = self.url
+        json['type'] = self.type_.to_json()
+        json['mimeType'] = self.mime_type
         if self.last_modified is not None:
-            json["lastModified"] = self.last_modified.to_json()
+            json['lastModified'] = self.last_modified.to_json()
         if self.content_size is not None:
-            json["contentSize"] = self.content_size
+            json['contentSize'] = self.content_size
         if self.failed is not None:
-            json["failed"] = self.failed
+            json['failed'] = self.failed
         if self.canceled is not None:
-            json["canceled"] = self.canceled
+            json['canceled'] = self.canceled
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FrameResource:
         return cls(
-            url=str(json["url"]),
-            type_=network.ResourceType.from_json(json["type"]),
-            mime_type=str(json["mimeType"]),
-            last_modified=network.TimeSinceEpoch.from_json(json["lastModified"])
-            if json.get("lastModified", None) is not None
-            else None,
-            content_size=float(json["contentSize"])
-            if json.get("contentSize", None) is not None
-            else None,
-            failed=bool(json["failed"])
-            if json.get("failed", None) is not None
-            else None,
-            canceled=bool(json["canceled"])
-            if json.get("canceled", None) is not None
-            else None,
+            url=str(json['url']),
+            type_=network.ResourceType.from_json(json['type']),
+            mime_type=str(json['mimeType']),
+            last_modified=network.TimeSinceEpoch.from_json_optional(json.get('lastModified')),
+            content_size=None if json.get('contentSize') is None else float(json['contentSize']),
+            failed=None if json.get('failed') is None else bool(json['failed']),
+            canceled=None if json.get('canceled') is None else bool(json['canceled']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FrameResource | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -758,28 +869,32 @@ class FrameResourceTree:
     frame: Frame
 
     #: Information about frame resources.
-    resources: typing.List[FrameResource]
+    resources: list[FrameResource]
 
     #: Child frames.
-    child_frames: typing.Optional[typing.List[FrameResourceTree]] = None
+    child_frames: list[FrameResourceTree] = field(default_factory=list)
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["frame"] = self.frame.to_json()
-        json["resources"] = [i.to_json() for i in self.resources]
+        json: T_JSON_DICT = {}
+        json['frame'] = self.frame.to_json()
+        json['resources'] = [i.to_json() for i in self.resources]
         if self.child_frames is not None:
-            json["childFrames"] = [i.to_json() for i in self.child_frames]
+            json['childFrames'] = [i.to_json() for i in self.child_frames]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FrameResourceTree:
         return cls(
-            frame=Frame.from_json(json["frame"]),
-            resources=[FrameResource.from_json(i) for i in json["resources"]],
-            child_frames=[FrameResourceTree.from_json(i) for i in json["childFrames"]]
-            if json.get("childFrames", None) is not None
-            else None,
+            frame=Frame.from_json(json['frame']),
+            resources=[FrameResource.from_json(i) for i in json.get('resources', [])],
+            child_frames=[FrameResourceTree.from_json(i) for i in json.get('childFrames', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FrameResourceTree | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -792,29 +907,35 @@ class FrameTree:
     frame: Frame
 
     #: Child frames.
-    child_frames: typing.Optional[typing.List[FrameTree]] = None
+    child_frames: list[FrameTree] = field(default_factory=list)
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["frame"] = self.frame.to_json()
+        json: T_JSON_DICT = {}
+        json['frame'] = self.frame.to_json()
         if self.child_frames is not None:
-            json["childFrames"] = [i.to_json() for i in self.child_frames]
+            json['childFrames'] = [i.to_json() for i in self.child_frames]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FrameTree:
         return cls(
-            frame=Frame.from_json(json["frame"]),
-            child_frames=[FrameTree.from_json(i) for i in json["childFrames"]]
-            if json.get("childFrames", None) is not None
-            else None,
+            frame=Frame.from_json(json['frame']),
+            child_frames=[FrameTree.from_json(i) for i in json.get('childFrames', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FrameTree | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class ScriptIdentifier(str):
     """
     Unique script identifier.
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -823,8 +944,14 @@ class ScriptIdentifier(str):
     def from_json(cls, json: str) -> ScriptIdentifier:
         return cls(json)
 
-    def __repr__(self):
-        return "ScriptIdentifier({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> ScriptIdentifier | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'ScriptIdentifier({super().__repr__()})'
 
 
 class TransitionType(enum.Enum):
@@ -832,19 +959,19 @@ class TransitionType(enum.Enum):
     Transition type.
     """
 
-    LINK = "link"
-    TYPED = "typed"
-    ADDRESS_BAR = "address_bar"
-    AUTO_BOOKMARK = "auto_bookmark"
-    AUTO_SUBFRAME = "auto_subframe"
-    MANUAL_SUBFRAME = "manual_subframe"
-    GENERATED = "generated"
-    AUTO_TOPLEVEL = "auto_toplevel"
-    FORM_SUBMIT = "form_submit"
-    RELOAD = "reload"
-    KEYWORD = "keyword"
-    KEYWORD_GENERATED = "keyword_generated"
-    OTHER = "other"
+    LINK = 'link'
+    TYPED = 'typed'
+    ADDRESS_BAR = 'address_bar'
+    AUTO_BOOKMARK = 'auto_bookmark'
+    AUTO_SUBFRAME = 'auto_subframe'
+    MANUAL_SUBFRAME = 'manual_subframe'
+    GENERATED = 'generated'
+    AUTO_TOPLEVEL = 'auto_toplevel'
+    FORM_SUBMIT = 'form_submit'
+    RELOAD = 'reload'
+    KEYWORD = 'keyword'
+    KEYWORD_GENERATED = 'keyword_generated'
+    OTHER = 'other'
 
     def to_json(self) -> str:
         return self.value
@@ -852,6 +979,12 @@ class TransitionType(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> TransitionType:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> TransitionType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -876,23 +1009,29 @@ class NavigationEntry:
     transition_type: TransitionType
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["id"] = self.id_
-        json["url"] = self.url
-        json["userTypedURL"] = self.user_typed_url
-        json["title"] = self.title
-        json["transitionType"] = self.transition_type.to_json()
+        json: T_JSON_DICT = {}
+        json['id'] = self.id_
+        json['url'] = self.url
+        json['userTypedURL'] = self.user_typed_url
+        json['title'] = self.title
+        json['transitionType'] = self.transition_type.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> NavigationEntry:
         return cls(
-            id_=int(json["id"]),
-            url=str(json["url"]),
-            user_typed_url=str(json["userTypedURL"]),
-            title=str(json["title"]),
-            transition_type=TransitionType.from_json(json["transitionType"]),
+            id_=int(json['id']),
+            url=str(json['url']),
+            user_typed_url=str(json['userTypedURL']),
+            title=str(json['title']),
+            transition_type=TransitionType.from_json(json['transitionType']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> NavigationEntry | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -920,33 +1059,37 @@ class ScreencastFrameMetadata:
     scroll_offset_y: float
 
     #: Frame swap timestamp.
-    timestamp: typing.Optional[network.TimeSinceEpoch] = None
+    timestamp: network.TimeSinceEpoch | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["offsetTop"] = self.offset_top
-        json["pageScaleFactor"] = self.page_scale_factor
-        json["deviceWidth"] = self.device_width
-        json["deviceHeight"] = self.device_height
-        json["scrollOffsetX"] = self.scroll_offset_x
-        json["scrollOffsetY"] = self.scroll_offset_y
+        json: T_JSON_DICT = {}
+        json['offsetTop'] = self.offset_top
+        json['pageScaleFactor'] = self.page_scale_factor
+        json['deviceWidth'] = self.device_width
+        json['deviceHeight'] = self.device_height
+        json['scrollOffsetX'] = self.scroll_offset_x
+        json['scrollOffsetY'] = self.scroll_offset_y
         if self.timestamp is not None:
-            json["timestamp"] = self.timestamp.to_json()
+            json['timestamp'] = self.timestamp.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ScreencastFrameMetadata:
         return cls(
-            offset_top=float(json["offsetTop"]),
-            page_scale_factor=float(json["pageScaleFactor"]),
-            device_width=float(json["deviceWidth"]),
-            device_height=float(json["deviceHeight"]),
-            scroll_offset_x=float(json["scrollOffsetX"]),
-            scroll_offset_y=float(json["scrollOffsetY"]),
-            timestamp=network.TimeSinceEpoch.from_json(json["timestamp"])
-            if json.get("timestamp", None) is not None
-            else None,
+            offset_top=float(json['offsetTop']),
+            page_scale_factor=float(json['pageScaleFactor']),
+            device_width=float(json['deviceWidth']),
+            device_height=float(json['deviceHeight']),
+            scroll_offset_x=float(json['scrollOffsetX']),
+            scroll_offset_y=float(json['scrollOffsetY']),
+            timestamp=network.TimeSinceEpoch.from_json_optional(json.get('timestamp')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ScreencastFrameMetadata | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class DialogType(enum.Enum):
@@ -954,10 +1097,10 @@ class DialogType(enum.Enum):
     Javascript dialog type.
     """
 
-    ALERT = "alert"
-    CONFIRM = "confirm"
-    PROMPT = "prompt"
-    BEFOREUNLOAD = "beforeunload"
+    ALERT = 'alert'
+    CONFIRM = 'confirm'
+    PROMPT = 'prompt'
+    BEFOREUNLOAD = 'beforeunload'
 
     def to_json(self) -> str:
         return self.value
@@ -965,6 +1108,12 @@ class DialogType(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> DialogType:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> DialogType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -986,21 +1135,27 @@ class AppManifestError:
     column: int
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["message"] = self.message
-        json["critical"] = self.critical
-        json["line"] = self.line
-        json["column"] = self.column
+        json: T_JSON_DICT = {}
+        json['message'] = self.message
+        json['critical'] = self.critical
+        json['line'] = self.line
+        json['column'] = self.column
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AppManifestError:
         return cls(
-            message=str(json["message"]),
-            critical=int(json["critical"]),
-            line=int(json["line"]),
-            column=int(json["column"]),
+            message=str(json['message']),
+            critical=int(json['critical']),
+            line=int(json['line']),
+            column=int(json['column']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AppManifestError | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1013,15 +1168,21 @@ class AppManifestParsedProperties:
     scope: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["scope"] = self.scope
+        json: T_JSON_DICT = {}
+        json['scope'] = self.scope
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AppManifestParsedProperties:
         return cls(
-            scope=str(json["scope"]),
+            scope=str(json['scope']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AppManifestParsedProperties | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1043,21 +1204,27 @@ class LayoutViewport:
     client_height: int
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["pageX"] = self.page_x
-        json["pageY"] = self.page_y
-        json["clientWidth"] = self.client_width
-        json["clientHeight"] = self.client_height
+        json: T_JSON_DICT = {}
+        json['pageX'] = self.page_x
+        json['pageY'] = self.page_y
+        json['clientWidth'] = self.client_width
+        json['clientHeight'] = self.client_height
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> LayoutViewport:
         return cls(
-            page_x=int(json["pageX"]),
-            page_y=int(json["pageY"]),
-            client_width=int(json["clientWidth"]),
-            client_height=int(json["clientHeight"]),
+            page_x=int(json['pageX']),
+            page_y=int(json['pageY']),
+            client_width=int(json['clientWidth']),
+            client_height=int(json['clientHeight']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> LayoutViewport | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1088,33 +1255,39 @@ class VisualViewport:
     scale: float
 
     #: Page zoom factor (CSS to device independent pixels ratio).
-    zoom: typing.Optional[float] = None
+    zoom: float | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["offsetX"] = self.offset_x
-        json["offsetY"] = self.offset_y
-        json["pageX"] = self.page_x
-        json["pageY"] = self.page_y
-        json["clientWidth"] = self.client_width
-        json["clientHeight"] = self.client_height
-        json["scale"] = self.scale
+        json: T_JSON_DICT = {}
+        json['offsetX'] = self.offset_x
+        json['offsetY'] = self.offset_y
+        json['pageX'] = self.page_x
+        json['pageY'] = self.page_y
+        json['clientWidth'] = self.client_width
+        json['clientHeight'] = self.client_height
+        json['scale'] = self.scale
         if self.zoom is not None:
-            json["zoom"] = self.zoom
+            json['zoom'] = self.zoom
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> VisualViewport:
         return cls(
-            offset_x=float(json["offsetX"]),
-            offset_y=float(json["offsetY"]),
-            page_x=float(json["pageX"]),
-            page_y=float(json["pageY"]),
-            client_width=float(json["clientWidth"]),
-            client_height=float(json["clientHeight"]),
-            scale=float(json["scale"]),
-            zoom=float(json["zoom"]) if json.get("zoom", None) is not None else None,
+            offset_x=float(json['offsetX']),
+            offset_y=float(json['offsetY']),
+            page_x=float(json['pageX']),
+            page_y=float(json['pageY']),
+            client_width=float(json['clientWidth']),
+            client_height=float(json['clientHeight']),
+            scale=float(json['scale']),
+            zoom=None if json.get('zoom') is None else float(json['zoom']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> VisualViewport | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1139,23 +1312,29 @@ class Viewport:
     scale: float
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["x"] = self.x
-        json["y"] = self.y
-        json["width"] = self.width
-        json["height"] = self.height
-        json["scale"] = self.scale
+        json: T_JSON_DICT = {}
+        json['x'] = self.x
+        json['y'] = self.y
+        json['width'] = self.width
+        json['height'] = self.height
+        json['scale'] = self.scale
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Viewport:
         return cls(
-            x=float(json["x"]),
-            y=float(json["y"]),
-            width=float(json["width"]),
-            height=float(json["height"]),
-            scale=float(json["scale"]),
+            x=float(json['x']),
+            y=float(json['y']),
+            width=float(json['width']),
+            height=float(json['height']),
+            scale=float(json['scale']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Viewport | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1165,63 +1344,61 @@ class FontFamilies:
     """
 
     #: The standard font-family.
-    standard: typing.Optional[str] = None
+    standard: str | None = None
 
     #: The fixed font-family.
-    fixed: typing.Optional[str] = None
+    fixed: str | None = None
 
     #: The serif font-family.
-    serif: typing.Optional[str] = None
+    serif: str | None = None
 
     #: The sansSerif font-family.
-    sans_serif: typing.Optional[str] = None
+    sans_serif: str | None = None
 
     #: The cursive font-family.
-    cursive: typing.Optional[str] = None
+    cursive: str | None = None
 
     #: The fantasy font-family.
-    fantasy: typing.Optional[str] = None
+    fantasy: str | None = None
 
     #: The math font-family.
-    math: typing.Optional[str] = None
+    math: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
+        json: T_JSON_DICT = {}
         if self.standard is not None:
-            json["standard"] = self.standard
+            json['standard'] = self.standard
         if self.fixed is not None:
-            json["fixed"] = self.fixed
+            json['fixed'] = self.fixed
         if self.serif is not None:
-            json["serif"] = self.serif
+            json['serif'] = self.serif
         if self.sans_serif is not None:
-            json["sansSerif"] = self.sans_serif
+            json['sansSerif'] = self.sans_serif
         if self.cursive is not None:
-            json["cursive"] = self.cursive
+            json['cursive'] = self.cursive
         if self.fantasy is not None:
-            json["fantasy"] = self.fantasy
+            json['fantasy'] = self.fantasy
         if self.math is not None:
-            json["math"] = self.math
+            json['math'] = self.math
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FontFamilies:
         return cls(
-            standard=str(json["standard"])
-            if json.get("standard", None) is not None
-            else None,
-            fixed=str(json["fixed"]) if json.get("fixed", None) is not None else None,
-            serif=str(json["serif"]) if json.get("serif", None) is not None else None,
-            sans_serif=str(json["sansSerif"])
-            if json.get("sansSerif", None) is not None
-            else None,
-            cursive=str(json["cursive"])
-            if json.get("cursive", None) is not None
-            else None,
-            fantasy=str(json["fantasy"])
-            if json.get("fantasy", None) is not None
-            else None,
-            math=str(json["math"]) if json.get("math", None) is not None else None,
+            standard=None if json.get('standard') is None else str(json['standard']),
+            fixed=None if json.get('fixed') is None else str(json['fixed']),
+            serif=None if json.get('serif') is None else str(json['serif']),
+            sans_serif=None if json.get('sansSerif') is None else str(json['sansSerif']),
+            cursive=None if json.get('cursive') is None else str(json['cursive']),
+            fantasy=None if json.get('fantasy') is None else str(json['fantasy']),
+            math=None if json.get('math') is None else str(json['math']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FontFamilies | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1237,17 +1414,23 @@ class ScriptFontFamilies:
     font_families: FontFamilies
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["script"] = self.script
-        json["fontFamilies"] = self.font_families.to_json()
+        json: T_JSON_DICT = {}
+        json['script'] = self.script
+        json['fontFamilies'] = self.font_families.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ScriptFontFamilies:
         return cls(
-            script=str(json["script"]),
-            font_families=FontFamilies.from_json(json["fontFamilies"]),
+            script=str(json['script']),
+            font_families=FontFamilies.from_json(json['fontFamilies']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ScriptFontFamilies | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1257,40 +1440,44 @@ class FontSizes:
     """
 
     #: Default standard font size.
-    standard: typing.Optional[int] = None
+    standard: int | None = None
 
     #: Default fixed font size.
-    fixed: typing.Optional[int] = None
+    fixed: int | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
+        json: T_JSON_DICT = {}
         if self.standard is not None:
-            json["standard"] = self.standard
+            json['standard'] = self.standard
         if self.fixed is not None:
-            json["fixed"] = self.fixed
+            json['fixed'] = self.fixed
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FontSizes:
         return cls(
-            standard=int(json["standard"])
-            if json.get("standard", None) is not None
-            else None,
-            fixed=int(json["fixed"]) if json.get("fixed", None) is not None else None,
+            standard=None if json.get('standard') is None else int(json['standard']),
+            fixed=None if json.get('fixed') is None else int(json['fixed']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FontSizes | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class ClientNavigationReason(enum.Enum):
-    ANCHOR_CLICK = "anchorClick"
-    FORM_SUBMISSION_GET = "formSubmissionGet"
-    FORM_SUBMISSION_POST = "formSubmissionPost"
-    HTTP_HEADER_REFRESH = "httpHeaderRefresh"
-    INITIAL_FRAME_NAVIGATION = "initialFrameNavigation"
-    META_TAG_REFRESH = "metaTagRefresh"
-    OTHER = "other"
-    PAGE_BLOCK_INTERSTITIAL = "pageBlockInterstitial"
-    RELOAD = "reload"
-    SCRIPT_INITIATED = "scriptInitiated"
+    ANCHOR_CLICK = 'anchorClick'
+    FORM_SUBMISSION_GET = 'formSubmissionGet'
+    FORM_SUBMISSION_POST = 'formSubmissionPost'
+    HTTP_HEADER_REFRESH = 'httpHeaderRefresh'
+    INITIAL_FRAME_NAVIGATION = 'initialFrameNavigation'
+    META_TAG_REFRESH = 'metaTagRefresh'
+    OTHER = 'other'
+    PAGE_BLOCK_INTERSTITIAL = 'pageBlockInterstitial'
+    RELOAD = 'reload'
+    SCRIPT_INITIATED = 'scriptInitiated'
 
     def to_json(self) -> str:
         return self.value
@@ -1299,12 +1486,18 @@ class ClientNavigationReason(enum.Enum):
     def from_json(cls, json: str) -> ClientNavigationReason:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> ClientNavigationReason | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class ClientNavigationDisposition(enum.Enum):
-    CURRENT_TAB = "currentTab"
-    NEW_TAB = "newTab"
-    NEW_WINDOW = "newWindow"
-    DOWNLOAD = "download"
+    CURRENT_TAB = 'currentTab'
+    NEW_TAB = 'newTab'
+    NEW_WINDOW = 'newWindow'
+    DOWNLOAD = 'download'
 
     def to_json(self) -> str:
         return self.value
@@ -1312,6 +1505,12 @@ class ClientNavigationDisposition(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> ClientNavigationDisposition:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> ClientNavigationDisposition | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1323,17 +1522,23 @@ class InstallabilityErrorArgument:
     value: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
-        json["value"] = self.value
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
+        json['value'] = self.value
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> InstallabilityErrorArgument:
         return cls(
-            name=str(json["name"]),
-            value=str(json["value"]),
+            name=str(json['name']),
+            value=str(json['value']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> InstallabilityErrorArgument | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1346,22 +1551,26 @@ class InstallabilityError:
     error_id: str
 
     #: The list of error arguments (e.g. {name:'minimum-icon-size-in-pixels', value:'64'}).
-    error_arguments: typing.List[InstallabilityErrorArgument]
+    error_arguments: list[InstallabilityErrorArgument]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["errorId"] = self.error_id
-        json["errorArguments"] = [i.to_json() for i in self.error_arguments]
+        json: T_JSON_DICT = {}
+        json['errorId'] = self.error_id
+        json['errorArguments'] = [i.to_json() for i in self.error_arguments]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> InstallabilityError:
         return cls(
-            error_id=str(json["errorId"]),
-            error_arguments=[
-                InstallabilityErrorArgument.from_json(i) for i in json["errorArguments"]
-            ],
+            error_id=str(json['errorId']),
+            error_arguments=[InstallabilityErrorArgument.from_json(i) for i in json.get('errorArguments', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> InstallabilityError | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class ReferrerPolicy(enum.Enum):
@@ -1369,14 +1578,14 @@ class ReferrerPolicy(enum.Enum):
     The referring-policy used for the navigation.
     """
 
-    NO_REFERRER = "noReferrer"
-    NO_REFERRER_WHEN_DOWNGRADE = "noReferrerWhenDowngrade"
-    ORIGIN = "origin"
-    ORIGIN_WHEN_CROSS_ORIGIN = "originWhenCrossOrigin"
-    SAME_ORIGIN = "sameOrigin"
-    STRICT_ORIGIN = "strictOrigin"
-    STRICT_ORIGIN_WHEN_CROSS_ORIGIN = "strictOriginWhenCrossOrigin"
-    UNSAFE_URL = "unsafeUrl"
+    NO_REFERRER = 'noReferrer'
+    NO_REFERRER_WHEN_DOWNGRADE = 'noReferrerWhenDowngrade'
+    ORIGIN = 'origin'
+    ORIGIN_WHEN_CROSS_ORIGIN = 'originWhenCrossOrigin'
+    SAME_ORIGIN = 'sameOrigin'
+    STRICT_ORIGIN = 'strictOrigin'
+    STRICT_ORIGIN_WHEN_CROSS_ORIGIN = 'strictOriginWhenCrossOrigin'
+    UNSAFE_URL = 'unsafeUrl'
 
     def to_json(self) -> str:
         return self.value
@@ -1384,6 +1593,12 @@ class ReferrerPolicy(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> ReferrerPolicy:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> ReferrerPolicy | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1397,45 +1612,55 @@ class CompilationCacheParams:
 
     #: A hint to the backend whether eager compilation is recommended.
     #: (the actual compilation mode used is upon backend discretion).
-    eager: typing.Optional[bool] = None
+    eager: bool | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["url"] = self.url
+        json: T_JSON_DICT = {}
+        json['url'] = self.url
         if self.eager is not None:
-            json["eager"] = self.eager
+            json['eager'] = self.eager
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CompilationCacheParams:
         return cls(
-            url=str(json["url"]),
-            eager=bool(json["eager"]) if json.get("eager", None) is not None else None,
+            url=str(json['url']),
+            eager=None if json.get('eager') is None else bool(json['eager']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CompilationCacheParams | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
 class FileFilter:
-    name: typing.Optional[str] = None
+    name: str | None = None
 
-    accepts: typing.Optional[typing.List[str]] = None
+    accepts: list[str] = field(default_factory=list)
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
+        json: T_JSON_DICT = {}
         if self.name is not None:
-            json["name"] = self.name
+            json['name'] = self.name
         if self.accepts is not None:
-            json["accepts"] = [i for i in self.accepts]
+            json['accepts'] = self.accepts
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FileFilter:
         return cls(
-            name=str(json["name"]) if json.get("name", None) is not None else None,
-            accepts=[str(i) for i in json["accepts"]]
-            if json.get("accepts", None) is not None
-            else None,
+            name=None if json.get('name') is None else str(json['name']),
+            accepts=[str(i) for i in json.get('accepts', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FileFilter | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1448,35 +1673,37 @@ class FileHandler:
     #: other enums below.
     launch_type: str
 
-    icons: typing.Optional[typing.List[ImageResource]] = None
+    icons: list[ImageResource] = field(default_factory=list)
 
     #: Mimic a map, name is the key, accepts is the value.
-    accepts: typing.Optional[typing.List[FileFilter]] = None
+    accepts: list[FileFilter] = field(default_factory=list)
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["action"] = self.action
-        json["name"] = self.name
-        json["launchType"] = self.launch_type
+        json: T_JSON_DICT = {}
+        json['action'] = self.action
+        json['name'] = self.name
+        json['launchType'] = self.launch_type
         if self.icons is not None:
-            json["icons"] = [i.to_json() for i in self.icons]
+            json['icons'] = [i.to_json() for i in self.icons]
         if self.accepts is not None:
-            json["accepts"] = [i.to_json() for i in self.accepts]
+            json['accepts'] = [i.to_json() for i in self.accepts]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FileHandler:
         return cls(
-            action=str(json["action"]),
-            name=str(json["name"]),
-            launch_type=str(json["launchType"]),
-            icons=[ImageResource.from_json(i) for i in json["icons"]]
-            if json.get("icons", None) is not None
-            else None,
-            accepts=[FileFilter.from_json(i) for i in json["accepts"]]
-            if json.get("accepts", None) is not None
-            else None,
+            action=str(json['action']),
+            name=str(json['name']),
+            launch_type=str(json['launchType']),
+            icons=[ImageResource.from_json(i) for i in json.get('icons', [])],
+            accepts=[FileFilter.from_json(i) for i in json.get('accepts', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FileHandler | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1489,26 +1716,32 @@ class ImageResource:
     #: consistency.
     url: str
 
-    sizes: typing.Optional[str] = None
+    sizes: str | None = None
 
-    type_: typing.Optional[str] = None
+    type_: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["url"] = self.url
+        json: T_JSON_DICT = {}
+        json['url'] = self.url
         if self.sizes is not None:
-            json["sizes"] = self.sizes
+            json['sizes'] = self.sizes
         if self.type_ is not None:
-            json["type"] = self.type_
+            json['type'] = self.type_
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ImageResource:
         return cls(
-            url=str(json["url"]),
-            sizes=str(json["sizes"]) if json.get("sizes", None) is not None else None,
-            type_=str(json["type"]) if json.get("type", None) is not None else None,
+            url=str(json['url']),
+            sizes=None if json.get('sizes') is None else str(json['sizes']),
+            type_=None if json.get('type') is None else str(json['type']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ImageResource | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1516,15 +1749,21 @@ class LaunchHandler:
     client_mode: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["clientMode"] = self.client_mode
+        json: T_JSON_DICT = {}
+        json['clientMode'] = self.client_mode
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> LaunchHandler:
         return cls(
-            client_mode=str(json["clientMode"]),
+            client_mode=str(json['clientMode']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> LaunchHandler | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1534,38 +1773,50 @@ class ProtocolHandler:
     url: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["protocol"] = self.protocol
-        json["url"] = self.url
+        json: T_JSON_DICT = {}
+        json['protocol'] = self.protocol
+        json['url'] = self.url
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ProtocolHandler:
         return cls(
-            protocol=str(json["protocol"]),
-            url=str(json["url"]),
+            protocol=str(json['protocol']),
+            url=str(json['url']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ProtocolHandler | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
 class RelatedApplication:
     url: str
 
-    id_: typing.Optional[str] = None
+    id_: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["url"] = self.url
+        json: T_JSON_DICT = {}
+        json['url'] = self.url
         if self.id_ is not None:
-            json["id"] = self.id_
+            json['id'] = self.id_
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> RelatedApplication:
         return cls(
-            url=str(json["url"]),
-            id_=str(json["id"]) if json.get("id", None) is not None else None,
+            url=str(json['url']),
+            id_=None if json.get('id') is None else str(json['id']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> RelatedApplication | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1577,17 +1828,23 @@ class ScopeExtension:
     has_origin_wildcard: bool
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["origin"] = self.origin
-        json["hasOriginWildcard"] = self.has_origin_wildcard
+        json: T_JSON_DICT = {}
+        json['origin'] = self.origin
+        json['hasOriginWildcard'] = self.has_origin_wildcard
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ScopeExtension:
         return cls(
-            origin=str(json["origin"]),
-            has_origin_wildcard=bool(json["hasOriginWildcard"]),
+            origin=str(json['origin']),
+            has_origin_wildcard=bool(json['hasOriginWildcard']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ScopeExtension | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1596,23 +1853,29 @@ class Screenshot:
 
     form_factor: str
 
-    label: typing.Optional[str] = None
+    label: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["image"] = self.image.to_json()
-        json["formFactor"] = self.form_factor
+        json: T_JSON_DICT = {}
+        json['image'] = self.image.to_json()
+        json['formFactor'] = self.form_factor
         if self.label is not None:
-            json["label"] = self.label
+            json['label'] = self.label
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Screenshot:
         return cls(
-            image=ImageResource.from_json(json["image"]),
-            form_factor=str(json["formFactor"]),
-            label=str(json["label"]) if json.get("label", None) is not None else None,
+            image=ImageResource.from_json(json['image']),
+            form_factor=str(json['formFactor']),
+            label=None if json.get('label') is None else str(json['label']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Screenshot | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1624,42 +1887,46 @@ class ShareTarget:
     enctype: str
 
     #: Embed the ShareTargetParams
-    title: typing.Optional[str] = None
+    title: str | None = None
 
-    text: typing.Optional[str] = None
+    text: str | None = None
 
-    url: typing.Optional[str] = None
+    url: str | None = None
 
-    files: typing.Optional[typing.List[FileFilter]] = None
+    files: list[FileFilter] = field(default_factory=list)
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["action"] = self.action
-        json["method"] = self.method
-        json["enctype"] = self.enctype
+        json: T_JSON_DICT = {}
+        json['action'] = self.action
+        json['method'] = self.method
+        json['enctype'] = self.enctype
         if self.title is not None:
-            json["title"] = self.title
+            json['title'] = self.title
         if self.text is not None:
-            json["text"] = self.text
+            json['text'] = self.text
         if self.url is not None:
-            json["url"] = self.url
+            json['url'] = self.url
         if self.files is not None:
-            json["files"] = [i.to_json() for i in self.files]
+            json['files'] = [i.to_json() for i in self.files]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ShareTarget:
         return cls(
-            action=str(json["action"]),
-            method=str(json["method"]),
-            enctype=str(json["enctype"]),
-            title=str(json["title"]) if json.get("title", None) is not None else None,
-            text=str(json["text"]) if json.get("text", None) is not None else None,
-            url=str(json["url"]) if json.get("url", None) is not None else None,
-            files=[FileFilter.from_json(i) for i in json["files"]]
-            if json.get("files", None) is not None
-            else None,
+            action=str(json['action']),
+            method=str(json['method']),
+            enctype=str(json['enctype']),
+            title=None if json.get('title') is None else str(json['title']),
+            text=None if json.get('text') is None else str(json['text']),
+            url=None if json.get('url') is None else str(json['url']),
+            files=[FileFilter.from_json(i) for i in json.get('files', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ShareTarget | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -1669,198 +1936,168 @@ class Shortcut:
     url: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
-        json["url"] = self.url
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
+        json['url'] = self.url
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Shortcut:
         return cls(
-            name=str(json["name"]),
-            url=str(json["url"]),
+            name=str(json['name']),
+            url=str(json['url']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Shortcut | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
 class WebAppManifest:
-    background_color: typing.Optional[str] = None
+    background_color: str | None = None
 
     #: The extra description provided by the manifest.
-    description: typing.Optional[str] = None
+    description: str | None = None
 
-    dir_: typing.Optional[str] = None
+    dir_: str | None = None
 
-    display: typing.Optional[str] = None
+    display: str | None = None
 
     #: The overrided display mode controlled by the user.
-    display_overrides: typing.Optional[typing.List[str]] = None
+    display_overrides: list[str] = field(default_factory=list)
 
     #: The handlers to open files.
-    file_handlers: typing.Optional[typing.List[FileHandler]] = None
+    file_handlers: list[FileHandler] = field(default_factory=list)
 
-    icons: typing.Optional[typing.List[ImageResource]] = None
+    icons: list[ImageResource] = field(default_factory=list)
 
-    id_: typing.Optional[str] = None
+    id_: str | None = None
 
-    lang: typing.Optional[str] = None
+    lang: str | None = None
 
     #: TODO(crbug.com/1231886): This field is non-standard and part of a Chrome
     #: experiment. See:
     #: https://github.com/WICG/web-app-launch/blob/main/launch_handler.md
-    launch_handler: typing.Optional[LaunchHandler] = None
+    launch_handler: LaunchHandler | None = None
 
-    name: typing.Optional[str] = None
+    name: str | None = None
 
-    orientation: typing.Optional[str] = None
+    orientation: str | None = None
 
-    prefer_related_applications: typing.Optional[bool] = None
+    prefer_related_applications: bool | None = None
 
     #: The handlers to open protocols.
-    protocol_handlers: typing.Optional[typing.List[ProtocolHandler]] = None
+    protocol_handlers: list[ProtocolHandler] = field(default_factory=list)
 
-    related_applications: typing.Optional[typing.List[RelatedApplication]] = None
+    related_applications: list[RelatedApplication] = field(default_factory=list)
 
-    scope: typing.Optional[str] = None
+    scope: str | None = None
 
     #: Non-standard, see
     #: https://github.com/WICG/manifest-incubations/blob/gh-pages/scope_extensions-explainer.md
-    scope_extensions: typing.Optional[typing.List[ScopeExtension]] = None
+    scope_extensions: list[ScopeExtension] = field(default_factory=list)
 
     #: The screenshots used by chromium.
-    screenshots: typing.Optional[typing.List[Screenshot]] = None
+    screenshots: list[Screenshot] = field(default_factory=list)
 
-    share_target: typing.Optional[ShareTarget] = None
+    share_target: ShareTarget | None = None
 
-    short_name: typing.Optional[str] = None
+    short_name: str | None = None
 
-    shortcuts: typing.Optional[typing.List[Shortcut]] = None
+    shortcuts: list[Shortcut] = field(default_factory=list)
 
-    start_url: typing.Optional[str] = None
+    start_url: str | None = None
 
-    theme_color: typing.Optional[str] = None
+    theme_color: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
+        json: T_JSON_DICT = {}
         if self.background_color is not None:
-            json["backgroundColor"] = self.background_color
+            json['backgroundColor'] = self.background_color
         if self.description is not None:
-            json["description"] = self.description
+            json['description'] = self.description
         if self.dir_ is not None:
-            json["dir"] = self.dir_
+            json['dir'] = self.dir_
         if self.display is not None:
-            json["display"] = self.display
+            json['display'] = self.display
         if self.display_overrides is not None:
-            json["displayOverrides"] = [i for i in self.display_overrides]
+            json['displayOverrides'] = self.display_overrides
         if self.file_handlers is not None:
-            json["fileHandlers"] = [i.to_json() for i in self.file_handlers]
+            json['fileHandlers'] = [i.to_json() for i in self.file_handlers]
         if self.icons is not None:
-            json["icons"] = [i.to_json() for i in self.icons]
+            json['icons'] = [i.to_json() for i in self.icons]
         if self.id_ is not None:
-            json["id"] = self.id_
+            json['id'] = self.id_
         if self.lang is not None:
-            json["lang"] = self.lang
+            json['lang'] = self.lang
         if self.launch_handler is not None:
-            json["launchHandler"] = self.launch_handler.to_json()
+            json['launchHandler'] = self.launch_handler.to_json()
         if self.name is not None:
-            json["name"] = self.name
+            json['name'] = self.name
         if self.orientation is not None:
-            json["orientation"] = self.orientation
+            json['orientation'] = self.orientation
         if self.prefer_related_applications is not None:
-            json["preferRelatedApplications"] = self.prefer_related_applications
+            json['preferRelatedApplications'] = self.prefer_related_applications
         if self.protocol_handlers is not None:
-            json["protocolHandlers"] = [i.to_json() for i in self.protocol_handlers]
+            json['protocolHandlers'] = [i.to_json() for i in self.protocol_handlers]
         if self.related_applications is not None:
-            json["relatedApplications"] = [
-                i.to_json() for i in self.related_applications
-            ]
+            json['relatedApplications'] = [i.to_json() for i in self.related_applications]
         if self.scope is not None:
-            json["scope"] = self.scope
+            json['scope'] = self.scope
         if self.scope_extensions is not None:
-            json["scopeExtensions"] = [i.to_json() for i in self.scope_extensions]
+            json['scopeExtensions'] = [i.to_json() for i in self.scope_extensions]
         if self.screenshots is not None:
-            json["screenshots"] = [i.to_json() for i in self.screenshots]
+            json['screenshots'] = [i.to_json() for i in self.screenshots]
         if self.share_target is not None:
-            json["shareTarget"] = self.share_target.to_json()
+            json['shareTarget'] = self.share_target.to_json()
         if self.short_name is not None:
-            json["shortName"] = self.short_name
+            json['shortName'] = self.short_name
         if self.shortcuts is not None:
-            json["shortcuts"] = [i.to_json() for i in self.shortcuts]
+            json['shortcuts'] = [i.to_json() for i in self.shortcuts]
         if self.start_url is not None:
-            json["startUrl"] = self.start_url
+            json['startUrl'] = self.start_url
         if self.theme_color is not None:
-            json["themeColor"] = self.theme_color
+            json['themeColor'] = self.theme_color
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> WebAppManifest:
         return cls(
-            background_color=str(json["backgroundColor"])
-            if json.get("backgroundColor", None) is not None
-            else None,
-            description=str(json["description"])
-            if json.get("description", None) is not None
-            else None,
-            dir_=str(json["dir"]) if json.get("dir", None) is not None else None,
-            display=str(json["display"])
-            if json.get("display", None) is not None
-            else None,
-            display_overrides=[str(i) for i in json["displayOverrides"]]
-            if json.get("displayOverrides", None) is not None
-            else None,
-            file_handlers=[FileHandler.from_json(i) for i in json["fileHandlers"]]
-            if json.get("fileHandlers", None) is not None
-            else None,
-            icons=[ImageResource.from_json(i) for i in json["icons"]]
-            if json.get("icons", None) is not None
-            else None,
-            id_=str(json["id"]) if json.get("id", None) is not None else None,
-            lang=str(json["lang"]) if json.get("lang", None) is not None else None,
-            launch_handler=LaunchHandler.from_json(json["launchHandler"])
-            if json.get("launchHandler", None) is not None
-            else None,
-            name=str(json["name"]) if json.get("name", None) is not None else None,
-            orientation=str(json["orientation"])
-            if json.get("orientation", None) is not None
-            else None,
-            prefer_related_applications=bool(json["preferRelatedApplications"])
-            if json.get("preferRelatedApplications", None) is not None
-            else None,
-            protocol_handlers=[
-                ProtocolHandler.from_json(i) for i in json["protocolHandlers"]
-            ]
-            if json.get("protocolHandlers", None) is not None
-            else None,
-            related_applications=[
-                RelatedApplication.from_json(i) for i in json["relatedApplications"]
-            ]
-            if json.get("relatedApplications", None) is not None
-            else None,
-            scope=str(json["scope"]) if json.get("scope", None) is not None else None,
-            scope_extensions=[
-                ScopeExtension.from_json(i) for i in json["scopeExtensions"]
-            ]
-            if json.get("scopeExtensions", None) is not None
-            else None,
-            screenshots=[Screenshot.from_json(i) for i in json["screenshots"]]
-            if json.get("screenshots", None) is not None
-            else None,
-            share_target=ShareTarget.from_json(json["shareTarget"])
-            if json.get("shareTarget", None) is not None
-            else None,
-            short_name=str(json["shortName"])
-            if json.get("shortName", None) is not None
-            else None,
-            shortcuts=[Shortcut.from_json(i) for i in json["shortcuts"]]
-            if json.get("shortcuts", None) is not None
-            else None,
-            start_url=str(json["startUrl"])
-            if json.get("startUrl", None) is not None
-            else None,
-            theme_color=str(json["themeColor"])
-            if json.get("themeColor", None) is not None
-            else None,
+            background_color=None if json.get('backgroundColor') is None else str(json['backgroundColor']),
+            description=None if json.get('description') is None else str(json['description']),
+            dir_=None if json.get('dir') is None else str(json['dir']),
+            display=None if json.get('display') is None else str(json['display']),
+            display_overrides=[str(i) for i in json.get('displayOverrides', [])],
+            file_handlers=[FileHandler.from_json(i) for i in json.get('fileHandlers', [])],
+            icons=[ImageResource.from_json(i) for i in json.get('icons', [])],
+            id_=None if json.get('id') is None else str(json['id']),
+            lang=None if json.get('lang') is None else str(json['lang']),
+            launch_handler=LaunchHandler.from_json_optional(json.get('launchHandler')),
+            name=None if json.get('name') is None else str(json['name']),
+            orientation=None if json.get('orientation') is None else str(json['orientation']),
+            prefer_related_applications=None
+            if json.get('preferRelatedApplications') is None
+            else bool(json['preferRelatedApplications']),
+            protocol_handlers=[ProtocolHandler.from_json(i) for i in json.get('protocolHandlers', [])],
+            related_applications=[RelatedApplication.from_json(i) for i in json.get('relatedApplications', [])],
+            scope=None if json.get('scope') is None else str(json['scope']),
+            scope_extensions=[ScopeExtension.from_json(i) for i in json.get('scopeExtensions', [])],
+            screenshots=[Screenshot.from_json(i) for i in json.get('screenshots', [])],
+            share_target=ShareTarget.from_json_optional(json.get('shareTarget')),
+            short_name=None if json.get('shortName') is None else str(json['shortName']),
+            shortcuts=[Shortcut.from_json(i) for i in json.get('shortcuts', [])],
+            start_url=None if json.get('startUrl') is None else str(json['startUrl']),
+            theme_color=None if json.get('themeColor') is None else str(json['themeColor']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> WebAppManifest | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class NavigationType(enum.Enum):
@@ -1868,8 +2105,8 @@ class NavigationType(enum.Enum):
     The type of a frameNavigated event.
     """
 
-    NAVIGATION = "Navigation"
-    BACK_FORWARD_CACHE_RESTORE = "BackForwardCacheRestore"
+    NAVIGATION = 'Navigation'
+    BACK_FORWARD_CACHE_RESTORE = 'BackForwardCacheRestore'
 
     def to_json(self) -> str:
         return self.value
@@ -1878,183 +2115,165 @@ class NavigationType(enum.Enum):
     def from_json(cls, json: str) -> NavigationType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> NavigationType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class BackForwardCacheNotRestoredReason(enum.Enum):
     """
     List of not restored reasons for back-forward cache.
     """
 
-    NOT_PRIMARY_MAIN_FRAME = "NotPrimaryMainFrame"
-    BACK_FORWARD_CACHE_DISABLED = "BackForwardCacheDisabled"
-    RELATED_ACTIVE_CONTENTS_EXIST = "RelatedActiveContentsExist"
-    HTTP_STATUS_NOT_OK = "HTTPStatusNotOK"
-    SCHEME_NOT_HTTP_OR_HTTPS = "SchemeNotHTTPOrHTTPS"
-    LOADING = "Loading"
-    WAS_GRANTED_MEDIA_ACCESS = "WasGrantedMediaAccess"
-    DISABLE_FOR_RENDER_FRAME_HOST_CALLED = "DisableForRenderFrameHostCalled"
-    DOMAIN_NOT_ALLOWED = "DomainNotAllowed"
-    HTTP_METHOD_NOT_GET = "HTTPMethodNotGET"
-    SUBFRAME_IS_NAVIGATING = "SubframeIsNavigating"
-    TIMEOUT = "Timeout"
-    CACHE_LIMIT = "CacheLimit"
-    JAVA_SCRIPT_EXECUTION = "JavaScriptExecution"
-    RENDERER_PROCESS_KILLED = "RendererProcessKilled"
-    RENDERER_PROCESS_CRASHED = "RendererProcessCrashed"
-    SCHEDULER_TRACKED_FEATURE_USED = "SchedulerTrackedFeatureUsed"
-    CONFLICTING_BROWSING_INSTANCE = "ConflictingBrowsingInstance"
-    CACHE_FLUSHED = "CacheFlushed"
-    SERVICE_WORKER_VERSION_ACTIVATION = "ServiceWorkerVersionActivation"
-    SESSION_RESTORED = "SessionRestored"
-    SERVICE_WORKER_POST_MESSAGE = "ServiceWorkerPostMessage"
-    ENTERED_BACK_FORWARD_CACHE_BEFORE_SERVICE_WORKER_HOST_ADDED = (
-        "EnteredBackForwardCacheBeforeServiceWorkerHostAdded"
-    )
-    RENDER_FRAME_HOST_REUSED_SAME_SITE = "RenderFrameHostReused_SameSite"
-    RENDER_FRAME_HOST_REUSED_CROSS_SITE = "RenderFrameHostReused_CrossSite"
-    SERVICE_WORKER_CLAIM = "ServiceWorkerClaim"
-    IGNORE_EVENT_AND_EVICT = "IgnoreEventAndEvict"
-    HAVE_INNER_CONTENTS = "HaveInnerContents"
-    TIMEOUT_PUTTING_IN_CACHE = "TimeoutPuttingInCache"
-    BACK_FORWARD_CACHE_DISABLED_BY_LOW_MEMORY = "BackForwardCacheDisabledByLowMemory"
-    BACK_FORWARD_CACHE_DISABLED_BY_COMMAND_LINE = (
-        "BackForwardCacheDisabledByCommandLine"
-    )
-    NETWORK_REQUEST_DATAPIPE_DRAINED_AS_BYTES_CONSUMER = (
-        "NetworkRequestDatapipeDrainedAsBytesConsumer"
-    )
-    NETWORK_REQUEST_REDIRECTED = "NetworkRequestRedirected"
-    NETWORK_REQUEST_TIMEOUT = "NetworkRequestTimeout"
-    NETWORK_EXCEEDS_BUFFER_LIMIT = "NetworkExceedsBufferLimit"
-    NAVIGATION_CANCELLED_WHILE_RESTORING = "NavigationCancelledWhileRestoring"
-    NOT_MOST_RECENT_NAVIGATION_ENTRY = "NotMostRecentNavigationEntry"
-    BACK_FORWARD_CACHE_DISABLED_FOR_PRERENDER = "BackForwardCacheDisabledForPrerender"
-    USER_AGENT_OVERRIDE_DIFFERS = "UserAgentOverrideDiffers"
-    FOREGROUND_CACHE_LIMIT = "ForegroundCacheLimit"
-    BROWSING_INSTANCE_NOT_SWAPPED = "BrowsingInstanceNotSwapped"
-    BACK_FORWARD_CACHE_DISABLED_FOR_DELEGATE = "BackForwardCacheDisabledForDelegate"
-    UNLOAD_HANDLER_EXISTS_IN_MAIN_FRAME = "UnloadHandlerExistsInMainFrame"
-    UNLOAD_HANDLER_EXISTS_IN_SUB_FRAME = "UnloadHandlerExistsInSubFrame"
-    SERVICE_WORKER_UNREGISTRATION = "ServiceWorkerUnregistration"
-    CACHE_CONTROL_NO_STORE = "CacheControlNoStore"
-    CACHE_CONTROL_NO_STORE_COOKIE_MODIFIED = "CacheControlNoStoreCookieModified"
-    CACHE_CONTROL_NO_STORE_HTTP_ONLY_COOKIE_MODIFIED = (
-        "CacheControlNoStoreHTTPOnlyCookieModified"
-    )
-    NO_RESPONSE_HEAD = "NoResponseHead"
-    UNKNOWN = "Unknown"
-    ACTIVATION_NAVIGATIONS_DISALLOWED_FOR_BUG1234857 = (
-        "ActivationNavigationsDisallowedForBug1234857"
-    )
-    ERROR_DOCUMENT = "ErrorDocument"
-    FENCED_FRAMES_EMBEDDER = "FencedFramesEmbedder"
-    COOKIE_DISABLED = "CookieDisabled"
-    HTTP_AUTH_REQUIRED = "HTTPAuthRequired"
-    COOKIE_FLUSHED = "CookieFlushed"
-    BROADCAST_CHANNEL_ON_MESSAGE = "BroadcastChannelOnMessage"
-    WEB_VIEW_SETTINGS_CHANGED = "WebViewSettingsChanged"
-    WEB_VIEW_JAVA_SCRIPT_OBJECT_CHANGED = "WebViewJavaScriptObjectChanged"
-    WEB_VIEW_MESSAGE_LISTENER_INJECTED = "WebViewMessageListenerInjected"
-    WEB_VIEW_SAFE_BROWSING_ALLOWLIST_CHANGED = "WebViewSafeBrowsingAllowlistChanged"
-    WEB_VIEW_DOCUMENT_START_JAVASCRIPT_CHANGED = "WebViewDocumentStartJavascriptChanged"
-    WEB_SOCKET = "WebSocket"
-    WEB_TRANSPORT = "WebTransport"
-    WEB_RTC = "WebRTC"
-    MAIN_RESOURCE_HAS_CACHE_CONTROL_NO_STORE = "MainResourceHasCacheControlNoStore"
-    MAIN_RESOURCE_HAS_CACHE_CONTROL_NO_CACHE = "MainResourceHasCacheControlNoCache"
-    SUBRESOURCE_HAS_CACHE_CONTROL_NO_STORE = "SubresourceHasCacheControlNoStore"
-    SUBRESOURCE_HAS_CACHE_CONTROL_NO_CACHE = "SubresourceHasCacheControlNoCache"
-    CONTAINS_PLUGINS = "ContainsPlugins"
-    DOCUMENT_LOADED = "DocumentLoaded"
-    OUTSTANDING_NETWORK_REQUEST_OTHERS = "OutstandingNetworkRequestOthers"
-    REQUESTED_MIDI_PERMISSION = "RequestedMIDIPermission"
-    REQUESTED_AUDIO_CAPTURE_PERMISSION = "RequestedAudioCapturePermission"
-    REQUESTED_VIDEO_CAPTURE_PERMISSION = "RequestedVideoCapturePermission"
-    REQUESTED_BACK_FORWARD_CACHE_BLOCKED_SENSORS = (
-        "RequestedBackForwardCacheBlockedSensors"
-    )
-    REQUESTED_BACKGROUND_WORK_PERMISSION = "RequestedBackgroundWorkPermission"
-    BROADCAST_CHANNEL = "BroadcastChannel"
-    WEB_XR = "WebXR"
-    SHARED_WORKER = "SharedWorker"
-    SHARED_WORKER_MESSAGE = "SharedWorkerMessage"
-    WEB_LOCKS = "WebLocks"
-    WEB_HID = "WebHID"
-    WEB_SHARE = "WebShare"
-    REQUESTED_STORAGE_ACCESS_GRANT = "RequestedStorageAccessGrant"
-    WEB_NFC = "WebNfc"
-    OUTSTANDING_NETWORK_REQUEST_FETCH = "OutstandingNetworkRequestFetch"
-    OUTSTANDING_NETWORK_REQUEST_XHR = "OutstandingNetworkRequestXHR"
-    APP_BANNER = "AppBanner"
-    PRINTING = "Printing"
-    WEB_DATABASE = "WebDatabase"
-    PICTURE_IN_PICTURE = "PictureInPicture"
-    SPEECH_RECOGNIZER = "SpeechRecognizer"
-    IDLE_MANAGER = "IdleManager"
-    PAYMENT_MANAGER = "PaymentManager"
-    SPEECH_SYNTHESIS = "SpeechSynthesis"
-    KEYBOARD_LOCK = "KeyboardLock"
-    WEB_OTP_SERVICE = "WebOTPService"
-    OUTSTANDING_NETWORK_REQUEST_DIRECT_SOCKET = "OutstandingNetworkRequestDirectSocket"
-    INJECTED_JAVASCRIPT = "InjectedJavascript"
-    INJECTED_STYLE_SHEET = "InjectedStyleSheet"
-    KEEPALIVE_REQUEST = "KeepaliveRequest"
-    INDEXED_DB_EVENT = "IndexedDBEvent"
-    DUMMY = "Dummy"
-    JS_NETWORK_REQUEST_RECEIVED_CACHE_CONTROL_NO_STORE_RESOURCE = (
-        "JsNetworkRequestReceivedCacheControlNoStoreResource"
-    )
-    WEB_RTC_STICKY = "WebRTCSticky"
-    WEB_TRANSPORT_STICKY = "WebTransportSticky"
-    WEB_SOCKET_STICKY = "WebSocketSticky"
-    SMART_CARD = "SmartCard"
-    LIVE_MEDIA_STREAM_TRACK = "LiveMediaStreamTrack"
-    UNLOAD_HANDLER = "UnloadHandler"
-    PARSER_ABORTED = "ParserAborted"
-    CONTENT_SECURITY_HANDLER = "ContentSecurityHandler"
-    CONTENT_WEB_AUTHENTICATION_API = "ContentWebAuthenticationAPI"
-    CONTENT_FILE_CHOOSER = "ContentFileChooser"
-    CONTENT_SERIAL = "ContentSerial"
-    CONTENT_FILE_SYSTEM_ACCESS = "ContentFileSystemAccess"
-    CONTENT_MEDIA_DEVICES_DISPATCHER_HOST = "ContentMediaDevicesDispatcherHost"
-    CONTENT_WEB_BLUETOOTH = "ContentWebBluetooth"
-    CONTENT_WEB_USB = "ContentWebUSB"
-    CONTENT_MEDIA_SESSION_SERVICE = "ContentMediaSessionService"
-    CONTENT_SCREEN_READER = "ContentScreenReader"
-    CONTENT_DISCARDED = "ContentDiscarded"
-    EMBEDDER_POPUP_BLOCKER_TAB_HELPER = "EmbedderPopupBlockerTabHelper"
-    EMBEDDER_SAFE_BROWSING_TRIGGERED_POPUP_BLOCKER = (
-        "EmbedderSafeBrowsingTriggeredPopupBlocker"
-    )
-    EMBEDDER_SAFE_BROWSING_THREAT_DETAILS = "EmbedderSafeBrowsingThreatDetails"
-    EMBEDDER_APP_BANNER_MANAGER = "EmbedderAppBannerManager"
-    EMBEDDER_DOM_DISTILLER_VIEWER_SOURCE = "EmbedderDomDistillerViewerSource"
-    EMBEDDER_DOM_DISTILLER_SELF_DELETING_REQUEST_DELEGATE = (
-        "EmbedderDomDistillerSelfDeletingRequestDelegate"
-    )
-    EMBEDDER_OOM_INTERVENTION_TAB_HELPER = "EmbedderOomInterventionTabHelper"
-    EMBEDDER_OFFLINE_PAGE = "EmbedderOfflinePage"
+    NOT_PRIMARY_MAIN_FRAME = 'NotPrimaryMainFrame'
+    BACK_FORWARD_CACHE_DISABLED = 'BackForwardCacheDisabled'
+    RELATED_ACTIVE_CONTENTS_EXIST = 'RelatedActiveContentsExist'
+    HTTP_STATUS_NOT_OK = 'HTTPStatusNotOK'
+    SCHEME_NOT_HTTP_OR_HTTPS = 'SchemeNotHTTPOrHTTPS'
+    LOADING = 'Loading'
+    WAS_GRANTED_MEDIA_ACCESS = 'WasGrantedMediaAccess'
+    DISABLE_FOR_RENDER_FRAME_HOST_CALLED = 'DisableForRenderFrameHostCalled'
+    DOMAIN_NOT_ALLOWED = 'DomainNotAllowed'
+    HTTP_METHOD_NOT_GET = 'HTTPMethodNotGET'
+    SUBFRAME_IS_NAVIGATING = 'SubframeIsNavigating'
+    TIMEOUT = 'Timeout'
+    CACHE_LIMIT = 'CacheLimit'
+    JAVA_SCRIPT_EXECUTION = 'JavaScriptExecution'
+    RENDERER_PROCESS_KILLED = 'RendererProcessKilled'
+    RENDERER_PROCESS_CRASHED = 'RendererProcessCrashed'
+    SCHEDULER_TRACKED_FEATURE_USED = 'SchedulerTrackedFeatureUsed'
+    CONFLICTING_BROWSING_INSTANCE = 'ConflictingBrowsingInstance'
+    CACHE_FLUSHED = 'CacheFlushed'
+    SERVICE_WORKER_VERSION_ACTIVATION = 'ServiceWorkerVersionActivation'
+    SESSION_RESTORED = 'SessionRestored'
+    SERVICE_WORKER_POST_MESSAGE = 'ServiceWorkerPostMessage'
+    ENTERED_BACK_FORWARD_CACHE_BEFORE_SERVICE_WORKER_HOST_ADDED = 'EnteredBackForwardCacheBeforeServiceWorkerHostAdded'
+    RENDER_FRAME_HOST_REUSED_SAME_SITE = 'RenderFrameHostReused_SameSite'
+    RENDER_FRAME_HOST_REUSED_CROSS_SITE = 'RenderFrameHostReused_CrossSite'
+    SERVICE_WORKER_CLAIM = 'ServiceWorkerClaim'
+    IGNORE_EVENT_AND_EVICT = 'IgnoreEventAndEvict'
+    HAVE_INNER_CONTENTS = 'HaveInnerContents'
+    TIMEOUT_PUTTING_IN_CACHE = 'TimeoutPuttingInCache'
+    BACK_FORWARD_CACHE_DISABLED_BY_LOW_MEMORY = 'BackForwardCacheDisabledByLowMemory'
+    BACK_FORWARD_CACHE_DISABLED_BY_COMMAND_LINE = 'BackForwardCacheDisabledByCommandLine'
+    NETWORK_REQUEST_DATAPIPE_DRAINED_AS_BYTES_CONSUMER = 'NetworkRequestDatapipeDrainedAsBytesConsumer'
+    NETWORK_REQUEST_REDIRECTED = 'NetworkRequestRedirected'
+    NETWORK_REQUEST_TIMEOUT = 'NetworkRequestTimeout'
+    NETWORK_EXCEEDS_BUFFER_LIMIT = 'NetworkExceedsBufferLimit'
+    NAVIGATION_CANCELLED_WHILE_RESTORING = 'NavigationCancelledWhileRestoring'
+    NOT_MOST_RECENT_NAVIGATION_ENTRY = 'NotMostRecentNavigationEntry'
+    BACK_FORWARD_CACHE_DISABLED_FOR_PRERENDER = 'BackForwardCacheDisabledForPrerender'
+    USER_AGENT_OVERRIDE_DIFFERS = 'UserAgentOverrideDiffers'
+    FOREGROUND_CACHE_LIMIT = 'ForegroundCacheLimit'
+    BROWSING_INSTANCE_NOT_SWAPPED = 'BrowsingInstanceNotSwapped'
+    BACK_FORWARD_CACHE_DISABLED_FOR_DELEGATE = 'BackForwardCacheDisabledForDelegate'
+    UNLOAD_HANDLER_EXISTS_IN_MAIN_FRAME = 'UnloadHandlerExistsInMainFrame'
+    UNLOAD_HANDLER_EXISTS_IN_SUB_FRAME = 'UnloadHandlerExistsInSubFrame'
+    SERVICE_WORKER_UNREGISTRATION = 'ServiceWorkerUnregistration'
+    CACHE_CONTROL_NO_STORE = 'CacheControlNoStore'
+    CACHE_CONTROL_NO_STORE_COOKIE_MODIFIED = 'CacheControlNoStoreCookieModified'
+    CACHE_CONTROL_NO_STORE_HTTP_ONLY_COOKIE_MODIFIED = 'CacheControlNoStoreHTTPOnlyCookieModified'
+    NO_RESPONSE_HEAD = 'NoResponseHead'
+    UNKNOWN = 'Unknown'
+    ACTIVATION_NAVIGATIONS_DISALLOWED_FOR_BUG1234857 = 'ActivationNavigationsDisallowedForBug1234857'
+    ERROR_DOCUMENT = 'ErrorDocument'
+    FENCED_FRAMES_EMBEDDER = 'FencedFramesEmbedder'
+    COOKIE_DISABLED = 'CookieDisabled'
+    HTTP_AUTH_REQUIRED = 'HTTPAuthRequired'
+    COOKIE_FLUSHED = 'CookieFlushed'
+    BROADCAST_CHANNEL_ON_MESSAGE = 'BroadcastChannelOnMessage'
+    WEB_VIEW_SETTINGS_CHANGED = 'WebViewSettingsChanged'
+    WEB_VIEW_JAVA_SCRIPT_OBJECT_CHANGED = 'WebViewJavaScriptObjectChanged'
+    WEB_VIEW_MESSAGE_LISTENER_INJECTED = 'WebViewMessageListenerInjected'
+    WEB_VIEW_SAFE_BROWSING_ALLOWLIST_CHANGED = 'WebViewSafeBrowsingAllowlistChanged'
+    WEB_VIEW_DOCUMENT_START_JAVASCRIPT_CHANGED = 'WebViewDocumentStartJavascriptChanged'
+    WEB_SOCKET = 'WebSocket'
+    WEB_TRANSPORT = 'WebTransport'
+    WEB_RTC = 'WebRTC'
+    MAIN_RESOURCE_HAS_CACHE_CONTROL_NO_STORE = 'MainResourceHasCacheControlNoStore'
+    MAIN_RESOURCE_HAS_CACHE_CONTROL_NO_CACHE = 'MainResourceHasCacheControlNoCache'
+    SUBRESOURCE_HAS_CACHE_CONTROL_NO_STORE = 'SubresourceHasCacheControlNoStore'
+    SUBRESOURCE_HAS_CACHE_CONTROL_NO_CACHE = 'SubresourceHasCacheControlNoCache'
+    CONTAINS_PLUGINS = 'ContainsPlugins'
+    DOCUMENT_LOADED = 'DocumentLoaded'
+    OUTSTANDING_NETWORK_REQUEST_OTHERS = 'OutstandingNetworkRequestOthers'
+    REQUESTED_MIDI_PERMISSION = 'RequestedMIDIPermission'
+    REQUESTED_AUDIO_CAPTURE_PERMISSION = 'RequestedAudioCapturePermission'
+    REQUESTED_VIDEO_CAPTURE_PERMISSION = 'RequestedVideoCapturePermission'
+    REQUESTED_BACK_FORWARD_CACHE_BLOCKED_SENSORS = 'RequestedBackForwardCacheBlockedSensors'
+    REQUESTED_BACKGROUND_WORK_PERMISSION = 'RequestedBackgroundWorkPermission'
+    BROADCAST_CHANNEL = 'BroadcastChannel'
+    WEB_XR = 'WebXR'
+    SHARED_WORKER = 'SharedWorker'
+    SHARED_WORKER_MESSAGE = 'SharedWorkerMessage'
+    SHARED_WORKER_WITH_NO_ACTIVE_CLIENT = 'SharedWorkerWithNoActiveClient'
+    WEB_LOCKS = 'WebLocks'
+    WEB_HID = 'WebHID'
+    WEB_BLUETOOTH = 'WebBluetooth'
+    WEB_SHARE = 'WebShare'
+    REQUESTED_STORAGE_ACCESS_GRANT = 'RequestedStorageAccessGrant'
+    WEB_NFC = 'WebNfc'
+    OUTSTANDING_NETWORK_REQUEST_FETCH = 'OutstandingNetworkRequestFetch'
+    OUTSTANDING_NETWORK_REQUEST_XHR = 'OutstandingNetworkRequestXHR'
+    APP_BANNER = 'AppBanner'
+    PRINTING = 'Printing'
+    WEB_DATABASE = 'WebDatabase'
+    PICTURE_IN_PICTURE = 'PictureInPicture'
+    SPEECH_RECOGNIZER = 'SpeechRecognizer'
+    IDLE_MANAGER = 'IdleManager'
+    PAYMENT_MANAGER = 'PaymentManager'
+    SPEECH_SYNTHESIS = 'SpeechSynthesis'
+    KEYBOARD_LOCK = 'KeyboardLock'
+    WEB_OTP_SERVICE = 'WebOTPService'
+    OUTSTANDING_NETWORK_REQUEST_DIRECT_SOCKET = 'OutstandingNetworkRequestDirectSocket'
+    INJECTED_JAVASCRIPT = 'InjectedJavascript'
+    INJECTED_STYLE_SHEET = 'InjectedStyleSheet'
+    KEEPALIVE_REQUEST = 'KeepaliveRequest'
+    INDEXED_DB_EVENT = 'IndexedDBEvent'
+    DUMMY = 'Dummy'
+    JS_NETWORK_REQUEST_RECEIVED_CACHE_CONTROL_NO_STORE_RESOURCE = 'JsNetworkRequestReceivedCacheControlNoStoreResource'
+    WEB_RTC_USED_WITH_CCNS = 'WebRTCUsedWithCCNS'
+    WEB_TRANSPORT_USED_WITH_CCNS = 'WebTransportUsedWithCCNS'
+    WEB_SOCKET_USED_WITH_CCNS = 'WebSocketUsedWithCCNS'
+    SMART_CARD = 'SmartCard'
+    LIVE_MEDIA_STREAM_TRACK = 'LiveMediaStreamTrack'
+    UNLOAD_HANDLER = 'UnloadHandler'
+    PARSER_ABORTED = 'ParserAborted'
+    CONTENT_SECURITY_HANDLER = 'ContentSecurityHandler'
+    CONTENT_WEB_AUTHENTICATION_API = 'ContentWebAuthenticationAPI'
+    CONTENT_FILE_CHOOSER = 'ContentFileChooser'
+    CONTENT_SERIAL = 'ContentSerial'
+    CONTENT_FILE_SYSTEM_ACCESS = 'ContentFileSystemAccess'
+    CONTENT_MEDIA_DEVICES_DISPATCHER_HOST = 'ContentMediaDevicesDispatcherHost'
+    CONTENT_WEB_BLUETOOTH = 'ContentWebBluetooth'
+    CONTENT_WEB_USB = 'ContentWebUSB'
+    CONTENT_MEDIA_SESSION_SERVICE = 'ContentMediaSessionService'
+    CONTENT_SCREEN_READER = 'ContentScreenReader'
+    CONTENT_DISCARDED = 'ContentDiscarded'
+    EMBEDDER_POPUP_BLOCKER_TAB_HELPER = 'EmbedderPopupBlockerTabHelper'
+    EMBEDDER_SAFE_BROWSING_TRIGGERED_POPUP_BLOCKER = 'EmbedderSafeBrowsingTriggeredPopupBlocker'
+    EMBEDDER_SAFE_BROWSING_THREAT_DETAILS = 'EmbedderSafeBrowsingThreatDetails'
+    EMBEDDER_APP_BANNER_MANAGER = 'EmbedderAppBannerManager'
+    EMBEDDER_DOM_DISTILLER_VIEWER_SOURCE = 'EmbedderDomDistillerViewerSource'
+    EMBEDDER_DOM_DISTILLER_SELF_DELETING_REQUEST_DELEGATE = 'EmbedderDomDistillerSelfDeletingRequestDelegate'
+    EMBEDDER_OOM_INTERVENTION_TAB_HELPER = 'EmbedderOomInterventionTabHelper'
+    EMBEDDER_OFFLINE_PAGE = 'EmbedderOfflinePage'
     EMBEDDER_CHROME_PASSWORD_MANAGER_CLIENT_BIND_CREDENTIAL_MANAGER = (
-        "EmbedderChromePasswordManagerClientBindCredentialManager"
+        'EmbedderChromePasswordManagerClientBindCredentialManager'
     )
-    EMBEDDER_PERMISSION_REQUEST_MANAGER = "EmbedderPermissionRequestManager"
-    EMBEDDER_MODAL_DIALOG = "EmbedderModalDialog"
-    EMBEDDER_EXTENSIONS = "EmbedderExtensions"
-    EMBEDDER_EXTENSION_MESSAGING = "EmbedderExtensionMessaging"
-    EMBEDDER_EXTENSION_MESSAGING_FOR_OPEN_PORT = "EmbedderExtensionMessagingForOpenPort"
-    EMBEDDER_EXTENSION_SENT_MESSAGE_TO_CACHED_FRAME = (
-        "EmbedderExtensionSentMessageToCachedFrame"
-    )
-    REQUESTED_BY_WEB_VIEW_CLIENT = "RequestedByWebViewClient"
-    POST_MESSAGE_BY_WEB_VIEW_CLIENT = "PostMessageByWebViewClient"
-    CACHE_CONTROL_NO_STORE_DEVICE_BOUND_SESSION_TERMINATED = (
-        "CacheControlNoStoreDeviceBoundSessionTerminated"
-    )
-    CACHE_LIMIT_PRUNED_ON_MODERATE_MEMORY_PRESSURE = (
-        "CacheLimitPrunedOnModerateMemoryPressure"
-    )
-    CACHE_LIMIT_PRUNED_ON_CRITICAL_MEMORY_PRESSURE = (
-        "CacheLimitPrunedOnCriticalMemoryPressure"
-    )
+    EMBEDDER_PERMISSION_REQUEST_MANAGER = 'EmbedderPermissionRequestManager'
+    EMBEDDER_MODAL_DIALOG = 'EmbedderModalDialog'
+    EMBEDDER_EXTENSIONS = 'EmbedderExtensions'
+    EMBEDDER_EXTENSION_MESSAGING = 'EmbedderExtensionMessaging'
+    EMBEDDER_EXTENSION_MESSAGING_FOR_OPEN_PORT = 'EmbedderExtensionMessagingForOpenPort'
+    EMBEDDER_EXTENSION_SENT_MESSAGE_TO_CACHED_FRAME = 'EmbedderExtensionSentMessageToCachedFrame'
+    REQUESTED_BY_WEB_VIEW_CLIENT = 'RequestedByWebViewClient'
+    POST_MESSAGE_BY_WEB_VIEW_CLIENT = 'PostMessageByWebViewClient'
+    CACHE_CONTROL_NO_STORE_DEVICE_BOUND_SESSION_TERMINATED = 'CacheControlNoStoreDeviceBoundSessionTerminated'
+    CACHE_LIMIT_PRUNED_ON_MODERATE_MEMORY_PRESSURE = 'CacheLimitPrunedOnModerateMemoryPressure'
+    CACHE_LIMIT_PRUNED_ON_CRITICAL_MEMORY_PRESSURE = 'CacheLimitPrunedOnCriticalMemoryPressure'
 
     def to_json(self) -> str:
         return self.value
@@ -2063,15 +2282,21 @@ class BackForwardCacheNotRestoredReason(enum.Enum):
     def from_json(cls, json: str) -> BackForwardCacheNotRestoredReason:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> BackForwardCacheNotRestoredReason | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class BackForwardCacheNotRestoredReasonType(enum.Enum):
     """
     Types of not restored reasons for back-forward cache.
     """
 
-    SUPPORT_PENDING = "SupportPending"
-    PAGE_SUPPORT_NEEDED = "PageSupportNeeded"
-    CIRCUMSTANTIAL = "Circumstantial"
+    SUPPORT_PENDING = 'SupportPending'
+    PAGE_SUPPORT_NEEDED = 'PageSupportNeeded'
+    CIRCUMSTANTIAL = 'Circumstantial'
 
     def to_json(self) -> str:
         return self.value
@@ -2079,6 +2304,12 @@ class BackForwardCacheNotRestoredReasonType(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> BackForwardCacheNotRestoredReasonType:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> BackForwardCacheNotRestoredReasonType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -2090,31 +2321,35 @@ class BackForwardCacheBlockingDetails:
     column_number: int
 
     #: Url of the file where blockage happened. Optional because of tests.
-    url: typing.Optional[str] = None
+    url: str | None = None
 
     #: Function name where blockage happened. Optional because of anonymous functions and tests.
-    function: typing.Optional[str] = None
+    function: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["lineNumber"] = self.line_number
-        json["columnNumber"] = self.column_number
+        json: T_JSON_DICT = {}
+        json['lineNumber'] = self.line_number
+        json['columnNumber'] = self.column_number
         if self.url is not None:
-            json["url"] = self.url
+            json['url'] = self.url
         if self.function is not None:
-            json["function"] = self.function
+            json['function'] = self.function
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> BackForwardCacheBlockingDetails:
         return cls(
-            line_number=int(json["lineNumber"]),
-            column_number=int(json["columnNumber"]),
-            url=str(json["url"]) if json.get("url", None) is not None else None,
-            function=str(json["function"])
-            if json.get("function", None) is not None
-            else None,
+            line_number=int(json['lineNumber']),
+            column_number=int(json['columnNumber']),
+            url=None if json.get('url') is None else str(json['url']),
+            function=None if json.get('function') is None else str(json['function']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> BackForwardCacheBlockingDetails | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -2128,34 +2363,34 @@ class BackForwardCacheNotRestoredExplanation:
     #: Context associated with the reason. The meaning of this context is
     #: dependent on the reason:
     #: - EmbedderExtensionSentMessageToCachedFrame: the extension ID.
-    context: typing.Optional[str] = None
+    context: str | None = None
 
-    details: typing.Optional[typing.List[BackForwardCacheBlockingDetails]] = None
+    details: list[BackForwardCacheBlockingDetails] = field(default_factory=list)
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["type"] = self.type_.to_json()
-        json["reason"] = self.reason.to_json()
+        json: T_JSON_DICT = {}
+        json['type'] = self.type_.to_json()
+        json['reason'] = self.reason.to_json()
         if self.context is not None:
-            json["context"] = self.context
+            json['context'] = self.context
         if self.details is not None:
-            json["details"] = [i.to_json() for i in self.details]
+            json['details'] = [i.to_json() for i in self.details]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> BackForwardCacheNotRestoredExplanation:
         return cls(
-            type_=BackForwardCacheNotRestoredReasonType.from_json(json["type"]),
-            reason=BackForwardCacheNotRestoredReason.from_json(json["reason"]),
-            context=str(json["context"])
-            if json.get("context", None) is not None
-            else None,
-            details=[
-                BackForwardCacheBlockingDetails.from_json(i) for i in json["details"]
-            ]
-            if json.get("details", None) is not None
-            else None,
+            type_=BackForwardCacheNotRestoredReasonType.from_json(json['type']),
+            reason=BackForwardCacheNotRestoredReason.from_json(json['reason']),
+            context=None if json.get('context') is None else str(json['context']),
+            details=[BackForwardCacheBlockingDetails.from_json(i) for i in json.get('details', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> BackForwardCacheNotRestoredExplanation | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -2164,37 +2399,37 @@ class BackForwardCacheNotRestoredExplanationTree:
     url: str
 
     #: Not restored reasons of each frame
-    explanations: typing.List[BackForwardCacheNotRestoredExplanation]
+    explanations: list[BackForwardCacheNotRestoredExplanation]
 
     #: Array of children frame
-    children: typing.List[BackForwardCacheNotRestoredExplanationTree]
+    children: list[BackForwardCacheNotRestoredExplanationTree]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["url"] = self.url
-        json["explanations"] = [i.to_json() for i in self.explanations]
-        json["children"] = [i.to_json() for i in self.children]
+        json: T_JSON_DICT = {}
+        json['url'] = self.url
+        json['explanations'] = [i.to_json() for i in self.explanations]
+        json['children'] = [i.to_json() for i in self.children]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> BackForwardCacheNotRestoredExplanationTree:
         return cls(
-            url=str(json["url"]),
-            explanations=[
-                BackForwardCacheNotRestoredExplanation.from_json(i)
-                for i in json["explanations"]
-            ],
-            children=[
-                BackForwardCacheNotRestoredExplanationTree.from_json(i)
-                for i in json["children"]
-            ],
+            url=str(json['url']),
+            explanations=[BackForwardCacheNotRestoredExplanation.from_json(i) for i in json.get('explanations', [])],
+            children=[BackForwardCacheNotRestoredExplanationTree.from_json(i) for i in json.get('children', [])],
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> BackForwardCacheNotRestoredExplanationTree | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@deprecated(version="1.3")
+
+@deprecated(version='1.3')
 def add_script_to_evaluate_on_load(
     script_source: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, ScriptIdentifier]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, ScriptIdentifier]:
     """
     Deprecated, please use addScriptToEvaluateOnNewDocument instead.
 
@@ -2203,24 +2438,27 @@ def add_script_to_evaluate_on_load(
     **EXPERIMENTAL**
 
     :param script_source:
-    :returns: Identifier of the added script.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, ScriptIdentifier]
     """
-    params: T_JSON_DICT = dict()
-    params["scriptSource"] = script_source
+
+    params: T_JSON_DICT = {}
+    params['scriptSource'] = script_source
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.addScriptToEvaluateOnLoad",
-        "params": params,
+        'method': 'Page.addScriptToEvaluateOnLoad',
+        'params': params,
     }
     json = yield cmd_dict
-    return ScriptIdentifier.from_json(json["identifier"])
+    return ScriptIdentifier.from_json(json['identifier'])
 
 
 def add_script_to_evaluate_on_new_document(
     source: str,
-    world_name: typing.Optional[str] = None,
-    include_command_line_api: typing.Optional[bool] = None,
-    run_immediately: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, ScriptIdentifier]:
+    *,
+    world_name: str | None = None,
+    include_command_line_api: bool | None = None,
+    run_immediately: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, ScriptIdentifier]:
     """
     Evaluates given script in every frame upon creation (before loading frame's scripts).
 
@@ -2228,42 +2466,48 @@ def add_script_to_evaluate_on_new_document(
     :param world_name: **(EXPERIMENTAL)** *(Optional)* If specified, creates an isolated world with the given name and evaluates given script in it. This world name will be used as the ExecutionContextDescription::name when the corresponding event is emitted.
     :param include_command_line_api: **(EXPERIMENTAL)** *(Optional)* Specifies whether command line API should be available to the script, defaults to false.
     :param run_immediately: **(EXPERIMENTAL)** *(Optional)* If true, runs the script immediately on existing execution contexts or worlds. Default: false.
-    :returns: Identifier of the added script.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, ScriptIdentifier]
     """
-    params: T_JSON_DICT = dict()
-    params["source"] = source
+
+    params: T_JSON_DICT = {}
+    params['source'] = source
     if world_name is not None:
-        params["worldName"] = world_name
+        params['worldName'] = world_name
     if include_command_line_api is not None:
-        params["includeCommandLineAPI"] = include_command_line_api
+        params['includeCommandLineAPI'] = include_command_line_api
     if run_immediately is not None:
-        params["runImmediately"] = run_immediately
+        params['runImmediately'] = run_immediately
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.addScriptToEvaluateOnNewDocument",
-        "params": params,
+        'method': 'Page.addScriptToEvaluateOnNewDocument',
+        'params': params,
     }
     json = yield cmd_dict
-    return ScriptIdentifier.from_json(json["identifier"])
+    return ScriptIdentifier.from_json(json['identifier'])
 
 
-def bring_to_front() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def bring_to_front() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Brings page to front (activates tab).
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.bringToFront",
+        'method': 'Page.bringToFront',
     }
     json = yield cmd_dict
 
 
 def capture_screenshot(
-    format_: typing.Optional[str] = None,
-    quality: typing.Optional[int] = None,
-    clip: typing.Optional[Viewport] = None,
-    from_surface: typing.Optional[bool] = None,
-    capture_beyond_viewport: typing.Optional[bool] = None,
-    optimize_for_speed: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, str]:
+    *,
+    format_: str | None = None,
+    quality: int | None = None,
+    clip: Viewport | None = None,
+    from_surface: bool | None = None,
+    capture_beyond_viewport: bool | None = None,
+    optimize_for_speed: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, str]:
     """
     Capture page screenshot.
 
@@ -2273,32 +2517,34 @@ def capture_screenshot(
     :param from_surface: **(EXPERIMENTAL)** *(Optional)* Capture the screenshot from the surface, rather than the view. Defaults to true.
     :param capture_beyond_viewport: **(EXPERIMENTAL)** *(Optional)* Capture the screenshot beyond the viewport. Defaults to false.
     :param optimize_for_speed: **(EXPERIMENTAL)** *(Optional)* Optimize image encoding for speed, not for resulting size (defaults to false)
-    :returns: Base64-encoded image data. (Encoded as a base64 string when passed over JSON)
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, str]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if format_ is not None:
-        params["format"] = format_
+        params['format'] = format_
     if quality is not None:
-        params["quality"] = quality
+        params['quality'] = quality
     if clip is not None:
-        params["clip"] = clip.to_json()
+        params['clip'] = clip.to_json()
     if from_surface is not None:
-        params["fromSurface"] = from_surface
+        params['fromSurface'] = from_surface
     if capture_beyond_viewport is not None:
-        params["captureBeyondViewport"] = capture_beyond_viewport
+        params['captureBeyondViewport'] = capture_beyond_viewport
     if optimize_for_speed is not None:
-        params["optimizeForSpeed"] = optimize_for_speed
+        params['optimizeForSpeed'] = optimize_for_speed
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.captureScreenshot",
-        "params": params,
+        'method': 'Page.captureScreenshot',
+        'params': params,
     }
     json = yield cmd_dict
-    return str(json["data"])
+    return str(json['data'])
 
 
 def capture_snapshot(
-    format_: typing.Optional[str] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, str]:
+    format_: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, str]:
     """
     Returns a snapshot of the page as a string. For MHTML format, the serialization includes
     iframes, shadow DOM, external resources, and element-inline styles.
@@ -2306,95 +2552,108 @@ def capture_snapshot(
     **EXPERIMENTAL**
 
     :param format_: *(Optional)* Format (defaults to mhtml).
-    :returns: Serialized page data.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, str]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if format_ is not None:
-        params["format"] = format_
+        params['format'] = format_
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.captureSnapshot",
-        "params": params,
+        'method': 'Page.captureSnapshot',
+        'params': params,
     }
     json = yield cmd_dict
-    return str(json["data"])
+    return str(json['data'])
 
 
-@deprecated(version="1.3")
-def clear_device_metrics_override() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+@deprecated(version='1.3')
+def clear_device_metrics_override() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Clears the overridden device metrics.
 
     .. deprecated:: 1.3
 
     **EXPERIMENTAL**
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.clearDeviceMetricsOverride",
+        'method': 'Page.clearDeviceMetricsOverride',
     }
     json = yield cmd_dict
 
 
-@deprecated(version="1.3")
-def clear_device_orientation_override() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, None]
-):
+@deprecated(version='1.3')
+def clear_device_orientation_override() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Clears the overridden Device Orientation.
 
     .. deprecated:: 1.3
 
     **EXPERIMENTAL**
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.clearDeviceOrientationOverride",
+        'method': 'Page.clearDeviceOrientationOverride',
     }
     json = yield cmd_dict
 
 
-@deprecated(version="1.3")
-def clear_geolocation_override() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+@deprecated(version='1.3')
+def clear_geolocation_override() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Clears the overridden Geolocation Position and Error.
 
     .. deprecated:: 1.3
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.clearGeolocationOverride",
+        'method': 'Page.clearGeolocationOverride',
     }
     json = yield cmd_dict
 
 
 def create_isolated_world(
     frame_id: FrameId,
-    world_name: typing.Optional[str] = None,
-    grant_univeral_access: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, runtime.ExecutionContextId]:
+    *,
+    world_name: str | None = None,
+    grant_univeral_access: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, runtime.ExecutionContextId]:
     """
     Creates an isolated world for the given frame.
 
     :param frame_id: Id of the frame in which the isolated world should be created.
     :param world_name: *(Optional)* An optional name which is reported in the Execution Context.
     :param grant_univeral_access: *(Optional)* Whether or not universal access should be granted to the isolated world. This is a powerful option, use with caution.
-    :returns: Execution context of the isolated world.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, runtime.ExecutionContextId]
     """
-    params: T_JSON_DICT = dict()
-    params["frameId"] = frame_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['frameId'] = frame_id.to_json()
     if world_name is not None:
-        params["worldName"] = world_name
+        params['worldName'] = world_name
     if grant_univeral_access is not None:
-        params["grantUniveralAccess"] = grant_univeral_access
+        params['grantUniveralAccess'] = grant_univeral_access
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.createIsolatedWorld",
-        "params": params,
+        'method': 'Page.createIsolatedWorld',
+        'params': params,
     }
     json = yield cmd_dict
-    return runtime.ExecutionContextId.from_json(json["executionContextId"])
+    return runtime.ExecutionContextId.from_json(json['executionContextId'])
 
 
-@deprecated(version="1.3")
+@deprecated(version='1.3')
 def delete_cookie(
-    cookie_name: str, url: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    cookie_name: str,
+    url: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Deletes browser cookie with given name, domain and path.
 
@@ -2404,57 +2663,61 @@ def delete_cookie(
 
     :param cookie_name: Name of the cookie to remove.
     :param url: URL to match cooke domain and path.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["cookieName"] = cookie_name
-    params["url"] = url
+
+    params: T_JSON_DICT = {}
+    params['cookieName'] = cookie_name
+    params['url'] = url
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.deleteCookie",
-        "params": params,
+        'method': 'Page.deleteCookie',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disables page domain notifications.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.disable",
+        'method': 'Page.disable',
     }
     json = yield cmd_dict
 
 
 def enable(
-    enable_file_chooser_opened_event: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    enable_file_chooser_opened_event: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables page domain notifications.
 
     :param enable_file_chooser_opened_event: **(EXPERIMENTAL)** *(Optional)* If true, the ```Page.fileChooserOpened```` event will be emitted regardless of the state set by ````Page.setInterceptFileChooserDialog``` command (default: false).
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if enable_file_chooser_opened_event is not None:
-        params["enableFileChooserOpenedEvent"] = enable_file_chooser_opened_event
+        params['enableFileChooserOpenedEvent'] = enable_file_chooser_opened_event
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.enable",
-        "params": params,
+        'method': 'Page.enable',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def get_app_manifest(
-    manifest_id: typing.Optional[str] = None,
-) -> typing.Generator[
+    manifest_id: str | None = None,
+) -> Generator[
     T_JSON_DICT,
     T_JSON_DICT,
-    typing.Tuple[
-        str,
-        typing.List[AppManifestError],
-        typing.Optional[str],
-        typing.Optional[AppManifestParsedProperties],
-        WebAppManifest,
-    ],
+    tuple[str, list[AppManifestError], str | None, AppManifestParsedProperties | None, WebAppManifest],
 ]:
     """
     Gets the processed manifest for this current document.
@@ -2464,54 +2727,46 @@ def get_app_manifest(
       If there is not a loaded page, this API errors out immediately.
 
     :param manifest_id: *(Optional)*
-    :returns: A tuple with the following items:
-
-        0. **url** - Manifest location.
-        1. **errors** -
-        2. **data** - *(Optional)* Manifest content.
-        3. **parsed** - *(Optional)* Parsed manifest properties. Deprecated, use manifest instead.
-        4. **manifest** -
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[str, list[AppManifestError], str `` None, AppManifestParsedProperties `` None, WebAppManifest]]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if manifest_id is not None:
-        params["manifestId"] = manifest_id
+        params['manifestId'] = manifest_id
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.getAppManifest",
-        "params": params,
+        'method': 'Page.getAppManifest',
+        'params': params,
     }
     json = yield cmd_dict
     return (
-        str(json["url"]),
-        [AppManifestError.from_json(i) for i in json["errors"]],
-        str(json["data"]) if json.get("data", None) is not None else None,
-        AppManifestParsedProperties.from_json(json["parsed"])
-        if json.get("parsed", None) is not None
-        else None,
-        WebAppManifest.from_json(json["manifest"]),
+        str(json['url']),
+        [AppManifestError.from_json(i) for i in json.get('errors', [])],
+        None if json.get('data') is None else str(json['data']),
+        AppManifestParsedProperties.from_json_optional(json.get('parsed')),
+        WebAppManifest.from_json(json['manifest']),
     )
 
 
-def get_installability_errors() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[InstallabilityError]]
-):
+def get_installability_errors() -> Generator[T_JSON_DICT, T_JSON_DICT, list[InstallabilityError]]:
     """
 
 
     **EXPERIMENTAL**
 
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[InstallabilityError]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.getInstallabilityErrors",
+        'method': 'Page.getInstallabilityErrors',
     }
     json = yield cmd_dict
-    return [InstallabilityError.from_json(i) for i in json["installabilityErrors"]]
+    return [InstallabilityError.from_json(i) for i in json.get('installabilityErrors', [])]
 
 
-@deprecated(version="1.3")
-def get_manifest_icons() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.Optional[str]]
-):
+@deprecated(version='1.3')
+def get_manifest_icons() -> Generator[T_JSON_DICT, T_JSON_DICT, str | None]:
     """
     Deprecated because it's not guaranteed that the returned icon is in fact the one used for PWA installation.
 
@@ -2519,161 +2774,134 @@ def get_manifest_icons() -> (
 
     **EXPERIMENTAL**
 
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, str ` None]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.getManifestIcons",
+        'method': 'Page.getManifestIcons',
     }
     json = yield cmd_dict
-    return (
-        str(json["primaryIcon"]) if json.get("primaryIcon", None) is not None else None
-    )
+    return None if json.get('primaryIcon') is None else str(json['primaryIcon'])
 
 
-def get_app_id() -> (
-    typing.Generator[
-        T_JSON_DICT,
-        T_JSON_DICT,
-        typing.Tuple[typing.Optional[str], typing.Optional[str]],
-    ]
-):
+def get_app_id() -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[str | None, str | None]]:
     """
     Returns the unique (PWA) app id.
     Only returns values if the feature flag 'WebAppEnableManifestId' is enabled
 
     **EXPERIMENTAL**
 
-    :returns: A tuple with the following items:
-
-        0. **appId** - *(Optional)* App id, either from manifest's id attribute or computed from start_url
-        1. **recommendedId** - *(Optional)* Recommendation for manifest's id attribute to match current id computed from start_url
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[str `` None, str `` None]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.getAppId",
+        'method': 'Page.getAppId',
     }
     json = yield cmd_dict
     return (
-        str(json["appId"]) if json.get("appId", None) is not None else None,
-        str(json["recommendedId"])
-        if json.get("recommendedId", None) is not None
-        else None,
+        None if json.get('appId') is None else str(json['appId']),
+        None if json.get('recommendedId') is None else str(json['recommendedId']),
     )
 
 
 def get_ad_script_ancestry(
     frame_id: FrameId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.Optional[AdScriptAncestry]]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, AdScriptAncestry | None]:
     """
 
 
     **EXPERIMENTAL**
 
     :param frame_id:
-    :returns: *(Optional)* The ancestry chain of ad script identifiers leading to this frame's creation, along with the root script's filterlist rule. The ancestry chain is ordered from the most immediate script (in the frame creation stack) to more distant ancestors (that created the immediately preceding script). Only sent if frame is labelled as an ad and ids are available.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, AdScriptAncestry ` None]
     """
-    params: T_JSON_DICT = dict()
-    params["frameId"] = frame_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['frameId'] = frame_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.getAdScriptAncestry",
-        "params": params,
+        'method': 'Page.getAdScriptAncestry',
+        'params': params,
     }
     json = yield cmd_dict
-    return (
-        AdScriptAncestry.from_json(json["adScriptAncestry"])
-        if json.get("adScriptAncestry", None) is not None
-        else None
-    )
+    return AdScriptAncestry.from_json_optional(json.get('adScriptAncestry'))
 
 
-def get_frame_tree() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, FrameTree]:
+def get_frame_tree() -> Generator[T_JSON_DICT, T_JSON_DICT, FrameTree]:
     """
     Returns present frame tree structure.
 
-    :returns: Present frame tree structure.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, FrameTree]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.getFrameTree",
+        'method': 'Page.getFrameTree',
     }
     json = yield cmd_dict
-    return FrameTree.from_json(json["frameTree"])
+    return FrameTree.from_json(json['frameTree'])
 
 
-def get_layout_metrics() -> (
-    typing.Generator[
-        T_JSON_DICT,
-        T_JSON_DICT,
-        typing.Tuple[
-            LayoutViewport,
-            VisualViewport,
-            dom.Rect,
-            LayoutViewport,
-            VisualViewport,
-            dom.Rect,
-        ],
-    ]
-):
+def get_layout_metrics() -> Generator[
+    T_JSON_DICT,
+    T_JSON_DICT,
+    tuple[LayoutViewport, VisualViewport, dom.Rect, LayoutViewport, VisualViewport, dom.Rect],
+]:
     """
     Returns metrics relating to the layouting of the page, such as viewport bounds/scale.
 
-    :returns: A tuple with the following items:
-
-        0. **layoutViewport** - Deprecated metrics relating to the layout viewport. Is in device pixels. Use ``cssLayoutViewport`` instead.
-        1. **visualViewport** - Deprecated metrics relating to the visual viewport. Is in device pixels. Use ``cssVisualViewport`` instead.
-        2. **contentSize** - Deprecated size of scrollable area. Is in DP. Use ``cssContentSize`` instead.
-        3. **cssLayoutViewport** - Metrics relating to the layout viewport in CSS pixels.
-        4. **cssVisualViewport** - Metrics relating to the visual viewport in CSS pixels.
-        5. **cssContentSize** - Size of scrollable area in CSS pixels.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[LayoutViewport, VisualViewport, dom.Rect, LayoutViewport, VisualViewport, dom.Rect]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.getLayoutMetrics",
+        'method': 'Page.getLayoutMetrics',
     }
     json = yield cmd_dict
     return (
-        LayoutViewport.from_json(json["layoutViewport"]),
-        VisualViewport.from_json(json["visualViewport"]),
-        dom.Rect.from_json(json["contentSize"]),
-        LayoutViewport.from_json(json["cssLayoutViewport"]),
-        VisualViewport.from_json(json["cssVisualViewport"]),
-        dom.Rect.from_json(json["cssContentSize"]),
+        LayoutViewport.from_json(json['layoutViewport']),
+        VisualViewport.from_json(json['visualViewport']),
+        dom.Rect.from_json(json['contentSize']),
+        LayoutViewport.from_json(json['cssLayoutViewport']),
+        VisualViewport.from_json(json['cssVisualViewport']),
+        dom.Rect.from_json(json['cssContentSize']),
     )
 
 
-def get_navigation_history() -> (
-    typing.Generator[
-        T_JSON_DICT, T_JSON_DICT, typing.Tuple[int, typing.List[NavigationEntry]]
-    ]
-):
+def get_navigation_history() -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[int, list[NavigationEntry]]]:
     """
     Returns navigation history for the current page.
 
-    :returns: A tuple with the following items:
-
-        0. **currentIndex** - Index of the current navigation history entry.
-        1. **entries** - Array of navigation history entries.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[int, list[NavigationEntry]]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.getNavigationHistory",
+        'method': 'Page.getNavigationHistory',
     }
     json = yield cmd_dict
-    return (
-        int(json["currentIndex"]),
-        [NavigationEntry.from_json(i) for i in json["entries"]],
-    )
+    return (int(json['currentIndex']), [NavigationEntry.from_json(i) for i in json.get('entries', [])])
 
 
-def reset_navigation_history() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def reset_navigation_history() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Resets navigation history for the current page.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.resetNavigationHistory",
+        'method': 'Page.resetNavigationHistory',
     }
     json = yield cmd_dict
 
 
 def get_resource_content(
-    frame_id: FrameId, url: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.Tuple[str, bool]]:
+    frame_id: FrameId,
+    url: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[str, bool]]:
     """
     Returns content of the given resource.
 
@@ -2681,70 +2909,71 @@ def get_resource_content(
 
     :param frame_id: Frame id to get resource for.
     :param url: URL of the resource to get content for.
-    :returns: A tuple with the following items:
-
-        0. **content** - Resource content.
-        1. **base64Encoded** - True, if content was served as base64.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[str, bool]]
     """
-    params: T_JSON_DICT = dict()
-    params["frameId"] = frame_id.to_json()
-    params["url"] = url
+
+    params: T_JSON_DICT = {}
+    params['frameId'] = frame_id.to_json()
+    params['url'] = url
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.getResourceContent",
-        "params": params,
+        'method': 'Page.getResourceContent',
+        'params': params,
     }
     json = yield cmd_dict
-    return (str(json["content"]), bool(json["base64Encoded"]))
+    return (str(json['content']), bool(json['base64Encoded']))
 
 
-def get_resource_tree() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, FrameResourceTree]
-):
+def get_resource_tree() -> Generator[T_JSON_DICT, T_JSON_DICT, FrameResourceTree]:
     """
     Returns present frame / resource tree structure.
 
     **EXPERIMENTAL**
 
-    :returns: Present frame / resource tree structure.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, FrameResourceTree]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.getResourceTree",
+        'method': 'Page.getResourceTree',
     }
     json = yield cmd_dict
-    return FrameResourceTree.from_json(json["frameTree"])
+    return FrameResourceTree.from_json(json['frameTree'])
 
 
 def handle_java_script_dialog(
-    accept: bool, prompt_text: typing.Optional[str] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    accept: bool,
+    prompt_text: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Accepts or dismisses a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload).
 
     :param accept: Whether to accept or dismiss the dialog.
     :param prompt_text: *(Optional)* The text to enter into the dialog prompt before accepting. Used only if this is a prompt dialog.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["accept"] = accept
+
+    params: T_JSON_DICT = {}
+    params['accept'] = accept
     if prompt_text is not None:
-        params["promptText"] = prompt_text
+        params['promptText'] = prompt_text
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.handleJavaScriptDialog",
-        "params": params,
+        'method': 'Page.handleJavaScriptDialog',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def navigate(
     url: str,
-    referrer: typing.Optional[str] = None,
-    transition_type: typing.Optional[TransitionType] = None,
-    frame_id: typing.Optional[FrameId] = None,
-    referrer_policy: typing.Optional[ReferrerPolicy] = None,
-) -> typing.Generator[
-    T_JSON_DICT,
-    T_JSON_DICT,
-    typing.Tuple[FrameId, typing.Optional[network.LoaderId], typing.Optional[str]],
-]:
+    *,
+    referrer: str | None = None,
+    transition_type: TransitionType | None = None,
+    frame_id: FrameId | None = None,
+    referrer_policy: ReferrerPolicy | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[FrameId, network.LoaderId | None, str | None, bool | None]]:
     """
     Navigates current page to the given URL.
 
@@ -2753,74 +2982,73 @@ def navigate(
     :param transition_type: *(Optional)* Intended transition type.
     :param frame_id: *(Optional)* Frame id to navigate, if not specified navigates the top frame.
     :param referrer_policy: **(EXPERIMENTAL)** *(Optional)* Referrer-policy used for the navigation.
-    :returns: A tuple with the following items:
-
-        0. **frameId** - Frame id that has navigated (or failed to navigate)
-        1. **loaderId** - *(Optional)* Loader identifier. This is omitted in case of same-document navigation, as the previously committed loaderId would not change.
-        2. **errorText** - *(Optional)* User friendly error message, present if and only if navigation has failed.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[FrameId, network.LoaderId `` None, str `` None, bool ` None]]
     """
-    params: T_JSON_DICT = dict()
-    params["url"] = url
+
+    params: T_JSON_DICT = {}
+    params['url'] = url
     if referrer is not None:
-        params["referrer"] = referrer
+        params['referrer'] = referrer
     if transition_type is not None:
-        params["transitionType"] = transition_type.to_json()
+        params['transitionType'] = transition_type.to_json()
     if frame_id is not None:
-        params["frameId"] = frame_id.to_json()
+        params['frameId'] = frame_id.to_json()
     if referrer_policy is not None:
-        params["referrerPolicy"] = referrer_policy.to_json()
+        params['referrerPolicy'] = referrer_policy.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.navigate",
-        "params": params,
+        'method': 'Page.navigate',
+        'params': params,
     }
     json = yield cmd_dict
     return (
-        FrameId.from_json(json["frameId"]),
-        network.LoaderId.from_json(json["loaderId"])
-        if json.get("loaderId", None) is not None
-        else None,
-        str(json["errorText"]) if json.get("errorText", None) is not None else None,
+        FrameId.from_json(json['frameId']),
+        network.LoaderId.from_json_optional(json.get('loaderId')),
+        None if json.get('errorText') is None else str(json['errorText']),
+        None if json.get('isDownload') is None else bool(json['isDownload']),
     )
 
 
 def navigate_to_history_entry(
     entry_id: int,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Navigates current page to the given history entry.
 
     :param entry_id: Unique id of the entry to navigate to.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["entryId"] = entry_id
+
+    params: T_JSON_DICT = {}
+    params['entryId'] = entry_id
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.navigateToHistoryEntry",
-        "params": params,
+        'method': 'Page.navigateToHistoryEntry',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def print_to_pdf(
-    landscape: typing.Optional[bool] = None,
-    display_header_footer: typing.Optional[bool] = None,
-    print_background: typing.Optional[bool] = None,
-    scale: typing.Optional[float] = None,
-    paper_width: typing.Optional[float] = None,
-    paper_height: typing.Optional[float] = None,
-    margin_top: typing.Optional[float] = None,
-    margin_bottom: typing.Optional[float] = None,
-    margin_left: typing.Optional[float] = None,
-    margin_right: typing.Optional[float] = None,
-    page_ranges: typing.Optional[str] = None,
-    header_template: typing.Optional[str] = None,
-    footer_template: typing.Optional[str] = None,
-    prefer_css_page_size: typing.Optional[bool] = None,
-    transfer_mode: typing.Optional[str] = None,
-    generate_tagged_pdf: typing.Optional[bool] = None,
-    generate_document_outline: typing.Optional[bool] = None,
-) -> typing.Generator[
-    T_JSON_DICT, T_JSON_DICT, typing.Tuple[str, typing.Optional[io.StreamHandle]]
-]:
+    *,
+    landscape: bool | None = None,
+    display_header_footer: bool | None = None,
+    print_background: bool | None = None,
+    scale: float | None = None,
+    paper_width: float | None = None,
+    paper_height: float | None = None,
+    margin_top: float | None = None,
+    margin_bottom: float | None = None,
+    margin_left: float | None = None,
+    margin_right: float | None = None,
+    page_ranges: str | None = None,
+    header_template: str | None = None,
+    footer_template: str | None = None,
+    prefer_css_page_size: bool | None = None,
+    transfer_mode: str | None = None,
+    generate_tagged_pdf: bool | None = None,
+    generate_document_outline: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[str, io.StreamHandle | None]]:
     """
     Print page as PDF.
 
@@ -2841,89 +3069,87 @@ def print_to_pdf(
     :param transfer_mode: **(EXPERIMENTAL)** *(Optional)* return as stream
     :param generate_tagged_pdf: **(EXPERIMENTAL)** *(Optional)* Whether or not to generate tagged (accessible) PDF. Defaults to embedder choice.
     :param generate_document_outline: **(EXPERIMENTAL)** *(Optional)* Whether or not to embed the document outline into the PDF.
-    :returns: A tuple with the following items:
-
-        0. **data** - Base64-encoded pdf data. Empty if `` returnAsStream` is specified. (Encoded as a base64 string when passed over JSON)
-        1. **stream** - *(Optional)* A handle of the stream that holds resulting PDF data.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[str, io.StreamHandle `` None]]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if landscape is not None:
-        params["landscape"] = landscape
+        params['landscape'] = landscape
     if display_header_footer is not None:
-        params["displayHeaderFooter"] = display_header_footer
+        params['displayHeaderFooter'] = display_header_footer
     if print_background is not None:
-        params["printBackground"] = print_background
+        params['printBackground'] = print_background
     if scale is not None:
-        params["scale"] = scale
+        params['scale'] = scale
     if paper_width is not None:
-        params["paperWidth"] = paper_width
+        params['paperWidth'] = paper_width
     if paper_height is not None:
-        params["paperHeight"] = paper_height
+        params['paperHeight'] = paper_height
     if margin_top is not None:
-        params["marginTop"] = margin_top
+        params['marginTop'] = margin_top
     if margin_bottom is not None:
-        params["marginBottom"] = margin_bottom
+        params['marginBottom'] = margin_bottom
     if margin_left is not None:
-        params["marginLeft"] = margin_left
+        params['marginLeft'] = margin_left
     if margin_right is not None:
-        params["marginRight"] = margin_right
+        params['marginRight'] = margin_right
     if page_ranges is not None:
-        params["pageRanges"] = page_ranges
+        params['pageRanges'] = page_ranges
     if header_template is not None:
-        params["headerTemplate"] = header_template
+        params['headerTemplate'] = header_template
     if footer_template is not None:
-        params["footerTemplate"] = footer_template
+        params['footerTemplate'] = footer_template
     if prefer_css_page_size is not None:
-        params["preferCSSPageSize"] = prefer_css_page_size
+        params['preferCSSPageSize'] = prefer_css_page_size
     if transfer_mode is not None:
-        params["transferMode"] = transfer_mode
+        params['transferMode'] = transfer_mode
     if generate_tagged_pdf is not None:
-        params["generateTaggedPDF"] = generate_tagged_pdf
+        params['generateTaggedPDF'] = generate_tagged_pdf
     if generate_document_outline is not None:
-        params["generateDocumentOutline"] = generate_document_outline
+        params['generateDocumentOutline'] = generate_document_outline
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.printToPDF",
-        "params": params,
+        'method': 'Page.printToPDF',
+        'params': params,
     }
     json = yield cmd_dict
-    return (
-        str(json["data"]),
-        io.StreamHandle.from_json(json["stream"])
-        if json.get("stream", None) is not None
-        else None,
-    )
+    return (str(json['data']), io.StreamHandle.from_json_optional(json.get('stream')))
 
 
 def reload(
-    ignore_cache: typing.Optional[bool] = None,
-    script_to_evaluate_on_load: typing.Optional[str] = None,
-    loader_id: typing.Optional[network.LoaderId] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    ignore_cache: bool | None = None,
+    script_to_evaluate_on_load: str | None = None,
+    loader_id: network.LoaderId | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Reloads given page optionally ignoring the cache.
 
     :param ignore_cache: *(Optional)* If true, browser cache is ignored (as if the user pressed Shift+refresh).
     :param script_to_evaluate_on_load: *(Optional)* If set, the script will be injected into all frames of the inspected page after reload. Argument will be ignored if reloading dataURL origin.
     :param loader_id: **(EXPERIMENTAL)** *(Optional)* If set, an error will be thrown if the target page's main frame's loader id does not match the provided id. This prevents accidentally reloading an unintended target in case there's a racing navigation.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if ignore_cache is not None:
-        params["ignoreCache"] = ignore_cache
+        params['ignoreCache'] = ignore_cache
     if script_to_evaluate_on_load is not None:
-        params["scriptToEvaluateOnLoad"] = script_to_evaluate_on_load
+        params['scriptToEvaluateOnLoad'] = script_to_evaluate_on_load
     if loader_id is not None:
-        params["loaderId"] = loader_id.to_json()
+        params['loaderId'] = loader_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.reload",
-        "params": params,
+        'method': 'Page.reload',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@deprecated(version="1.3")
+@deprecated(version='1.3')
 def remove_script_to_evaluate_on_load(
     identifier: ScriptIdentifier,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Deprecated, please use removeScriptToEvaluateOnNewDocument instead.
 
@@ -2932,48 +3158,57 @@ def remove_script_to_evaluate_on_load(
     **EXPERIMENTAL**
 
     :param identifier:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["identifier"] = identifier.to_json()
+
+    params: T_JSON_DICT = {}
+    params['identifier'] = identifier.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.removeScriptToEvaluateOnLoad",
-        "params": params,
+        'method': 'Page.removeScriptToEvaluateOnLoad',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def remove_script_to_evaluate_on_new_document(
     identifier: ScriptIdentifier,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Removes given script from the list.
 
     :param identifier:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["identifier"] = identifier.to_json()
+
+    params: T_JSON_DICT = {}
+    params['identifier'] = identifier.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.removeScriptToEvaluateOnNewDocument",
-        "params": params,
+        'method': 'Page.removeScriptToEvaluateOnNewDocument',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def screencast_frame_ack(
     session_id: int,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Acknowledges that a screencast frame has been received by the frontend.
 
     **EXPERIMENTAL**
 
     :param session_id: Frame number.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["sessionId"] = session_id
+
+    params: T_JSON_DICT = {}
+    params['sessionId'] = session_id
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.screencastFrameAck",
-        "params": params,
+        'method': 'Page.screencastFrameAck',
+        'params': params,
     }
     json = yield cmd_dict
 
@@ -2982,9 +3217,10 @@ def search_in_resource(
     frame_id: FrameId,
     url: str,
     query: str,
-    case_sensitive: typing.Optional[bool] = None,
-    is_regex: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[debugger.SearchMatch]]:
+    *,
+    case_sensitive: bool | None = None,
+    is_regex: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[debugger.SearchMatch]]:
     """
     Searches for given string in resource content.
 
@@ -2995,117 +3231,132 @@ def search_in_resource(
     :param query: String to search for.
     :param case_sensitive: *(Optional)* If true, search is case sensitive.
     :param is_regex: *(Optional)* If true, treats string parameter as regex.
-    :returns: List of search matches.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[debugger.SearchMatch]]
     """
-    params: T_JSON_DICT = dict()
-    params["frameId"] = frame_id.to_json()
-    params["url"] = url
-    params["query"] = query
+
+    params: T_JSON_DICT = {}
+    params['frameId'] = frame_id.to_json()
+    params['url'] = url
+    params['query'] = query
     if case_sensitive is not None:
-        params["caseSensitive"] = case_sensitive
+        params['caseSensitive'] = case_sensitive
     if is_regex is not None:
-        params["isRegex"] = is_regex
+        params['isRegex'] = is_regex
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.searchInResource",
-        "params": params,
+        'method': 'Page.searchInResource',
+        'params': params,
     }
     json = yield cmd_dict
-    return [debugger.SearchMatch.from_json(i) for i in json["result"]]
+    return [debugger.SearchMatch.from_json(i) for i in json.get('result', [])]
 
 
 def set_ad_blocking_enabled(
+    *,
     enabled: bool,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enable Chrome's experimental ad filter on all sites.
 
     **EXPERIMENTAL**
 
     :param enabled: Whether to block ads.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["enabled"] = enabled
+
+    params: T_JSON_DICT = {}
+    params['enabled'] = enabled
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.setAdBlockingEnabled",
-        "params": params,
+        'method': 'Page.setAdBlockingEnabled',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def set_bypass_csp(enabled: bool) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def set_bypass_csp(
+    *,
+    enabled: bool,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enable page Content Security Policy by-passing.
 
     :param enabled: Whether to bypass page CSP.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["enabled"] = enabled
+
+    params: T_JSON_DICT = {}
+    params['enabled'] = enabled
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.setBypassCSP",
-        "params": params,
+        'method': 'Page.setBypassCSP',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def get_permissions_policy_state(
     frame_id: FrameId,
-) -> typing.Generator[
-    T_JSON_DICT, T_JSON_DICT, typing.List[PermissionsPolicyFeatureState]
-]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[PermissionsPolicyFeatureState]]:
     """
     Get Permissions Policy state on given frame.
 
     **EXPERIMENTAL**
 
     :param frame_id:
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[PermissionsPolicyFeatureState]]
     """
-    params: T_JSON_DICT = dict()
-    params["frameId"] = frame_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['frameId'] = frame_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.getPermissionsPolicyState",
-        "params": params,
+        'method': 'Page.getPermissionsPolicyState',
+        'params': params,
     }
     json = yield cmd_dict
-    return [PermissionsPolicyFeatureState.from_json(i) for i in json["states"]]
+    return [PermissionsPolicyFeatureState.from_json(i) for i in json.get('states', [])]
 
 
 def get_origin_trials(
     frame_id: FrameId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[OriginTrial]]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[OriginTrial]]:
     """
     Get Origin Trials on given frame.
 
     **EXPERIMENTAL**
 
     :param frame_id:
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[OriginTrial]]
     """
-    params: T_JSON_DICT = dict()
-    params["frameId"] = frame_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['frameId'] = frame_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.getOriginTrials",
-        "params": params,
+        'method': 'Page.getOriginTrials',
+        'params': params,
     }
     json = yield cmd_dict
-    return [OriginTrial.from_json(i) for i in json["originTrials"]]
+    return [OriginTrial.from_json(i) for i in json.get('originTrials', [])]
 
 
-@deprecated(version="1.3")
+@deprecated(version='1.3')
 def set_device_metrics_override(
     width: int,
     height: int,
     device_scale_factor: float,
+    *,
     mobile: bool,
-    scale: typing.Optional[float] = None,
-    screen_width: typing.Optional[int] = None,
-    screen_height: typing.Optional[int] = None,
-    position_x: typing.Optional[int] = None,
-    position_y: typing.Optional[int] = None,
-    dont_set_visible_size: typing.Optional[bool] = None,
-    screen_orientation: typing.Optional[emulation.ScreenOrientation] = None,
-    viewport: typing.Optional[Viewport] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    scale: float | None = None,
+    screen_width: int | None = None,
+    screen_height: int | None = None,
+    position_x: int | None = None,
+    position_y: int | None = None,
+    dont_set_visible_size: bool | None = None,
+    screen_orientation: emulation.ScreenOrientation | None = None,
+    viewport: Viewport | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Overrides the values of device screen dimensions (window.screen.width, window.screen.height,
     window.innerWidth, window.innerHeight, and "device-width"/"device-height"-related CSS media
@@ -3127,39 +3378,44 @@ def set_device_metrics_override(
     :param dont_set_visible_size: *(Optional)* Do not set visible view size, rely upon explicit setVisibleSize call.
     :param screen_orientation: *(Optional)* Screen orientation override.
     :param viewport: *(Optional)* The viewport dimensions and scale. If not set, the override is cleared.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["width"] = width
-    params["height"] = height
-    params["deviceScaleFactor"] = device_scale_factor
-    params["mobile"] = mobile
+
+    params: T_JSON_DICT = {}
+    params['width'] = width
+    params['height'] = height
+    params['deviceScaleFactor'] = device_scale_factor
+    params['mobile'] = mobile
     if scale is not None:
-        params["scale"] = scale
+        params['scale'] = scale
     if screen_width is not None:
-        params["screenWidth"] = screen_width
+        params['screenWidth'] = screen_width
     if screen_height is not None:
-        params["screenHeight"] = screen_height
+        params['screenHeight'] = screen_height
     if position_x is not None:
-        params["positionX"] = position_x
+        params['positionX'] = position_x
     if position_y is not None:
-        params["positionY"] = position_y
+        params['positionY'] = position_y
     if dont_set_visible_size is not None:
-        params["dontSetVisibleSize"] = dont_set_visible_size
+        params['dontSetVisibleSize'] = dont_set_visible_size
     if screen_orientation is not None:
-        params["screenOrientation"] = screen_orientation.to_json()
+        params['screenOrientation'] = screen_orientation.to_json()
     if viewport is not None:
-        params["viewport"] = viewport.to_json()
+        params['viewport'] = viewport.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.setDeviceMetricsOverride",
-        "params": params,
+        'method': 'Page.setDeviceMetricsOverride',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@deprecated(version="1.3")
+@deprecated(version='1.3')
 def set_device_orientation_override(
-    alpha: float, beta: float, gamma: float
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    alpha: float,
+    beta: float,
+    gamma: float,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Overrides the Device Orientation.
 
@@ -3170,22 +3426,26 @@ def set_device_orientation_override(
     :param alpha: Mock alpha
     :param beta: Mock beta
     :param gamma: Mock gamma
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["alpha"] = alpha
-    params["beta"] = beta
-    params["gamma"] = gamma
+
+    params: T_JSON_DICT = {}
+    params['alpha'] = alpha
+    params['beta'] = beta
+    params['gamma'] = gamma
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.setDeviceOrientationOverride",
-        "params": params,
+        'method': 'Page.setDeviceOrientationOverride',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_font_families(
     font_families: FontFamilies,
-    for_scripts: typing.Optional[typing.List[ScriptFontFamilies]] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    for_scripts: list[ScriptFontFamilies] | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Set generic font families.
 
@@ -3193,60 +3453,72 @@ def set_font_families(
 
     :param font_families: Specifies font families to set. If a font family is not specified, it won't be changed.
     :param for_scripts: *(Optional)* Specifies font families to set for individual scripts.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["fontFamilies"] = font_families.to_json()
+
+    params: T_JSON_DICT = {}
+    params['fontFamilies'] = font_families.to_json()
     if for_scripts is not None:
-        params["forScripts"] = [i.to_json() for i in for_scripts]
+        params['forScripts'] = [i.to_json() for i in for_scripts]
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.setFontFamilies",
-        "params": params,
+        'method': 'Page.setFontFamilies',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_font_sizes(
     font_sizes: FontSizes,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Set default font sizes.
 
     **EXPERIMENTAL**
 
     :param font_sizes: Specifies font sizes to set. If a font size is not specified, it won't be changed.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["fontSizes"] = font_sizes.to_json()
+
+    params: T_JSON_DICT = {}
+    params['fontSizes'] = font_sizes.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.setFontSizes",
-        "params": params,
+        'method': 'Page.setFontSizes',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_document_content(
-    frame_id: FrameId, html: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    frame_id: FrameId,
+    html: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets given markup as the document's HTML.
 
     :param frame_id: Frame id to set HTML for.
     :param html: HTML content to set.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["frameId"] = frame_id.to_json()
-    params["html"] = html
+
+    params: T_JSON_DICT = {}
+    params['frameId'] = frame_id.to_json()
+    params['html'] = html
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.setDocumentContent",
-        "params": params,
+        'method': 'Page.setDocumentContent',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@deprecated(version="1.3")
+@deprecated(version='1.3')
 def set_download_behavior(
-    behavior: str, download_path: typing.Optional[str] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    behavior: str,
+    *,
+    download_path: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Set the behavior when downloading a file.
 
@@ -3256,24 +3528,28 @@ def set_download_behavior(
 
     :param behavior: Whether to allow all or deny all download requests, or use default Chrome behavior if available (otherwise deny).
     :param download_path: *(Optional)* The default path to save downloaded files to. This is required if behavior is set to 'allow'
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["behavior"] = behavior
+
+    params: T_JSON_DICT = {}
+    params['behavior'] = behavior
     if download_path is not None:
-        params["downloadPath"] = download_path
+        params['downloadPath'] = download_path
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.setDownloadBehavior",
-        "params": params,
+        'method': 'Page.setDownloadBehavior',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@deprecated(version="1.3")
+@deprecated(version='1.3')
 def set_geolocation_override(
-    latitude: typing.Optional[float] = None,
-    longitude: typing.Optional[float] = None,
-    accuracy: typing.Optional[float] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    latitude: float | None = None,
+    longitude: float | None = None,
+    accuracy: float | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Overrides the Geolocation Position or Error. Omitting any of the parameters emulates position
     unavailable.
@@ -3283,42 +3559,51 @@ def set_geolocation_override(
     :param latitude: *(Optional)* Mock latitude
     :param longitude: *(Optional)* Mock longitude
     :param accuracy: *(Optional)* Mock accuracy
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if latitude is not None:
-        params["latitude"] = latitude
+        params['latitude'] = latitude
     if longitude is not None:
-        params["longitude"] = longitude
+        params['longitude'] = longitude
     if accuracy is not None:
-        params["accuracy"] = accuracy
+        params['accuracy'] = accuracy
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.setGeolocationOverride",
-        "params": params,
+        'method': 'Page.setGeolocationOverride',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_lifecycle_events_enabled(
+    *,
     enabled: bool,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Controls whether page will emit lifecycle events.
 
     :param enabled: If true, starts emitting lifecycle events.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["enabled"] = enabled
+
+    params: T_JSON_DICT = {}
+    params['enabled'] = enabled
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.setLifecycleEventsEnabled",
-        "params": params,
+        'method': 'Page.setLifecycleEventsEnabled',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@deprecated(version="1.3")
+@deprecated(version='1.3')
 def set_touch_emulation_enabled(
-    enabled: bool, configuration: typing.Optional[str] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    enabled: bool,
+    configuration: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Toggles mouse event-based touch event emulation.
 
@@ -3328,25 +3613,29 @@ def set_touch_emulation_enabled(
 
     :param enabled: Whether the touch event emulation should be enabled.
     :param configuration: *(Optional)* Touch/gesture events configuration. Default: current platform.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["enabled"] = enabled
+
+    params: T_JSON_DICT = {}
+    params['enabled'] = enabled
     if configuration is not None:
-        params["configuration"] = configuration
+        params['configuration'] = configuration
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.setTouchEmulationEnabled",
-        "params": params,
+        'method': 'Page.setTouchEmulationEnabled',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def start_screencast(
-    format_: typing.Optional[str] = None,
-    quality: typing.Optional[int] = None,
-    max_width: typing.Optional[int] = None,
-    max_height: typing.Optional[int] = None,
-    every_nth_frame: typing.Optional[int] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    format_: str | None = None,
+    quality: int | None = None,
+    max_width: int | None = None,
+    max_height: int | None = None,
+    every_nth_frame: int | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Starts sending each frame using the ``screencastFrame`` event.
 
@@ -3357,60 +3646,72 @@ def start_screencast(
     :param max_width: *(Optional)* Maximum screenshot width.
     :param max_height: *(Optional)* Maximum screenshot height.
     :param every_nth_frame: *(Optional)* Send every n-th frame.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if format_ is not None:
-        params["format"] = format_
+        params['format'] = format_
     if quality is not None:
-        params["quality"] = quality
+        params['quality'] = quality
     if max_width is not None:
-        params["maxWidth"] = max_width
+        params['maxWidth'] = max_width
     if max_height is not None:
-        params["maxHeight"] = max_height
+        params['maxHeight'] = max_height
     if every_nth_frame is not None:
-        params["everyNthFrame"] = every_nth_frame
+        params['everyNthFrame'] = every_nth_frame
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.startScreencast",
-        "params": params,
+        'method': 'Page.startScreencast',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def stop_loading() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def stop_loading() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Force the page stop all navigations and pending resource fetches.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.stopLoading",
+        'method': 'Page.stopLoading',
     }
     json = yield cmd_dict
 
 
-def crash() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def crash() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Crashes renderer on the IO thread, generates minidumps.
 
     **EXPERIMENTAL**
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.crash",
+        'method': 'Page.crash',
     }
     json = yield cmd_dict
 
 
-def close() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def close() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Tries to close page, running its beforeunload hooks, if any.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.close",
+        'method': 'Page.close',
     }
     json = yield cmd_dict
 
 
 def set_web_lifecycle_state(
     state: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Tries to update the web lifecycle state of the page.
     It will transition the page to the given state according to:
@@ -3419,31 +3720,37 @@ def set_web_lifecycle_state(
     **EXPERIMENTAL**
 
     :param state: Target lifecycle state
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["state"] = state
+
+    params: T_JSON_DICT = {}
+    params['state'] = state
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.setWebLifecycleState",
-        "params": params,
+        'method': 'Page.setWebLifecycleState',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def stop_screencast() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def stop_screencast() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Stops sending each frame in the ``screencastFrame``.
 
     **EXPERIMENTAL**
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.stopScreencast",
+        'method': 'Page.stopScreencast',
     }
     json = yield cmd_dict
 
 
 def produce_compilation_cache(
-    scripts: typing.List[CompilationCacheParams],
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    scripts: list[CompilationCacheParams],
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Requests backend to produce compilation cache for the specified scripts.
     ``scripts`` are appended to the list of scripts for which the cache
@@ -3455,19 +3762,23 @@ def produce_compilation_cache(
     **EXPERIMENTAL**
 
     :param scripts:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["scripts"] = [i.to_json() for i in scripts]
+
+    params: T_JSON_DICT = {}
+    params['scripts'] = [i.to_json() for i in scripts]
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.produceCompilationCache",
-        "params": params,
+        'method': 'Page.produceCompilationCache',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def add_compilation_cache(
-    url: str, data: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    url: str,
+    data: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Seeds compilation cache for given url. Compilation cache does not survive
     cross-process navigation.
@@ -3476,32 +3787,38 @@ def add_compilation_cache(
 
     :param url:
     :param data: Base64-encoded data (Encoded as a base64 string when passed over JSON)
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["url"] = url
-    params["data"] = data
+
+    params: T_JSON_DICT = {}
+    params['url'] = url
+    params['data'] = data
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.addCompilationCache",
-        "params": params,
+        'method': 'Page.addCompilationCache',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def clear_compilation_cache() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def clear_compilation_cache() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Clears seeded compilation cache.
 
     **EXPERIMENTAL**
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.clearCompilationCache",
+        'method': 'Page.clearCompilationCache',
     }
     json = yield cmd_dict
 
 
 def set_spc_transaction_mode(
     mode: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets the Secure Payment Confirmation transaction mode.
     https://w3c.github.io/secure-payment-confirmation/#sctn-automation-set-spc-transaction-mode
@@ -3509,19 +3826,22 @@ def set_spc_transaction_mode(
     **EXPERIMENTAL**
 
     :param mode:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["mode"] = mode
+
+    params: T_JSON_DICT = {}
+    params['mode'] = mode
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.setSPCTransactionMode",
-        "params": params,
+        'method': 'Page.setSPCTransactionMode',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_rph_registration_mode(
     mode: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Extensions for Custom Handlers API:
     https://html.spec.whatwg.org/multipage/system-state.html#rph-automation
@@ -3529,19 +3849,24 @@ def set_rph_registration_mode(
     **EXPERIMENTAL**
 
     :param mode:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["mode"] = mode
+
+    params: T_JSON_DICT = {}
+    params['mode'] = mode
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.setRPHRegistrationMode",
-        "params": params,
+        'method': 'Page.setRPHRegistrationMode',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def generate_test_report(
-    message: str, group: typing.Optional[str] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    message: str,
+    *,
+    group: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Generates a report for testing.
 
@@ -3549,33 +3874,41 @@ def generate_test_report(
 
     :param message: Message to be displayed in the report.
     :param group: *(Optional)* Specifies the endpoint group to deliver the report to.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["message"] = message
+
+    params: T_JSON_DICT = {}
+    params['message'] = message
     if group is not None:
-        params["group"] = group
+        params['group'] = group
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.generateTestReport",
-        "params": params,
+        'method': 'Page.generateTestReport',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def wait_for_debugger() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def wait_for_debugger() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Pauses page execution. Can be resumed using generic Runtime.runIfWaitingForDebugger.
 
     **EXPERIMENTAL**
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.waitForDebugger",
+        'method': 'Page.waitForDebugger',
     }
     json = yield cmd_dict
 
 
 def set_intercept_file_chooser_dialog(
-    enabled: bool, cancel: typing.Optional[bool] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    enabled: bool,
+    cancel: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Intercept file chooser requests and transfer control to protocol clients.
     When file chooser interception is enabled, native file chooser dialog is not shown.
@@ -3583,21 +3916,25 @@ def set_intercept_file_chooser_dialog(
 
     :param enabled:
     :param cancel: **(EXPERIMENTAL)** *(Optional)* If true, cancels the dialog by emitting relevant events (if any) in addition to not showing it if the interception is enabled (default: false).
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["enabled"] = enabled
+
+    params: T_JSON_DICT = {}
+    params['enabled'] = enabled
     if cancel is not None:
-        params["cancel"] = cancel
+        params['cancel'] = cancel
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.setInterceptFileChooserDialog",
-        "params": params,
+        'method': 'Page.setInterceptFileChooserDialog',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_prerendering_allowed(
+    *,
     is_allowed: bool,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enable/disable prerendering manually.
 
@@ -3610,27 +3947,38 @@ def set_prerendering_allowed(
     **EXPERIMENTAL**
 
     :param is_allowed:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["isAllowed"] = is_allowed
+
+    params: T_JSON_DICT = {}
+    params['isAllowed'] = is_allowed
     cmd_dict: T_JSON_DICT = {
-        "method": "Page.setPrerenderingAllowed",
-        "params": params,
+        'method': 'Page.setPrerenderingAllowed',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@event_class("Page.domContentEventFired")
+@event_type('Page.domContentEventFired')
 @dataclass
 class DomContentEventFired:
     timestamp: network.MonotonicTime
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DomContentEventFired:
-        return cls(timestamp=network.MonotonicTime.from_json(json["timestamp"]))
+        return cls(
+            timestamp=network.MonotonicTime.from_json(json['timestamp']),
+        )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DomContentEventFired | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Page.fileChooserOpened")
+@event_type('Page.fileChooserOpened')
 @dataclass
 class FileChooserOpened:
     """
@@ -3642,20 +3990,24 @@ class FileChooserOpened:
     #: Input mode.
     mode: str
     #: Input node id. Only present for file choosers opened via an ``<input type="file">`` element.
-    backend_node_id: typing.Optional[dom.BackendNodeId]
+    backend_node_id: dom.BackendNodeId | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FileChooserOpened:
         return cls(
-            frame_id=FrameId.from_json(json["frameId"]),
-            mode=str(json["mode"]),
-            backend_node_id=dom.BackendNodeId.from_json(json["backendNodeId"])
-            if json.get("backendNodeId", None) is not None
-            else None,
+            frame_id=FrameId.from_json(json['frameId']),
+            mode=str(json['mode']),
+            backend_node_id=dom.BackendNodeId.from_json_optional(json.get('backendNodeId')),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FileChooserOpened | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Page.frameAttached")
+
+@event_type('Page.frameAttached')
 @dataclass
 class FrameAttached:
     """
@@ -3667,21 +4019,25 @@ class FrameAttached:
     #: Parent frame identifier.
     parent_frame_id: FrameId
     #: JavaScript stack trace of when frame was attached, only set if frame initiated from script.
-    stack: typing.Optional[runtime.StackTrace]
+    stack: runtime.StackTrace | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FrameAttached:
         return cls(
-            frame_id=FrameId.from_json(json["frameId"]),
-            parent_frame_id=FrameId.from_json(json["parentFrameId"]),
-            stack=runtime.StackTrace.from_json(json["stack"])
-            if json.get("stack", None) is not None
-            else None,
+            frame_id=FrameId.from_json(json['frameId']),
+            parent_frame_id=FrameId.from_json(json['parentFrameId']),
+            stack=runtime.StackTrace.from_json_optional(json.get('stack')),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FrameAttached | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@deprecated(version="1.3")
-@event_class("Page.frameClearedScheduledNavigation")
+
+@deprecated(version='1.3')
+@event_type('Page.frameClearedScheduledNavigation')
 @dataclass
 class FrameClearedScheduledNavigation:
     """
@@ -3693,10 +4049,16 @@ class FrameClearedScheduledNavigation:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FrameClearedScheduledNavigation:
-        return cls(frame_id=FrameId.from_json(json["frameId"]))
+        return cls(frame_id=FrameId.from_json(json['frameId']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FrameClearedScheduledNavigation | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Page.frameDetached")
+@event_type('Page.frameDetached')
 @dataclass
 class FrameDetached:
     """
@@ -3710,11 +4072,18 @@ class FrameDetached:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FrameDetached:
         return cls(
-            frame_id=FrameId.from_json(json["frameId"]), reason=str(json["reason"])
+            frame_id=FrameId.from_json(json['frameId']),
+            reason=str(json['reason']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FrameDetached | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Page.frameSubtreeWillBeDetached")
+
+@event_type('Page.frameSubtreeWillBeDetached')
 @dataclass
 class FrameSubtreeWillBeDetached:
     """
@@ -3729,10 +4098,16 @@ class FrameSubtreeWillBeDetached:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FrameSubtreeWillBeDetached:
-        return cls(frame_id=FrameId.from_json(json["frameId"]))
+        return cls(frame_id=FrameId.from_json(json['frameId']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FrameSubtreeWillBeDetached | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Page.frameNavigated")
+@event_type('Page.frameNavigated')
 @dataclass
 class FrameNavigated:
     """
@@ -3746,12 +4121,18 @@ class FrameNavigated:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FrameNavigated:
         return cls(
-            frame=Frame.from_json(json["frame"]),
-            type_=NavigationType.from_json(json["type"]),
+            frame=Frame.from_json(json['frame']),
+            type_=NavigationType.from_json(json['type']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FrameNavigated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Page.documentOpened")
+
+@event_type('Page.documentOpened')
 @dataclass
 class DocumentOpened:
     """
@@ -3765,10 +4146,16 @@ class DocumentOpened:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DocumentOpened:
-        return cls(frame=Frame.from_json(json["frame"]))
+        return cls(frame=Frame.from_json(json['frame']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DocumentOpened | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Page.frameResized")
+@event_type('Page.frameResized')
 @dataclass
 class FrameResized:
     """
@@ -3781,8 +4168,14 @@ class FrameResized:
     def from_json(cls, json: T_JSON_DICT) -> FrameResized:
         return cls()
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FrameResized | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Page.frameStartedNavigating")
+
+@event_type('Page.frameStartedNavigating')
 @dataclass
 class FrameStartedNavigating:
     """
@@ -3811,14 +4204,20 @@ class FrameStartedNavigating:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FrameStartedNavigating:
         return cls(
-            frame_id=FrameId.from_json(json["frameId"]),
-            url=str(json["url"]),
-            loader_id=network.LoaderId.from_json(json["loaderId"]),
-            navigation_type=str(json["navigationType"]),
+            frame_id=FrameId.from_json(json['frameId']),
+            url=str(json['url']),
+            loader_id=network.LoaderId.from_json(json['loaderId']),
+            navigation_type=str(json['navigationType']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FrameStartedNavigating | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Page.frameRequestedNavigation")
+
+@event_type('Page.frameRequestedNavigation')
 @dataclass
 class FrameRequestedNavigation:
     """
@@ -3840,15 +4239,21 @@ class FrameRequestedNavigation:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FrameRequestedNavigation:
         return cls(
-            frame_id=FrameId.from_json(json["frameId"]),
-            reason=ClientNavigationReason.from_json(json["reason"]),
-            url=str(json["url"]),
-            disposition=ClientNavigationDisposition.from_json(json["disposition"]),
+            frame_id=FrameId.from_json(json['frameId']),
+            reason=ClientNavigationReason.from_json(json['reason']),
+            url=str(json['url']),
+            disposition=ClientNavigationDisposition.from_json(json['disposition']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FrameRequestedNavigation | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@deprecated(version="1.3")
-@event_class("Page.frameScheduledNavigation")
+
+@deprecated(version='1.3')
+@event_type('Page.frameScheduledNavigation')
 @dataclass
 class FrameScheduledNavigation:
     """
@@ -3868,14 +4273,20 @@ class FrameScheduledNavigation:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FrameScheduledNavigation:
         return cls(
-            frame_id=FrameId.from_json(json["frameId"]),
-            delay=float(json["delay"]),
-            reason=ClientNavigationReason.from_json(json["reason"]),
-            url=str(json["url"]),
+            frame_id=FrameId.from_json(json['frameId']),
+            delay=float(json['delay']),
+            reason=ClientNavigationReason.from_json(json['reason']),
+            url=str(json['url']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FrameScheduledNavigation | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Page.frameStartedLoading")
+
+@event_type('Page.frameStartedLoading')
 @dataclass
 class FrameStartedLoading:
     """
@@ -3889,10 +4300,16 @@ class FrameStartedLoading:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FrameStartedLoading:
-        return cls(frame_id=FrameId.from_json(json["frameId"]))
+        return cls(frame_id=FrameId.from_json(json['frameId']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FrameStartedLoading | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Page.frameStoppedLoading")
+@event_type('Page.frameStoppedLoading')
 @dataclass
 class FrameStoppedLoading:
     """
@@ -3906,11 +4323,17 @@ class FrameStoppedLoading:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FrameStoppedLoading:
-        return cls(frame_id=FrameId.from_json(json["frameId"]))
+        return cls(frame_id=FrameId.from_json(json['frameId']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FrameStoppedLoading | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@deprecated(version="1.3")
-@event_class("Page.downloadWillBegin")
+@deprecated(version='1.3')
+@event_type('Page.downloadWillBegin')
 @dataclass
 class DownloadWillBegin:
     """
@@ -3932,15 +4355,21 @@ class DownloadWillBegin:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DownloadWillBegin:
         return cls(
-            frame_id=FrameId.from_json(json["frameId"]),
-            guid=str(json["guid"]),
-            url=str(json["url"]),
-            suggested_filename=str(json["suggestedFilename"]),
+            frame_id=FrameId.from_json(json['frameId']),
+            guid=str(json['guid']),
+            url=str(json['url']),
+            suggested_filename=str(json['suggestedFilename']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DownloadWillBegin | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@deprecated(version="1.3")
-@event_class("Page.downloadProgress")
+
+@deprecated(version='1.3')
+@event_type('Page.downloadProgress')
 @dataclass
 class DownloadProgress:
     """
@@ -3962,14 +4391,20 @@ class DownloadProgress:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DownloadProgress:
         return cls(
-            guid=str(json["guid"]),
-            total_bytes=float(json["totalBytes"]),
-            received_bytes=float(json["receivedBytes"]),
-            state=str(json["state"]),
+            guid=str(json['guid']),
+            total_bytes=float(json['totalBytes']),
+            received_bytes=float(json['receivedBytes']),
+            state=str(json['state']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DownloadProgress | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Page.interstitialHidden")
+
+@event_type('Page.interstitialHidden')
 @dataclass
 class InterstitialHidden:
     """
@@ -3980,8 +4415,14 @@ class InterstitialHidden:
     def from_json(cls, json: T_JSON_DICT) -> InterstitialHidden:
         return cls()
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> InterstitialHidden | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Page.interstitialShown")
+
+@event_type('Page.interstitialShown')
 @dataclass
 class InterstitialShown:
     """
@@ -3992,8 +4433,14 @@ class InterstitialShown:
     def from_json(cls, json: T_JSON_DICT) -> InterstitialShown:
         return cls()
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> InterstitialShown | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Page.javascriptDialogClosed")
+
+@event_type('Page.javascriptDialogClosed')
 @dataclass
 class JavascriptDialogClosed:
     """
@@ -4011,13 +4458,19 @@ class JavascriptDialogClosed:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> JavascriptDialogClosed:
         return cls(
-            frame_id=FrameId.from_json(json["frameId"]),
-            result=bool(json["result"]),
-            user_input=str(json["userInput"]),
+            frame_id=FrameId.from_json(json['frameId']),
+            result=bool(json['result']),
+            user_input=str(json['userInput']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> JavascriptDialogClosed | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Page.javascriptDialogOpening")
+
+@event_type('Page.javascriptDialogOpening')
 @dataclass
 class JavascriptDialogOpening:
     """
@@ -4038,23 +4491,27 @@ class JavascriptDialogOpening:
     #: the page execution. Execution can be resumed via calling Page.handleJavaScriptDialog.
     has_browser_handler: bool
     #: Default dialog prompt.
-    default_prompt: typing.Optional[str]
+    default_prompt: str | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> JavascriptDialogOpening:
         return cls(
-            url=str(json["url"]),
-            frame_id=FrameId.from_json(json["frameId"]),
-            message=str(json["message"]),
-            type_=DialogType.from_json(json["type"]),
-            has_browser_handler=bool(json["hasBrowserHandler"]),
-            default_prompt=str(json["defaultPrompt"])
-            if json.get("defaultPrompt", None) is not None
-            else None,
+            url=str(json['url']),
+            frame_id=FrameId.from_json(json['frameId']),
+            message=str(json['message']),
+            type_=DialogType.from_json(json['type']),
+            has_browser_handler=bool(json['hasBrowserHandler']),
+            default_prompt=None if json.get('defaultPrompt') is None else str(json['defaultPrompt']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> JavascriptDialogOpening | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Page.lifecycleEvent")
+
+@event_type('Page.lifecycleEvent')
 @dataclass
 class LifecycleEvent:
     """
@@ -4072,14 +4529,20 @@ class LifecycleEvent:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> LifecycleEvent:
         return cls(
-            frame_id=FrameId.from_json(json["frameId"]),
-            loader_id=network.LoaderId.from_json(json["loaderId"]),
-            name=str(json["name"]),
-            timestamp=network.MonotonicTime.from_json(json["timestamp"]),
+            frame_id=FrameId.from_json(json['frameId']),
+            loader_id=network.LoaderId.from_json(json['loaderId']),
+            name=str(json['name']),
+            timestamp=network.MonotonicTime.from_json(json['timestamp']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> LifecycleEvent | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Page.backForwardCacheNotUsed")
+
+@event_type('Page.backForwardCacheNotUsed')
 @dataclass
 class BackForwardCacheNotUsed:
     """
@@ -4096,40 +4559,49 @@ class BackForwardCacheNotUsed:
     #: The frame id of the associated frame.
     frame_id: FrameId
     #: Array of reasons why the page could not be cached. This must not be empty.
-    not_restored_explanations: typing.List[BackForwardCacheNotRestoredExplanation]
+    not_restored_explanations: list[BackForwardCacheNotRestoredExplanation]
     #: Tree structure of reasons why the page could not be cached for each frame.
-    not_restored_explanations_tree: typing.Optional[
-        BackForwardCacheNotRestoredExplanationTree
-    ]
+    not_restored_explanations_tree: BackForwardCacheNotRestoredExplanationTree | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> BackForwardCacheNotUsed:
         return cls(
-            loader_id=network.LoaderId.from_json(json["loaderId"]),
-            frame_id=FrameId.from_json(json["frameId"]),
+            loader_id=network.LoaderId.from_json(json['loaderId']),
+            frame_id=FrameId.from_json(json['frameId']),
             not_restored_explanations=[
-                BackForwardCacheNotRestoredExplanation.from_json(i)
-                for i in json["notRestoredExplanations"]
+                BackForwardCacheNotRestoredExplanation.from_json(i) for i in json.get('notRestoredExplanations', [])
             ],
-            not_restored_explanations_tree=BackForwardCacheNotRestoredExplanationTree.from_json(
-                json["notRestoredExplanationsTree"]
-            )
-            if json.get("notRestoredExplanationsTree", None) is not None
-            else None,
+            not_restored_explanations_tree=BackForwardCacheNotRestoredExplanationTree.from_json_optional(
+                json.get('notRestoredExplanationsTree'),
+            ),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> BackForwardCacheNotUsed | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Page.loadEventFired")
+
+@event_type('Page.loadEventFired')
 @dataclass
 class LoadEventFired:
     timestamp: network.MonotonicTime
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> LoadEventFired:
-        return cls(timestamp=network.MonotonicTime.from_json(json["timestamp"]))
+        return cls(
+            timestamp=network.MonotonicTime.from_json(json['timestamp']),
+        )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> LoadEventFired | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Page.navigatedWithinDocument")
+@event_type('Page.navigatedWithinDocument')
 @dataclass
 class NavigatedWithinDocument:
     """
@@ -4148,13 +4620,19 @@ class NavigatedWithinDocument:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> NavigatedWithinDocument:
         return cls(
-            frame_id=FrameId.from_json(json["frameId"]),
-            url=str(json["url"]),
-            navigation_type=str(json["navigationType"]),
+            frame_id=FrameId.from_json(json['frameId']),
+            url=str(json['url']),
+            navigation_type=str(json['navigationType']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> NavigatedWithinDocument | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Page.screencastFrame")
+
+@event_type('Page.screencastFrame')
 @dataclass
 class ScreencastFrame:
     """
@@ -4173,13 +4651,19 @@ class ScreencastFrame:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ScreencastFrame:
         return cls(
-            data=str(json["data"]),
-            metadata=ScreencastFrameMetadata.from_json(json["metadata"]),
-            session_id=int(json["sessionId"]),
+            data=str(json['data']),
+            metadata=ScreencastFrameMetadata.from_json(json['metadata']),
+            session_id=int(json['sessionId']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ScreencastFrame | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Page.screencastVisibilityChanged")
+
+@event_type('Page.screencastVisibilityChanged')
 @dataclass
 class ScreencastVisibilityChanged:
     """
@@ -4193,10 +4677,16 @@ class ScreencastVisibilityChanged:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ScreencastVisibilityChanged:
-        return cls(visible=bool(json["visible"]))
+        return cls(visible=bool(json['visible']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ScreencastVisibilityChanged | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Page.windowOpen")
+@event_type('Page.windowOpen')
 @dataclass
 class WindowOpen:
     """
@@ -4209,28 +4699,33 @@ class WindowOpen:
     #: Window name.
     window_name: str
     #: An array of enabled window features.
-    window_features: typing.List[str]
+    window_features: list[str]
     #: Whether or not it was triggered by user gesture.
     user_gesture: bool
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> WindowOpen:
         return cls(
-            url=str(json["url"]),
-            window_name=str(json["windowName"]),
-            window_features=[str(i) for i in json["windowFeatures"]],
-            user_gesture=bool(json["userGesture"]),
+            url=str(json['url']),
+            window_name=str(json['windowName']),
+            window_features=[str(i) for i in json.get('windowFeatures', [])],
+            user_gesture=bool(json['userGesture']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> WindowOpen | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Page.compilationCacheProduced")
+
+@event_type('Page.compilationCacheProduced')
 @dataclass
 class CompilationCacheProduced:
     """
     **EXPERIMENTAL**
 
-    Issued for every compilation cache generated. Is only available
-    if Page.setGenerateCompilationCache is enabled.
+    Issued for every compilation cache generated.
     """
 
     url: str
@@ -4239,4 +4734,10 @@ class CompilationCacheProduced:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CompilationCacheProduced:
-        return cls(url=str(json["url"]), data=str(json["data"]))
+        return cls(url=str(json['url']), data=str(json['data']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CompilationCacheProduced | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

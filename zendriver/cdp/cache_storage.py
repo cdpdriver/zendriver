@@ -3,21 +3,35 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: CacheStorage (experimental)
 
 from __future__ import annotations
+
 import enum
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
 
 from . import storage
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
+
+
+# ruff: noqa: FURB189
 
 
 class CacheId(str):
     """
     Unique identifier of the Cache object.
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -26,8 +40,14 @@ class CacheId(str):
     def from_json(cls, json: str) -> CacheId:
         return cls(json)
 
-    def __repr__(self):
-        return "CacheId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> CacheId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'CacheId({super().__repr__()})'
 
 
 class CachedResponseType(enum.Enum):
@@ -35,12 +55,12 @@ class CachedResponseType(enum.Enum):
     type of HTTP response cached
     """
 
-    BASIC = "basic"
-    CORS = "cors"
-    DEFAULT = "default"
-    ERROR = "error"
-    OPAQUE_RESPONSE = "opaqueResponse"
-    OPAQUE_REDIRECT = "opaqueRedirect"
+    BASIC = 'basic'
+    CORS = 'cors'
+    DEFAULT = 'default'
+    ERROR = 'error'
+    OPAQUE_RESPONSE = 'opaqueResponse'
+    OPAQUE_REDIRECT = 'opaqueRedirect'
 
     def to_json(self) -> str:
         return self.value
@@ -48,6 +68,12 @@ class CachedResponseType(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> CachedResponseType:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> CachedResponseType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -63,7 +89,7 @@ class DataEntry:
     request_method: str
 
     #: Request headers
-    request_headers: typing.List[Header]
+    request_headers: list[Header]
 
     #: Number of seconds since epoch.
     response_time: float
@@ -78,32 +104,38 @@ class DataEntry:
     response_type: CachedResponseType
 
     #: Response headers
-    response_headers: typing.List[Header]
+    response_headers: list[Header]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["requestURL"] = self.request_url
-        json["requestMethod"] = self.request_method
-        json["requestHeaders"] = [i.to_json() for i in self.request_headers]
-        json["responseTime"] = self.response_time
-        json["responseStatus"] = self.response_status
-        json["responseStatusText"] = self.response_status_text
-        json["responseType"] = self.response_type.to_json()
-        json["responseHeaders"] = [i.to_json() for i in self.response_headers]
+        json: T_JSON_DICT = {}
+        json['requestURL'] = self.request_url
+        json['requestMethod'] = self.request_method
+        json['requestHeaders'] = [i.to_json() for i in self.request_headers]
+        json['responseTime'] = self.response_time
+        json['responseStatus'] = self.response_status
+        json['responseStatusText'] = self.response_status_text
+        json['responseType'] = self.response_type.to_json()
+        json['responseHeaders'] = [i.to_json() for i in self.response_headers]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DataEntry:
         return cls(
-            request_url=str(json["requestURL"]),
-            request_method=str(json["requestMethod"]),
-            request_headers=[Header.from_json(i) for i in json["requestHeaders"]],
-            response_time=float(json["responseTime"]),
-            response_status=int(json["responseStatus"]),
-            response_status_text=str(json["responseStatusText"]),
-            response_type=CachedResponseType.from_json(json["responseType"]),
-            response_headers=[Header.from_json(i) for i in json["responseHeaders"]],
+            request_url=str(json['requestURL']),
+            request_method=str(json['requestMethod']),
+            request_headers=[Header.from_json(i) for i in json.get('requestHeaders', [])],
+            response_time=float(json['responseTime']),
+            response_status=int(json['responseStatus']),
+            response_status_text=str(json['responseStatusText']),
+            response_type=CachedResponseType.from_json(json['responseType']),
+            response_headers=[Header.from_json(i) for i in json.get('responseHeaders', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DataEntry | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -125,29 +157,33 @@ class Cache:
     cache_name: str
 
     #: Storage bucket of the cache.
-    storage_bucket: typing.Optional[storage.StorageBucket] = None
+    storage_bucket: storage.StorageBucket | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["cacheId"] = self.cache_id.to_json()
-        json["securityOrigin"] = self.security_origin
-        json["storageKey"] = self.storage_key
-        json["cacheName"] = self.cache_name
+        json: T_JSON_DICT = {}
+        json['cacheId'] = self.cache_id.to_json()
+        json['securityOrigin'] = self.security_origin
+        json['storageKey'] = self.storage_key
+        json['cacheName'] = self.cache_name
         if self.storage_bucket is not None:
-            json["storageBucket"] = self.storage_bucket.to_json()
+            json['storageBucket'] = self.storage_bucket.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Cache:
         return cls(
-            cache_id=CacheId.from_json(json["cacheId"]),
-            security_origin=str(json["securityOrigin"]),
-            storage_key=str(json["storageKey"]),
-            cache_name=str(json["cacheName"]),
-            storage_bucket=storage.StorageBucket.from_json(json["storageBucket"])
-            if json.get("storageBucket", None) is not None
-            else None,
+            cache_id=CacheId.from_json(json['cacheId']),
+            security_origin=str(json['securityOrigin']),
+            storage_key=str(json['storageKey']),
+            cache_name=str(json['cacheName']),
+            storage_bucket=storage.StorageBucket.from_json_optional(json.get('storageBucket')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Cache | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -157,17 +193,23 @@ class Header:
     value: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
-        json["value"] = self.value
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
+        json['value'] = self.value
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Header:
         return cls(
-            name=str(json["name"]),
-            value=str(json["value"]),
+            name=str(json['name']),
+            value=str(json['value']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Header | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -180,110 +222,131 @@ class CachedResponse:
     body: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["body"] = self.body
+        json: T_JSON_DICT = {}
+        json['body'] = self.body
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CachedResponse:
         return cls(
-            body=str(json["body"]),
+            body=str(json['body']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CachedResponse | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-def delete_cache(cache_id: CacheId) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+
+def delete_cache(
+    cache_id: CacheId,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Deletes a cache.
 
     :param cache_id: Id of cache for deletion.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["cacheId"] = cache_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['cacheId'] = cache_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "CacheStorage.deleteCache",
-        "params": params,
+        'method': 'CacheStorage.deleteCache',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def delete_entry(
-    cache_id: CacheId, request: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    cache_id: CacheId,
+    request: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Deletes a cache entry.
 
     :param cache_id: Id of cache where the entry will be deleted.
     :param request: URL spec of the request.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["cacheId"] = cache_id.to_json()
-    params["request"] = request
+
+    params: T_JSON_DICT = {}
+    params['cacheId'] = cache_id.to_json()
+    params['request'] = request
     cmd_dict: T_JSON_DICT = {
-        "method": "CacheStorage.deleteEntry",
-        "params": params,
+        'method': 'CacheStorage.deleteEntry',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def request_cache_names(
-    security_origin: typing.Optional[str] = None,
-    storage_key: typing.Optional[str] = None,
-    storage_bucket: typing.Optional[storage.StorageBucket] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[Cache]]:
+    *,
+    security_origin: str | None = None,
+    storage_key: str | None = None,
+    storage_bucket: storage.StorageBucket | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[Cache]]:
     """
     Requests cache names.
 
     :param security_origin: *(Optional)* At least and at most one of securityOrigin, storageKey, storageBucket must be specified. Security origin.
     :param storage_key: *(Optional)* Storage key.
     :param storage_bucket: *(Optional)* Storage bucket. If not specified, it uses the default bucket.
-    :returns: Caches for the security origin.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[Cache]]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if security_origin is not None:
-        params["securityOrigin"] = security_origin
+        params['securityOrigin'] = security_origin
     if storage_key is not None:
-        params["storageKey"] = storage_key
+        params['storageKey'] = storage_key
     if storage_bucket is not None:
-        params["storageBucket"] = storage_bucket.to_json()
+        params['storageBucket'] = storage_bucket.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "CacheStorage.requestCacheNames",
-        "params": params,
+        'method': 'CacheStorage.requestCacheNames',
+        'params': params,
     }
     json = yield cmd_dict
-    return [Cache.from_json(i) for i in json["caches"]]
+    return [Cache.from_json(i) for i in json.get('caches', [])]
 
 
 def request_cached_response(
-    cache_id: CacheId, request_url: str, request_headers: typing.List[Header]
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, CachedResponse]:
+    cache_id: CacheId,
+    request_url: str,
+    request_headers: list[Header],
+) -> Generator[T_JSON_DICT, T_JSON_DICT, CachedResponse]:
     """
     Fetches cache entry.
 
     :param cache_id: Id of cache that contains the entry.
     :param request_url: URL spec of the request.
     :param request_headers: headers of the request.
-    :returns: Response read from the cache.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, CachedResponse]
     """
-    params: T_JSON_DICT = dict()
-    params["cacheId"] = cache_id.to_json()
-    params["requestURL"] = request_url
-    params["requestHeaders"] = [i.to_json() for i in request_headers]
+
+    params: T_JSON_DICT = {}
+    params['cacheId'] = cache_id.to_json()
+    params['requestURL'] = request_url
+    params['requestHeaders'] = [i.to_json() for i in request_headers]
     cmd_dict: T_JSON_DICT = {
-        "method": "CacheStorage.requestCachedResponse",
-        "params": params,
+        'method': 'CacheStorage.requestCachedResponse',
+        'params': params,
     }
     json = yield cmd_dict
-    return CachedResponse.from_json(json["response"])
+    return CachedResponse.from_json(json['response'])
 
 
 def request_entries(
     cache_id: CacheId,
-    skip_count: typing.Optional[int] = None,
-    page_size: typing.Optional[int] = None,
-    path_filter: typing.Optional[str] = None,
-) -> typing.Generator[
-    T_JSON_DICT, T_JSON_DICT, typing.Tuple[typing.List[DataEntry], float]
-]:
+    *,
+    skip_count: int | None = None,
+    page_size: int | None = None,
+    path_filter: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[list[DataEntry], float]]:
     """
     Requests data from cache.
 
@@ -291,25 +354,21 @@ def request_entries(
     :param skip_count: *(Optional)* Number of records to skip.
     :param page_size: *(Optional)* Number of records to fetch.
     :param path_filter: *(Optional)* If present, only return the entries containing this substring in the path
-    :returns: A tuple with the following items:
-
-        0. **cacheDataEntries** - Array of object store data entries.
-        1. **returnCount** - Count of returned entries from this storage. If pathFilter is empty, it is the count of all entries from this storage.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[list[DataEntry], float]]
     """
-    params: T_JSON_DICT = dict()
-    params["cacheId"] = cache_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['cacheId'] = cache_id.to_json()
     if skip_count is not None:
-        params["skipCount"] = skip_count
+        params['skipCount'] = skip_count
     if page_size is not None:
-        params["pageSize"] = page_size
+        params['pageSize'] = page_size
     if path_filter is not None:
-        params["pathFilter"] = path_filter
+        params['pathFilter'] = path_filter
     cmd_dict: T_JSON_DICT = {
-        "method": "CacheStorage.requestEntries",
-        "params": params,
+        'method': 'CacheStorage.requestEntries',
+        'params': params,
     }
     json = yield cmd_dict
-    return (
-        [DataEntry.from_json(i) for i in json["cacheDataEntries"]],
-        float(json["returnCount"]),
-    )
+    return ([DataEntry.from_json(i) for i in json.get('cacheDataEntries', [])], float(json['returnCount']))

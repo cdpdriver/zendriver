@@ -3,13 +3,23 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Cast (experimental)
 
 from __future__ import annotations
-import enum
+
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 @dataclass
@@ -20,30 +30,34 @@ class Sink:
 
     #: Text describing the current session. Present only if there is an active
     #: session on the sink.
-    session: typing.Optional[str] = None
+    session: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
-        json["id"] = self.id_
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
+        json['id'] = self.id_
         if self.session is not None:
-            json["session"] = self.session
+            json['session'] = self.session
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Sink:
         return cls(
-            name=str(json["name"]),
-            id_=str(json["id"]),
-            session=str(json["session"])
-            if json.get("session", None) is not None
-            else None,
+            name=str(json['name']),
+            id_=str(json['id']),
+            session=None if json.get('session') is None else str(json['session']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Sink | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 def enable(
-    presentation_url: typing.Optional[str] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    presentation_url: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Starts observing for sinks that can be used for tab mirroring, and if set,
     sinks compatible with ``presentationUrl`` as well. When sinks are found, a
@@ -52,93 +66,115 @@ def enable(
     an ``issueUpdated`` event is fired.
 
     :param presentation_url: *(Optional)*
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if presentation_url is not None:
-        params["presentationUrl"] = presentation_url
+        params['presentationUrl'] = presentation_url
     cmd_dict: T_JSON_DICT = {
-        "method": "Cast.enable",
-        "params": params,
+        'method': 'Cast.enable',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Stops observing for sinks and issues.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Cast.disable",
+        'method': 'Cast.disable',
     }
     json = yield cmd_dict
 
 
-def set_sink_to_use(sink_name: str) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def set_sink_to_use(
+    sink_name: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets a sink to be used when the web page requests the browser to choose a
     sink via Presentation API, Remote Playback API, or Cast SDK.
 
     :param sink_name:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["sinkName"] = sink_name
+
+    params: T_JSON_DICT = {}
+    params['sinkName'] = sink_name
     cmd_dict: T_JSON_DICT = {
-        "method": "Cast.setSinkToUse",
-        "params": params,
+        'method': 'Cast.setSinkToUse',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def start_desktop_mirroring(
     sink_name: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Starts mirroring the desktop to the sink.
 
     :param sink_name:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["sinkName"] = sink_name
+
+    params: T_JSON_DICT = {}
+    params['sinkName'] = sink_name
     cmd_dict: T_JSON_DICT = {
-        "method": "Cast.startDesktopMirroring",
-        "params": params,
+        'method': 'Cast.startDesktopMirroring',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def start_tab_mirroring(
     sink_name: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Starts mirroring the tab to the sink.
 
     :param sink_name:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["sinkName"] = sink_name
+
+    params: T_JSON_DICT = {}
+    params['sinkName'] = sink_name
     cmd_dict: T_JSON_DICT = {
-        "method": "Cast.startTabMirroring",
-        "params": params,
+        'method': 'Cast.startTabMirroring',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def stop_casting(sink_name: str) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def stop_casting(
+    sink_name: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Stops the active Cast session on the sink.
 
     :param sink_name:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["sinkName"] = sink_name
+
+    params: T_JSON_DICT = {}
+    params['sinkName'] = sink_name
     cmd_dict: T_JSON_DICT = {
-        "method": "Cast.stopCasting",
-        "params": params,
+        'method': 'Cast.stopCasting',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@event_class("Cast.sinksUpdated")
+@event_type('Cast.sinksUpdated')
 @dataclass
 class SinksUpdated:
     """
@@ -146,14 +182,20 @@ class SinksUpdated:
     device or a software surface that you can cast to.
     """
 
-    sinks: typing.List[Sink]
+    sinks: list[Sink]
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SinksUpdated:
-        return cls(sinks=[Sink.from_json(i) for i in json["sinks"]])
+        return cls(sinks=[Sink.from_json(i) for i in json.get('sinks', [])])
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SinksUpdated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Cast.issueUpdated")
+@event_type('Cast.issueUpdated')
 @dataclass
 class IssueUpdated:
     """
@@ -165,4 +207,10 @@ class IssueUpdated:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> IssueUpdated:
-        return cls(issue_message=str(json["issueMessage"]))
+        return cls(issue_message=str(json['issueMessage']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> IssueUpdated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

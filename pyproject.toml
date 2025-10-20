@@ -1,85 +1,75 @@
 [project]
-name = "zendriver"
-version = "0.14.2"
-description = "A blazing fast, async-first, undetectable webscraping/web automation framework"
-readme = "README.md"
-authors = [{ name = "Stephan Lensky", email = "oss@slensky.com" }]
-license = { file = "LICENSE" }
-classifiers = [
+  authors = [{ name = "Stephan Lensky", email = "oss@slensky.com" }]
+  classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "Topic :: Internet :: WWW/HTTP :: Browsers",
     "License :: OSI Approved :: GNU Affero General Public License v3",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-]
-requires-python = ">=3.10"
-dependencies = [
+    "Topic :: Internet :: WWW/HTTP :: Browsers",
+  ]
+  dependencies = [
     "asyncio-atexit>=1.0.1",
     "deprecated>=1.2.14",
     "emoji>=2.14.1",
     "grapheme>=0.6.0",
     "mss>=9.0.2",
     "websockets>=14.0",
-]
+  ]
+  description = "A blazing fast, async-first, undetectable webscraping/web automation framework"
+  license = { file = "LICENSE" }
+  name = "zendriver"
+  readme = "README.md"
+  requires-python = ">=3.13"
+  version = "0.14.3"
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+  build-backend = "hatchling.build"
+  requires      = ["hatchling"]
 
 [tool.uv]
-dev-dependencies = [
+  dev-dependencies = [
+    "inflection>=0.5.1",
     "mkdocs-material>=9.5.42",
     "mkdocstrings[python]>=0.26.2",
     "mypy>=1.12.0",
+    "psutil>=7.1.0",
     "pytest-asyncio>=0.24.0",
     "pytest-cov>=6.1.1",
+    "pytest-mock>=3.14.0",
     "pytest>=8.3.3",
     "pyyaml>=6.0.2",
     "ruff>=0.7.4",
+    "types-deprecated>=1.2.15.20241117",
+    "types-psutil>=7.0.0.20251001",
     "types-pyyaml>=6.0.12.20240917",
     "types-requests>=2.32.0.20241016",
-    "pytest-mock>=3.14.0",
-    "types-deprecated>=1.2.15.20241117",
-    "inflection>=0.5.1",
-]
+  ]
 
 [tool.pytest.ini_options]
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
-log_level = "INFO"
+  asyncio_default_fixture_loop_scope = "function"
+  asyncio_mode                       = "auto"
+  log_level                          = "INFO"
 
-[tool.ruff]
-exclude = ["zendriver/cdp"]
-
-[tool.ruff.lint]
-exclude = [
-    "examples/demo.py",
-    "examples/fetch_domain.py",
-    "examples/imgur_upload_image.py",
-    "examples/mouse_drag_boxes.py",
-]
 
 [tool.mypy]
-exclude = [
-    "zendriver/cdp",
+  check_untyped_defs = true
+  exclude = [
     "examples/demo.py",
+    "examples/expect_download.py",
     "examples/fetch_domain.py",
     "examples/imgur_upload_image.py",
     "examples/mouse_drag_boxes.py",
     "examples/network_monitor.py",
-    "examples/wait_for_page.py",
     "examples/set_user_agent.py",
-    "examples/expect_download.py",
-]
-strict = true
-check_untyped_defs = true
+    "examples/wait_for_page.py",
+    "zendriver/cdp",
+  ]
+  strict = true
 
-[[tool.mypy.overrides]]
-module = [
-    "asyncio_atexit",
-]
-ignore_missing_imports = true
+  [[tool.mypy.overrides]]
+    ignore_missing_imports = true
+    module                 = ["asyncio_atexit"]

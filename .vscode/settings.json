@@ -1,0 +1,106 @@
+{
+  "[python]": {
+    "diffEditor.ignoreTrimWhitespace": false,
+    "editor.codeActionsOnSave": {
+      // "source.convertImportFormat": "always",
+      "source.fixAll": "always",
+      "source.fixAll.pylance": "always",
+      "source.fixAll.ruff": "always",
+      "source.organizeImports": "always",
+      "source.organizeImports.ruff": "always",
+      "source.unusedImports": "never"
+    },
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file",
+    "editor.formatOnType": true,
+    "editor.wordBasedSuggestions": "off"
+  },
+  "cSpell.enabled": false,
+  "debugpy.debugJustMyCode": false,
+  "editor.formatOnPaste": true,
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "editor.formatOnType": true,
+  "explorerExclude.backup": {},
+  "files.exclude": {
+    "**/.DS_Store": true,
+    "**/.git": true,
+    "**/.hg": true,
+    "**/.mypy_cache": true,
+    "**/.pdm-python": true,
+    "**/.poetry": true,
+    "**/.pycache": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
+    "**/.svn": true,
+    "**/.trunk/*actions/": true,
+    "**/.trunk/*logs/": true,
+    "**/.trunk/*notifications/": true,
+    "**/.trunk/*out/": true,
+    "**/.trunk/*plugins/": true,
+    "**/.venv": true,
+    "**/.yarn/cache": true,
+    "**/.yarn/releases": true,
+    "**/CVS": true,
+    "**/Thumbs.db": true,
+    "**/__pycache__/": true,
+    "**/node_modules": true
+  },
+  "python.REPL.enableREPLSmartSend": false,
+  "python.analysis.autoFormatStrings": true,
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.autoIndent": true,
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "python.analysis.include": [
+    "zendriver"
+  ],
+  "python.analysis.exclude": [
+    "**/!local",
+    "**/.local",
+    "**/.venv",
+    "**/venv",
+    ".local",
+    "./.venv",
+    "C:/Python313/lib",
+    "!local"
+  ],
+  "python.analysis.extraPaths": [
+    "./.venv"
+  ],
+  "python.analysis.fixAll": [
+    // "source.convertImportFormat"
+  ],
+  "python.analysis.generateWithTypeAnnotation": true,
+  "python.analysis.importFormat": "relative",
+  "python.analysis.inlayHints.functionReturnTypes": true,
+  "python.analysis.languageServerMode": "full",
+  "python.analysis.packageIndexDepths": [
+    {
+      "depth": 4,
+      "includeAllSymbols": true,
+      "name": "zendriver"
+    }
+  ],
+  "python.analysis.typeCheckingMode": "standard",
+  "python.analysis.typeEvaluation.deprecateTypingAliases": true,
+  "python.analysis.typeEvaluation.enableReachabilityAnalysis": true,
+  "python.analysis.useLibraryCodeForTypes": true,
+  "python.analysis.userFileIndexingLimit": -1,
+  "python.testing.pytestArgs": [
+    "tests"
+  ],
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "ruff.organizeImports": true,
+  "search.exclude": {
+    "**/!local": true,
+    "**/*.code-search": true,
+    "**/.local": true,
+    "**/.venv": true,
+    "**/bower_components": true,
+    "**/node_modules": true,
+    "**/venv": true
+  }
+}

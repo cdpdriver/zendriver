@@ -3,36 +3,52 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Inspector (experimental)
 
 from __future__ import annotations
-import enum
+
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+
+from .util import event_type
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
+
+
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disables inspector domain notifications.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Inspector.disable",
+        'method': 'Inspector.disable',
     }
     json = yield cmd_dict
 
 
-def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def enable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables inspector domain notifications.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Inspector.enable",
+        'method': 'Inspector.enable',
     }
     json = yield cmd_dict
 
 
-@event_class("Inspector.detached")
+@event_type('Inspector.detached')
 @dataclass
 class Detached:
     """
@@ -44,10 +60,16 @@ class Detached:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Detached:
-        return cls(reason=str(json["reason"]))
+        return cls(reason=str(json['reason']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Detached | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Inspector.targetCrashed")
+@event_type('Inspector.targetCrashed')
 @dataclass
 class TargetCrashed:
     """
@@ -58,8 +80,14 @@ class TargetCrashed:
     def from_json(cls, json: T_JSON_DICT) -> TargetCrashed:
         return cls()
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> TargetCrashed | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Inspector.targetReloadedAfterCrash")
+
+@event_type('Inspector.targetReloadedAfterCrash')
 @dataclass
 class TargetReloadedAfterCrash:
     """
@@ -69,3 +97,9 @@ class TargetReloadedAfterCrash:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> TargetReloadedAfterCrash:
         return cls()
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> TargetReloadedAfterCrash | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

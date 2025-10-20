@@ -3,13 +3,21 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Extensions (experimental)
 
 from __future__ import annotations
+
 import enum
 import typing
-from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 class StorageArea(enum.Enum):
@@ -17,10 +25,10 @@ class StorageArea(enum.Enum):
     Storage areas.
     """
 
-    SESSION = "session"
-    LOCAL = "local"
-    SYNC = "sync"
-    MANAGED = "managed"
+    SESSION = 'session'
+    LOCAL = 'local'
+    SYNC = 'sync'
+    MANAGED = 'managed'
 
     def to_json(self) -> str:
         return self.value
@@ -29,8 +37,16 @@ class StorageArea(enum.Enum):
     def from_json(cls, json: str) -> StorageArea:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> StorageArea | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-def load_unpacked(path: str) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, str]:
+
+def load_unpacked(
+    path: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, str]:
     """
     Installs an unpacked extension from the filesystem similar to
     --load-extension CLI flags. Returns extension ID once the extension
@@ -39,38 +55,48 @@ def load_unpacked(path: str) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, str]:
     flag is set.
 
     :param path: Absolute file path.
-    :returns: Extension id.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, str]
     """
-    params: T_JSON_DICT = dict()
-    params["path"] = path
+
+    params: T_JSON_DICT = {}
+    params['path'] = path
     cmd_dict: T_JSON_DICT = {
-        "method": "Extensions.loadUnpacked",
-        "params": params,
+        'method': 'Extensions.loadUnpacked',
+        'params': params,
     }
     json = yield cmd_dict
-    return str(json["id"])
+    return str(json['id'])
 
 
-def uninstall(id_: str) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def uninstall(
+    id_: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Uninstalls an unpacked extension (others not supported) from the profile.
     Available if the client is connected using the --remote-debugging-pipe flag
     and the --enable-unsafe-extension-debugging.
 
     :param id_: Extension id.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["id"] = id_
+
+    params: T_JSON_DICT = {}
+    params['id'] = id_
     cmd_dict: T_JSON_DICT = {
-        "method": "Extensions.uninstall",
-        "params": params,
+        'method': 'Extensions.uninstall',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def get_storage_items(
-    id_: str, storage_area: StorageArea, keys: typing.Optional[typing.List[str]] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, dict]:
+    id_: str,
+    storage_area: StorageArea,
+    *,
+    keys: list[str] | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, dict]:
     """
     Gets data from extension storage in the given ``storageArea``. If ``keys`` is
     specified, these are used to filter the result.
@@ -78,64 +104,77 @@ def get_storage_items(
     :param id_: ID of extension.
     :param storage_area: StorageArea to retrieve data from.
     :param keys: *(Optional)* Keys to retrieve.
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, dict]
     """
-    params: T_JSON_DICT = dict()
-    params["id"] = id_
-    params["storageArea"] = storage_area.to_json()
+
+    params: T_JSON_DICT = {}
+    params['id'] = id_
+    params['storageArea'] = storage_area.to_json()
     if keys is not None:
-        params["keys"] = [i for i in keys]
+        params['keys'] = keys
     cmd_dict: T_JSON_DICT = {
-        "method": "Extensions.getStorageItems",
-        "params": params,
+        'method': 'Extensions.getStorageItems',
+        'params': params,
     }
     json = yield cmd_dict
-    return dict(json["data"])
+    return dict(json['data'])
 
 
 def remove_storage_items(
-    id_: str, storage_area: StorageArea, keys: typing.List[str]
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    id_: str,
+    storage_area: StorageArea,
+    keys: list[str],
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Removes ``keys`` from extension storage in the given ``storageArea``.
 
     :param id_: ID of extension.
     :param storage_area: StorageArea to remove data from.
     :param keys: Keys to remove.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["id"] = id_
-    params["storageArea"] = storage_area.to_json()
-    params["keys"] = [i for i in keys]
+
+    params: T_JSON_DICT = {}
+    params['id'] = id_
+    params['storageArea'] = storage_area.to_json()
+    params['keys'] = keys
     cmd_dict: T_JSON_DICT = {
-        "method": "Extensions.removeStorageItems",
-        "params": params,
+        'method': 'Extensions.removeStorageItems',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def clear_storage_items(
-    id_: str, storage_area: StorageArea
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    id_: str,
+    storage_area: StorageArea,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Clears extension storage in the given ``storageArea``.
 
     :param id_: ID of extension.
     :param storage_area: StorageArea to remove data from.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["id"] = id_
-    params["storageArea"] = storage_area.to_json()
+
+    params: T_JSON_DICT = {}
+    params['id'] = id_
+    params['storageArea'] = storage_area.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Extensions.clearStorageItems",
-        "params": params,
+        'method': 'Extensions.clearStorageItems',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_storage_items(
-    id_: str, storage_area: StorageArea, values: dict
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    id_: str,
+    storage_area: StorageArea,
+    values: dict,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets ``values`` in extension storage in the given ``storageArea``. The provided ``values``
     will be merged with existing values in the storage area.
@@ -143,13 +182,16 @@ def set_storage_items(
     :param id_: ID of extension.
     :param storage_area: StorageArea to set data in.
     :param values: Values to set.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["id"] = id_
-    params["storageArea"] = storage_area.to_json()
-    params["values"] = values
+
+    params: T_JSON_DICT = {}
+    params['id'] = id_
+    params['storageArea'] = storage_area.to_json()
+    params['values'] = values
     cmd_dict: T_JSON_DICT = {
-        "method": "Extensions.setStorageItems",
-        "params": params,
+        'method': 'Extensions.setStorageItems',
+        'params': params,
     }
     json = yield cmd_dict

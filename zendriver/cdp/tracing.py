@@ -3,15 +3,28 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Tracing
 
 from __future__ import annotations
+
 import enum
 import typing
-from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+from dataclasses import dataclass, field
 
 from . import io
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
+
+
+# ruff: noqa: FURB189
 
 
 class MemoryDumpConfig(dict):
@@ -26,93 +39,91 @@ class MemoryDumpConfig(dict):
     def from_json(cls, json: dict) -> MemoryDumpConfig:
         return cls(json)
 
-    def __repr__(self):
-        return "MemoryDumpConfig({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: dict | None) -> MemoryDumpConfig | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'MemoryDumpConfig({super().__repr__()})'
 
 
 @dataclass
 class TraceConfig:
     #: Controls how the trace buffer stores data. The default is ``recordUntilFull``.
-    record_mode: typing.Optional[str] = None
+    record_mode: str | None = None
 
     #: Size of the trace buffer in kilobytes. If not specified or zero is passed, a default value
     #: of 200 MB would be used.
-    trace_buffer_size_in_kb: typing.Optional[float] = None
+    trace_buffer_size_in_kb: float | None = None
 
     #: Turns on JavaScript stack sampling.
-    enable_sampling: typing.Optional[bool] = None
+    enable_sampling: bool | None = None
 
     #: Turns on system tracing.
-    enable_systrace: typing.Optional[bool] = None
+    enable_systrace: bool | None = None
 
     #: Turns on argument filter.
-    enable_argument_filter: typing.Optional[bool] = None
+    enable_argument_filter: bool | None = None
 
     #: Included category filters.
-    included_categories: typing.Optional[typing.List[str]] = None
+    included_categories: list[str] = field(default_factory=list)
 
     #: Excluded category filters.
-    excluded_categories: typing.Optional[typing.List[str]] = None
+    excluded_categories: list[str] = field(default_factory=list)
 
     #: Configuration to synthesize the delays in tracing.
-    synthetic_delays: typing.Optional[typing.List[str]] = None
+    synthetic_delays: list[str] = field(default_factory=list)
 
     #: Configuration for memory dump triggers. Used only when "memory-infra" category is enabled.
-    memory_dump_config: typing.Optional[MemoryDumpConfig] = None
+    memory_dump_config: MemoryDumpConfig | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
+        json: T_JSON_DICT = {}
         if self.record_mode is not None:
-            json["recordMode"] = self.record_mode
+            json['recordMode'] = self.record_mode
         if self.trace_buffer_size_in_kb is not None:
-            json["traceBufferSizeInKb"] = self.trace_buffer_size_in_kb
+            json['traceBufferSizeInKb'] = self.trace_buffer_size_in_kb
         if self.enable_sampling is not None:
-            json["enableSampling"] = self.enable_sampling
+            json['enableSampling'] = self.enable_sampling
         if self.enable_systrace is not None:
-            json["enableSystrace"] = self.enable_systrace
+            json['enableSystrace'] = self.enable_systrace
         if self.enable_argument_filter is not None:
-            json["enableArgumentFilter"] = self.enable_argument_filter
+            json['enableArgumentFilter'] = self.enable_argument_filter
         if self.included_categories is not None:
-            json["includedCategories"] = [i for i in self.included_categories]
+            json['includedCategories'] = self.included_categories
         if self.excluded_categories is not None:
-            json["excludedCategories"] = [i for i in self.excluded_categories]
+            json['excludedCategories'] = self.excluded_categories
         if self.synthetic_delays is not None:
-            json["syntheticDelays"] = [i for i in self.synthetic_delays]
+            json['syntheticDelays'] = self.synthetic_delays
         if self.memory_dump_config is not None:
-            json["memoryDumpConfig"] = self.memory_dump_config.to_json()
+            json['memoryDumpConfig'] = self.memory_dump_config.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> TraceConfig:
         return cls(
-            record_mode=str(json["recordMode"])
-            if json.get("recordMode", None) is not None
-            else None,
-            trace_buffer_size_in_kb=float(json["traceBufferSizeInKb"])
-            if json.get("traceBufferSizeInKb", None) is not None
-            else None,
-            enable_sampling=bool(json["enableSampling"])
-            if json.get("enableSampling", None) is not None
-            else None,
-            enable_systrace=bool(json["enableSystrace"])
-            if json.get("enableSystrace", None) is not None
-            else None,
-            enable_argument_filter=bool(json["enableArgumentFilter"])
-            if json.get("enableArgumentFilter", None) is not None
-            else None,
-            included_categories=[str(i) for i in json["includedCategories"]]
-            if json.get("includedCategories", None) is not None
-            else None,
-            excluded_categories=[str(i) for i in json["excludedCategories"]]
-            if json.get("excludedCategories", None) is not None
-            else None,
-            synthetic_delays=[str(i) for i in json["syntheticDelays"]]
-            if json.get("syntheticDelays", None) is not None
-            else None,
-            memory_dump_config=MemoryDumpConfig.from_json(json["memoryDumpConfig"])
-            if json.get("memoryDumpConfig", None) is not None
-            else None,
+            record_mode=None if json.get('recordMode') is None else str(json['recordMode']),
+            trace_buffer_size_in_kb=None
+            if json.get('traceBufferSizeInKb') is None
+            else float(json['traceBufferSizeInKb']),
+            enable_sampling=None if json.get('enableSampling') is None else bool(json['enableSampling']),
+            enable_systrace=None if json.get('enableSystrace') is None else bool(json['enableSystrace']),
+            enable_argument_filter=None
+            if json.get('enableArgumentFilter') is None
+            else bool(json['enableArgumentFilter']),
+            included_categories=[str(i) for i in json.get('includedCategories', [])],
+            excluded_categories=[str(i) for i in json.get('excludedCategories', [])],
+            synthetic_delays=[str(i) for i in json.get('syntheticDelays', [])],
+            memory_dump_config=MemoryDumpConfig.from_json_optional(json.get('memoryDumpConfig')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> TraceConfig | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class StreamFormat(enum.Enum):
@@ -121,8 +132,8 @@ class StreamFormat(enum.Enum):
     protocol buffer format. Note that the JSON format will be deprecated soon.
     """
 
-    JSON = "json"
-    PROTO = "proto"
+    JSON = 'json'
+    PROTO = 'proto'
 
     def to_json(self) -> str:
         return self.value
@@ -131,14 +142,20 @@ class StreamFormat(enum.Enum):
     def from_json(cls, json: str) -> StreamFormat:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> StreamFormat | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class StreamCompression(enum.Enum):
     """
     Compression type to use for traces returned via streams.
     """
 
-    NONE = "none"
-    GZIP = "gzip"
+    NONE = 'none'
+    GZIP = 'gzip'
 
     def to_json(self) -> str:
         return self.value
@@ -146,6 +163,12 @@ class StreamCompression(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> StreamCompression:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> StreamCompression | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class MemoryDumpLevelOfDetail(enum.Enum):
@@ -155,9 +178,9 @@ class MemoryDumpLevelOfDetail(enum.Enum):
     memory_instrumentation.mojom
     """
 
-    BACKGROUND = "background"
-    LIGHT = "light"
-    DETAILED = "detailed"
+    BACKGROUND = 'background'
+    LIGHT = 'light'
+    DETAILED = 'detailed'
 
     def to_json(self) -> str:
         return self.value
@@ -165,6 +188,12 @@ class MemoryDumpLevelOfDetail(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> MemoryDumpLevelOfDetail:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> MemoryDumpLevelOfDetail | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class TracingBackend(enum.Enum):
@@ -176,9 +205,9 @@ class TracingBackend(enum.Enum):
     specifies at least one non-Chrome data source; otherwise uses ``chrome``.
     """
 
-    AUTO = "auto"
-    CHROME = "chrome"
-    SYSTEM = "system"
+    AUTO = 'auto'
+    CHROME = 'chrome'
+    SYSTEM = 'system'
 
     def to_json(self) -> str:
         return self.value
@@ -187,55 +216,70 @@ class TracingBackend(enum.Enum):
     def from_json(cls, json: str) -> TracingBackend:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> TracingBackend | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-def end() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+
+def end() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Stop trace events collection.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Tracing.end",
+        'method': 'Tracing.end',
     }
     json = yield cmd_dict
 
 
-def get_categories() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[str]]:
+def get_categories() -> Generator[T_JSON_DICT, T_JSON_DICT, list[str]]:
     """
     Gets supported tracing categories.
 
     **EXPERIMENTAL**
 
-    :returns: A list of supported tracing categories.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[str]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Tracing.getCategories",
+        'method': 'Tracing.getCategories',
     }
     json = yield cmd_dict
-    return [str(i) for i in json["categories"]]
+    return [str(i) for i in json.get('categories', [])]
 
 
 def record_clock_sync_marker(
     sync_id: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Record a clock sync marker in the trace.
 
     **EXPERIMENTAL**
 
     :param sync_id: The ID of this clock sync marker
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["syncId"] = sync_id
+
+    params: T_JSON_DICT = {}
+    params['syncId'] = sync_id
     cmd_dict: T_JSON_DICT = {
-        "method": "Tracing.recordClockSyncMarker",
-        "params": params,
+        'method': 'Tracing.recordClockSyncMarker',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def request_memory_dump(
-    deterministic: typing.Optional[bool] = None,
-    level_of_detail: typing.Optional[MemoryDumpLevelOfDetail] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.Tuple[str, bool]]:
+    *,
+    deterministic: bool | None = None,
+    level_of_detail: MemoryDumpLevelOfDetail | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[str, bool]]:
     """
     Request a global memory dump.
 
@@ -243,35 +287,35 @@ def request_memory_dump(
 
     :param deterministic: *(Optional)* Enables more deterministic results by forcing garbage collection
     :param level_of_detail: *(Optional)* Specifies level of details in memory dump. Defaults to "detailed".
-    :returns: A tuple with the following items:
-
-        0. **dumpGuid** - GUID of the resulting global memory dump.
-        1. **success** - True iff the global memory dump succeeded.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[str, bool]]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if deterministic is not None:
-        params["deterministic"] = deterministic
+        params['deterministic'] = deterministic
     if level_of_detail is not None:
-        params["levelOfDetail"] = level_of_detail.to_json()
+        params['levelOfDetail'] = level_of_detail.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Tracing.requestMemoryDump",
-        "params": params,
+        'method': 'Tracing.requestMemoryDump',
+        'params': params,
     }
     json = yield cmd_dict
-    return (str(json["dumpGuid"]), bool(json["success"]))
+    return (str(json['dumpGuid']), bool(json['success']))
 
 
 def start(
-    categories: typing.Optional[str] = None,
-    options: typing.Optional[str] = None,
-    buffer_usage_reporting_interval: typing.Optional[float] = None,
-    transfer_mode: typing.Optional[str] = None,
-    stream_format: typing.Optional[StreamFormat] = None,
-    stream_compression: typing.Optional[StreamCompression] = None,
-    trace_config: typing.Optional[TraceConfig] = None,
-    perfetto_config: typing.Optional[str] = None,
-    tracing_backend: typing.Optional[TracingBackend] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    categories: str | None = None,
+    options: str | None = None,
+    buffer_usage_reporting_interval: float | None = None,
+    transfer_mode: str | None = None,
+    stream_format: StreamFormat | None = None,
+    stream_compression: StreamCompression | None = None,
+    trace_config: TraceConfig | None = None,
+    perfetto_config: str | None = None,
+    tracing_backend: TracingBackend | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Start trace events collection.
 
@@ -284,34 +328,37 @@ def start(
     :param trace_config: *(Optional)*
     :param perfetto_config: **(EXPERIMENTAL)** *(Optional)* Base64-encoded serialized perfetto.protos.TraceConfig protobuf message When specified, the parameters ````categories````, ````options````, ````traceConfig```` are ignored. (Encoded as a base64 string when passed over JSON)
     :param tracing_backend: **(EXPERIMENTAL)** *(Optional)* Backend type (defaults to ````auto```)
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if categories is not None:
-        params["categories"] = categories
+        params['categories'] = categories
     if options is not None:
-        params["options"] = options
+        params['options'] = options
     if buffer_usage_reporting_interval is not None:
-        params["bufferUsageReportingInterval"] = buffer_usage_reporting_interval
+        params['bufferUsageReportingInterval'] = buffer_usage_reporting_interval
     if transfer_mode is not None:
-        params["transferMode"] = transfer_mode
+        params['transferMode'] = transfer_mode
     if stream_format is not None:
-        params["streamFormat"] = stream_format.to_json()
+        params['streamFormat'] = stream_format.to_json()
     if stream_compression is not None:
-        params["streamCompression"] = stream_compression.to_json()
+        params['streamCompression'] = stream_compression.to_json()
     if trace_config is not None:
-        params["traceConfig"] = trace_config.to_json()
+        params['traceConfig'] = trace_config.to_json()
     if perfetto_config is not None:
-        params["perfettoConfig"] = perfetto_config
+        params['perfettoConfig'] = perfetto_config
     if tracing_backend is not None:
-        params["tracingBackend"] = tracing_backend.to_json()
+        params['tracingBackend'] = tracing_backend.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Tracing.start",
-        "params": params,
+        'method': 'Tracing.start',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@event_class("Tracing.bufferUsage")
+@event_type('Tracing.bufferUsage')
 @dataclass
 class BufferUsage:
     """
@@ -322,27 +369,29 @@ class BufferUsage:
 
     #: A number in range [0..1] that indicates the used size of event buffer as a fraction of its
     #: total size.
-    percent_full: typing.Optional[float]
+    percent_full: float | None
     #: An approximate number of events in the trace log.
-    event_count: typing.Optional[float]
+    event_count: float | None
     #: A number in range [0..1] that indicates the used size of event buffer as a fraction of its
     #: total size.
-    value: typing.Optional[float]
+    value: float | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> BufferUsage:
         return cls(
-            percent_full=float(json["percentFull"])
-            if json.get("percentFull", None) is not None
-            else None,
-            event_count=float(json["eventCount"])
-            if json.get("eventCount", None) is not None
-            else None,
-            value=float(json["value"]) if json.get("value", None) is not None else None,
+            percent_full=None if json.get('percentFull') is None else float(json['percentFull']),
+            event_count=None if json.get('eventCount') is None else float(json['eventCount']),
+            value=None if json.get('value') is None else float(json['value']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> BufferUsage | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Tracing.dataCollected")
+
+@event_type('Tracing.dataCollected')
 @dataclass
 class DataCollected:
     """
@@ -352,14 +401,20 @@ class DataCollected:
     sent as a sequence of dataCollected events followed by tracingComplete event.
     """
 
-    value: typing.List[dict]
+    value: list[dict]
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DataCollected:
-        return cls(value=[dict(i) for i in json["value"]])
+        return cls(value=[dict(i) for i in json.get('value', [])])
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DataCollected | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Tracing.tracingComplete")
+@event_type('Tracing.tracingComplete')
 @dataclass
 class TracingComplete:
     """
@@ -371,23 +426,23 @@ class TracingComplete:
     #: buffer wrapped around.
     data_loss_occurred: bool
     #: A handle of the stream that holds resulting trace data.
-    stream: typing.Optional[io.StreamHandle]
+    stream: io.StreamHandle | None
     #: Trace data format of returned stream.
-    trace_format: typing.Optional[StreamFormat]
+    trace_format: StreamFormat | None
     #: Compression format of returned stream.
-    stream_compression: typing.Optional[StreamCompression]
+    stream_compression: StreamCompression | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> TracingComplete:
         return cls(
-            data_loss_occurred=bool(json["dataLossOccurred"]),
-            stream=io.StreamHandle.from_json(json["stream"])
-            if json.get("stream", None) is not None
-            else None,
-            trace_format=StreamFormat.from_json(json["traceFormat"])
-            if json.get("traceFormat", None) is not None
-            else None,
-            stream_compression=StreamCompression.from_json(json["streamCompression"])
-            if json.get("streamCompression", None) is not None
-            else None,
+            data_loss_occurred=bool(json['dataLossOccurred']),
+            stream=io.StreamHandle.from_json_optional(json.get('stream')),
+            trace_format=StreamFormat.from_json_optional(json.get('traceFormat')),
+            stream_compression=StreamCompression.from_json_optional(json.get('streamCompression')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> TracingComplete | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

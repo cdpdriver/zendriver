@@ -3,46 +3,66 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Tethering (experimental)
 
 from __future__ import annotations
-import enum
+
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+
+from .util import event_type
 
 
-def bind(port: int) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
+
+
+def bind(
+    port: int,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Request browser port binding.
 
     :param port: Port number to bind.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["port"] = port
+
+    params: T_JSON_DICT = {}
+    params['port'] = port
     cmd_dict: T_JSON_DICT = {
-        "method": "Tethering.bind",
-        "params": params,
+        'method': 'Tethering.bind',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def unbind(port: int) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def unbind(
+    port: int,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Request browser port unbinding.
 
     :param port: Port number to unbind.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["port"] = port
+
+    params: T_JSON_DICT = {}
+    params['port'] = port
     cmd_dict: T_JSON_DICT = {
-        "method": "Tethering.unbind",
-        "params": params,
+        'method': 'Tethering.unbind',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@event_class("Tethering.accepted")
+@event_type('Tethering.accepted')
 @dataclass
 class Accepted:
     """
@@ -56,4 +76,13 @@ class Accepted:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Accepted:
-        return cls(port=int(json["port"]), connection_id=str(json["connectionId"]))
+        return cls(
+            port=int(json['port']),
+            connection_id=str(json['connectionId']),
+        )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Accepted | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

@@ -3,18 +3,33 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: ServiceWorker (experimental)
 
 from __future__ import annotations
+
 import enum
 import typing
-from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+from dataclasses import dataclass, field
 
 from . import target
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
+
+
+# ruff: noqa: FURB189
 
 
 class RegistrationID(str):
+    __slots__ = ()
+
     def to_json(self) -> str:
         return self
 
@@ -22,8 +37,14 @@ class RegistrationID(str):
     def from_json(cls, json: str) -> RegistrationID:
         return cls(json)
 
-    def __repr__(self):
-        return "RegistrationID({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> RegistrationID | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'RegistrationID({super().__repr__()})'
 
 
 @dataclass
@@ -39,26 +60,32 @@ class ServiceWorkerRegistration:
     is_deleted: bool
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["registrationId"] = self.registration_id.to_json()
-        json["scopeURL"] = self.scope_url
-        json["isDeleted"] = self.is_deleted
+        json: T_JSON_DICT = {}
+        json['registrationId'] = self.registration_id.to_json()
+        json['scopeURL'] = self.scope_url
+        json['isDeleted'] = self.is_deleted
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ServiceWorkerRegistration:
         return cls(
-            registration_id=RegistrationID.from_json(json["registrationId"]),
-            scope_url=str(json["scopeURL"]),
-            is_deleted=bool(json["isDeleted"]),
+            registration_id=RegistrationID.from_json(json['registrationId']),
+            scope_url=str(json['scopeURL']),
+            is_deleted=bool(json['isDeleted']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ServiceWorkerRegistration | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class ServiceWorkerVersionRunningStatus(enum.Enum):
-    STOPPED = "stopped"
-    STARTING = "starting"
-    RUNNING = "running"
-    STOPPING = "stopping"
+    STOPPED = 'stopped'
+    STARTING = 'starting'
+    RUNNING = 'running'
+    STOPPING = 'stopping'
 
     def to_json(self) -> str:
         return self.value
@@ -67,14 +94,20 @@ class ServiceWorkerVersionRunningStatus(enum.Enum):
     def from_json(cls, json: str) -> ServiceWorkerVersionRunningStatus:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> ServiceWorkerVersionRunningStatus | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class ServiceWorkerVersionStatus(enum.Enum):
-    NEW = "new"
-    INSTALLING = "installing"
-    INSTALLED = "installed"
-    ACTIVATING = "activating"
-    ACTIVATED = "activated"
-    REDUNDANT = "redundant"
+    NEW = 'new'
+    INSTALLING = 'installing'
+    INSTALLED = 'installed'
+    ACTIVATING = 'activating'
+    ACTIVATED = 'activated'
+    REDUNDANT = 'redundant'
 
     def to_json(self) -> str:
         return self.value
@@ -82,6 +115,12 @@ class ServiceWorkerVersionStatus(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> ServiceWorkerVersionStatus:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> ServiceWorkerVersionStatus | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -101,65 +140,57 @@ class ServiceWorkerVersion:
     status: ServiceWorkerVersionStatus
 
     #: The Last-Modified header value of the main script.
-    script_last_modified: typing.Optional[float] = None
+    script_last_modified: float | None = None
 
     #: The time at which the response headers of the main script were received from the server.
     #: For cached script it is the last time the cache entry was validated.
-    script_response_time: typing.Optional[float] = None
+    script_response_time: float | None = None
 
-    controlled_clients: typing.Optional[typing.List[target.TargetID]] = None
+    controlled_clients: list[target.TargetID] = field(default_factory=list)
 
-    target_id: typing.Optional[target.TargetID] = None
+    target_id: target.TargetID | None = None
 
-    router_rules: typing.Optional[str] = None
+    router_rules: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["versionId"] = self.version_id
-        json["registrationId"] = self.registration_id.to_json()
-        json["scriptURL"] = self.script_url
-        json["runningStatus"] = self.running_status.to_json()
-        json["status"] = self.status.to_json()
+        json: T_JSON_DICT = {}
+        json['versionId'] = self.version_id
+        json['registrationId'] = self.registration_id.to_json()
+        json['scriptURL'] = self.script_url
+        json['runningStatus'] = self.running_status.to_json()
+        json['status'] = self.status.to_json()
         if self.script_last_modified is not None:
-            json["scriptLastModified"] = self.script_last_modified
+            json['scriptLastModified'] = self.script_last_modified
         if self.script_response_time is not None:
-            json["scriptResponseTime"] = self.script_response_time
+            json['scriptResponseTime'] = self.script_response_time
         if self.controlled_clients is not None:
-            json["controlledClients"] = [i.to_json() for i in self.controlled_clients]
+            json['controlledClients'] = [i.to_json() for i in self.controlled_clients]
         if self.target_id is not None:
-            json["targetId"] = self.target_id.to_json()
+            json['targetId'] = self.target_id.to_json()
         if self.router_rules is not None:
-            json["routerRules"] = self.router_rules
+            json['routerRules'] = self.router_rules
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ServiceWorkerVersion:
         return cls(
-            version_id=str(json["versionId"]),
-            registration_id=RegistrationID.from_json(json["registrationId"]),
-            script_url=str(json["scriptURL"]),
-            running_status=ServiceWorkerVersionRunningStatus.from_json(
-                json["runningStatus"]
-            ),
-            status=ServiceWorkerVersionStatus.from_json(json["status"]),
-            script_last_modified=float(json["scriptLastModified"])
-            if json.get("scriptLastModified", None) is not None
-            else None,
-            script_response_time=float(json["scriptResponseTime"])
-            if json.get("scriptResponseTime", None) is not None
-            else None,
-            controlled_clients=[
-                target.TargetID.from_json(i) for i in json["controlledClients"]
-            ]
-            if json.get("controlledClients", None) is not None
-            else None,
-            target_id=target.TargetID.from_json(json["targetId"])
-            if json.get("targetId", None) is not None
-            else None,
-            router_rules=str(json["routerRules"])
-            if json.get("routerRules", None) is not None
-            else None,
+            version_id=str(json['versionId']),
+            registration_id=RegistrationID.from_json(json['registrationId']),
+            script_url=str(json['scriptURL']),
+            running_status=ServiceWorkerVersionRunningStatus.from_json(json['runningStatus']),
+            status=ServiceWorkerVersionStatus.from_json(json['status']),
+            script_last_modified=None if json.get('scriptLastModified') is None else float(json['scriptLastModified']),
+            script_response_time=None if json.get('scriptResponseTime') is None else float(json['scriptResponseTime']),
+            controlled_clients=[target.TargetID.from_json(i) for i in json.get('controlledClients', [])],
+            target_id=target.TargetID.from_json_optional(json.get('targetId')),
+            router_rules=None if json.get('routerRules') is None else str(json['routerRules']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ServiceWorkerVersion | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -181,190 +212,258 @@ class ServiceWorkerErrorMessage:
     column_number: int
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["errorMessage"] = self.error_message
-        json["registrationId"] = self.registration_id.to_json()
-        json["versionId"] = self.version_id
-        json["sourceURL"] = self.source_url
-        json["lineNumber"] = self.line_number
-        json["columnNumber"] = self.column_number
+        json: T_JSON_DICT = {}
+        json['errorMessage'] = self.error_message
+        json['registrationId'] = self.registration_id.to_json()
+        json['versionId'] = self.version_id
+        json['sourceURL'] = self.source_url
+        json['lineNumber'] = self.line_number
+        json['columnNumber'] = self.column_number
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ServiceWorkerErrorMessage:
         return cls(
-            error_message=str(json["errorMessage"]),
-            registration_id=RegistrationID.from_json(json["registrationId"]),
-            version_id=str(json["versionId"]),
-            source_url=str(json["sourceURL"]),
-            line_number=int(json["lineNumber"]),
-            column_number=int(json["columnNumber"]),
+            error_message=str(json['errorMessage']),
+            registration_id=RegistrationID.from_json(json['registrationId']),
+            version_id=str(json['versionId']),
+            source_url=str(json['sourceURL']),
+            line_number=int(json['lineNumber']),
+            column_number=int(json['columnNumber']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ServiceWorkerErrorMessage | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 def deliver_push_message(
-    origin: str, registration_id: RegistrationID, data: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    origin: str,
+    registration_id: RegistrationID,
+    data: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param origin:
     :param registration_id:
     :param data:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["origin"] = origin
-    params["registrationId"] = registration_id.to_json()
-    params["data"] = data
+
+    params: T_JSON_DICT = {}
+    params['origin'] = origin
+    params['registrationId'] = registration_id.to_json()
+    params['data'] = data
     cmd_dict: T_JSON_DICT = {
-        "method": "ServiceWorker.deliverPushMessage",
-        "params": params,
+        'method': 'ServiceWorker.deliverPushMessage',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
+    """
+
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
+    """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "ServiceWorker.disable",
+        'method': 'ServiceWorker.disable',
     }
     json = yield cmd_dict
 
 
 def dispatch_sync_event(
-    origin: str, registration_id: RegistrationID, tag: str, last_chance: bool
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    origin: str,
+    registration_id: RegistrationID,
+    tag: str,
+    *,
+    last_chance: bool,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param origin:
     :param registration_id:
     :param tag:
     :param last_chance:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["origin"] = origin
-    params["registrationId"] = registration_id.to_json()
-    params["tag"] = tag
-    params["lastChance"] = last_chance
+
+    params: T_JSON_DICT = {}
+    params['origin'] = origin
+    params['registrationId'] = registration_id.to_json()
+    params['tag'] = tag
+    params['lastChance'] = last_chance
     cmd_dict: T_JSON_DICT = {
-        "method": "ServiceWorker.dispatchSyncEvent",
-        "params": params,
+        'method': 'ServiceWorker.dispatchSyncEvent',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def dispatch_periodic_sync_event(
-    origin: str, registration_id: RegistrationID, tag: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    origin: str,
+    registration_id: RegistrationID,
+    tag: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param origin:
     :param registration_id:
     :param tag:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["origin"] = origin
-    params["registrationId"] = registration_id.to_json()
-    params["tag"] = tag
+
+    params: T_JSON_DICT = {}
+    params['origin'] = origin
+    params['registrationId'] = registration_id.to_json()
+    params['tag'] = tag
     cmd_dict: T_JSON_DICT = {
-        "method": "ServiceWorker.dispatchPeriodicSyncEvent",
-        "params": params,
+        'method': 'ServiceWorker.dispatchPeriodicSyncEvent',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def enable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
+    """
+
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
+    """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "ServiceWorker.enable",
+        'method': 'ServiceWorker.enable',
     }
     json = yield cmd_dict
 
 
 def set_force_update_on_page_load(
+    *,
     force_update_on_page_load: bool,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param force_update_on_page_load:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["forceUpdateOnPageLoad"] = force_update_on_page_load
+
+    params: T_JSON_DICT = {}
+    params['forceUpdateOnPageLoad'] = force_update_on_page_load
     cmd_dict: T_JSON_DICT = {
-        "method": "ServiceWorker.setForceUpdateOnPageLoad",
-        "params": params,
+        'method': 'ServiceWorker.setForceUpdateOnPageLoad',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def skip_waiting(scope_url: str) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def skip_waiting(
+    scope_url: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param scope_url:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["scopeURL"] = scope_url
+
+    params: T_JSON_DICT = {}
+    params['scopeURL'] = scope_url
     cmd_dict: T_JSON_DICT = {
-        "method": "ServiceWorker.skipWaiting",
-        "params": params,
+        'method': 'ServiceWorker.skipWaiting',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def start_worker(scope_url: str) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def start_worker(
+    scope_url: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param scope_url:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["scopeURL"] = scope_url
+
+    params: T_JSON_DICT = {}
+    params['scopeURL'] = scope_url
     cmd_dict: T_JSON_DICT = {
-        "method": "ServiceWorker.startWorker",
-        "params": params,
+        'method': 'ServiceWorker.startWorker',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def stop_all_workers() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def stop_all_workers() -> Generator[T_JSON_DICT, T_JSON_DICT]:
+    """
+
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
+    """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "ServiceWorker.stopAllWorkers",
+        'method': 'ServiceWorker.stopAllWorkers',
     }
     json = yield cmd_dict
 
 
-def stop_worker(version_id: str) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def stop_worker(
+    version_id: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param version_id:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["versionId"] = version_id
+
+    params: T_JSON_DICT = {}
+    params['versionId'] = version_id
     cmd_dict: T_JSON_DICT = {
-        "method": "ServiceWorker.stopWorker",
-        "params": params,
+        'method': 'ServiceWorker.stopWorker',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def unregister(scope_url: str) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def unregister(
+    scope_url: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param scope_url:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["scopeURL"] = scope_url
+
+    params: T_JSON_DICT = {}
+    params['scopeURL'] = scope_url
     cmd_dict: T_JSON_DICT = {
-        "method": "ServiceWorker.unregister",
-        "params": params,
+        'method': 'ServiceWorker.unregister',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def update_registration(
     scope_url: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param scope_url:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["scopeURL"] = scope_url
+
+    params: T_JSON_DICT = {}
+    params['scopeURL'] = scope_url
     cmd_dict: T_JSON_DICT = {
-        "method": "ServiceWorker.updateRegistration",
-        "params": params,
+        'method': 'ServiceWorker.updateRegistration',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@event_class("ServiceWorker.workerErrorReported")
+@event_type('ServiceWorker.workerErrorReported')
 @dataclass
 class WorkerErrorReported:
     error_message: ServiceWorkerErrorMessage
@@ -372,31 +471,47 @@ class WorkerErrorReported:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> WorkerErrorReported:
         return cls(
-            error_message=ServiceWorkerErrorMessage.from_json(json["errorMessage"])
+            error_message=ServiceWorkerErrorMessage.from_json(json['errorMessage']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> WorkerErrorReported | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("ServiceWorker.workerRegistrationUpdated")
+
+@event_type('ServiceWorker.workerRegistrationUpdated')
 @dataclass
 class WorkerRegistrationUpdated:
-    registrations: typing.List[ServiceWorkerRegistration]
+    registrations: list[ServiceWorkerRegistration]
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> WorkerRegistrationUpdated:
         return cls(
-            registrations=[
-                ServiceWorkerRegistration.from_json(i) for i in json["registrations"]
-            ]
+            registrations=[ServiceWorkerRegistration.from_json(i) for i in json.get('registrations', [])],
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> WorkerRegistrationUpdated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("ServiceWorker.workerVersionUpdated")
+
+@event_type('ServiceWorker.workerVersionUpdated')
 @dataclass
 class WorkerVersionUpdated:
-    versions: typing.List[ServiceWorkerVersion]
+    versions: list[ServiceWorkerVersion]
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> WorkerVersionUpdated:
         return cls(
-            versions=[ServiceWorkerVersion.from_json(i) for i in json["versions"]]
+            versions=[ServiceWorkerVersion.from_json(i) for i in json.get('versions', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> WorkerVersionUpdated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

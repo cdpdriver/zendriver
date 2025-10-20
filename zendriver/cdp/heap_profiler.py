@@ -3,21 +3,35 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: HeapProfiler (experimental)
 
 from __future__ import annotations
-import enum
-import typing
+
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+from typing import TYPE_CHECKING
 
 from . import runtime
+from .util import event_type
+
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
+
+
+# ruff: noqa: FURB189
 
 
 class HeapSnapshotObjectId(str):
     """
     Heap snapshot object id.
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -26,8 +40,14 @@ class HeapSnapshotObjectId(str):
     def from_json(cls, json: str) -> HeapSnapshotObjectId:
         return cls(json)
 
-    def __repr__(self):
-        return "HeapSnapshotObjectId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> HeapSnapshotObjectId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'HeapSnapshotObjectId({super().__repr__()})'
 
 
 @dataclass
@@ -46,24 +66,30 @@ class SamplingHeapProfileNode:
     id_: int
 
     #: Child nodes.
-    children: typing.List[SamplingHeapProfileNode]
+    children: list[SamplingHeapProfileNode]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["callFrame"] = self.call_frame.to_json()
-        json["selfSize"] = self.self_size
-        json["id"] = self.id_
-        json["children"] = [i.to_json() for i in self.children]
+        json: T_JSON_DICT = {}
+        json['callFrame'] = self.call_frame.to_json()
+        json['selfSize'] = self.self_size
+        json['id'] = self.id_
+        json['children'] = [i.to_json() for i in self.children]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SamplingHeapProfileNode:
         return cls(
-            call_frame=runtime.CallFrame.from_json(json["callFrame"]),
-            self_size=float(json["selfSize"]),
-            id_=int(json["id"]),
-            children=[SamplingHeapProfileNode.from_json(i) for i in json["children"]],
+            call_frame=runtime.CallFrame.from_json(json['callFrame']),
+            self_size=float(json['selfSize']),
+            id_=int(json['id']),
+            children=[SamplingHeapProfileNode.from_json(i) for i in json.get('children', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SamplingHeapProfileNode | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -83,19 +109,25 @@ class SamplingHeapProfileSample:
     ordinal: float
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["size"] = self.size
-        json["nodeId"] = self.node_id
-        json["ordinal"] = self.ordinal
+        json: T_JSON_DICT = {}
+        json['size'] = self.size
+        json['nodeId'] = self.node_id
+        json['ordinal'] = self.ordinal
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SamplingHeapProfileSample:
         return cls(
-            size=float(json["size"]),
-            node_id=int(json["nodeId"]),
-            ordinal=float(json["ordinal"]),
+            size=float(json['size']),
+            node_id=int(json['nodeId']),
+            ordinal=float(json['ordinal']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SamplingHeapProfileSample | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -106,237 +138,294 @@ class SamplingHeapProfile:
 
     head: SamplingHeapProfileNode
 
-    samples: typing.List[SamplingHeapProfileSample]
+    samples: list[SamplingHeapProfileSample]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["head"] = self.head.to_json()
-        json["samples"] = [i.to_json() for i in self.samples]
+        json: T_JSON_DICT = {}
+        json['head'] = self.head.to_json()
+        json['samples'] = [i.to_json() for i in self.samples]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SamplingHeapProfile:
         return cls(
-            head=SamplingHeapProfileNode.from_json(json["head"]),
-            samples=[SamplingHeapProfileSample.from_json(i) for i in json["samples"]],
+            head=SamplingHeapProfileNode.from_json(json['head']),
+            samples=[SamplingHeapProfileSample.from_json(i) for i in json.get('samples', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SamplingHeapProfile | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 def add_inspected_heap_object(
     heap_object_id: HeapSnapshotObjectId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables console to refer to the node with given id via $x (see Command Line API for more details
     $x functions).
 
     :param heap_object_id: Heap snapshot object id to be accessible by means of $x command line API.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["heapObjectId"] = heap_object_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['heapObjectId'] = heap_object_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "HeapProfiler.addInspectedHeapObject",
-        "params": params,
+        'method': 'HeapProfiler.addInspectedHeapObject',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def collect_garbage() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def collect_garbage() -> Generator[T_JSON_DICT, T_JSON_DICT]:
+    """
+
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
+    """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "HeapProfiler.collectGarbage",
+        'method': 'HeapProfiler.collectGarbage',
     }
     json = yield cmd_dict
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
+    """
+
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
+    """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "HeapProfiler.disable",
+        'method': 'HeapProfiler.disable',
     }
     json = yield cmd_dict
 
 
-def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def enable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
+    """
+
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
+    """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "HeapProfiler.enable",
+        'method': 'HeapProfiler.enable',
     }
     json = yield cmd_dict
 
 
 def get_heap_object_id(
     object_id: runtime.RemoteObjectId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, HeapSnapshotObjectId]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, HeapSnapshotObjectId]:
     """
     :param object_id: Identifier of the object to get heap object id for.
-    :returns: Id of the heap snapshot object corresponding to the passed remote object id.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, HeapSnapshotObjectId]
     """
-    params: T_JSON_DICT = dict()
-    params["objectId"] = object_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['objectId'] = object_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "HeapProfiler.getHeapObjectId",
-        "params": params,
+        'method': 'HeapProfiler.getHeapObjectId',
+        'params': params,
     }
     json = yield cmd_dict
-    return HeapSnapshotObjectId.from_json(json["heapSnapshotObjectId"])
+    return HeapSnapshotObjectId.from_json(json['heapSnapshotObjectId'])
 
 
 def get_object_by_heap_object_id(
-    object_id: HeapSnapshotObjectId, object_group: typing.Optional[str] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, runtime.RemoteObject]:
+    object_id: HeapSnapshotObjectId,
+    *,
+    object_group: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, runtime.RemoteObject]:
     """
     :param object_id:
     :param object_group: *(Optional)* Symbolic group name that can be used to release multiple objects.
-    :returns: Evaluation result.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, runtime.RemoteObject]
     """
-    params: T_JSON_DICT = dict()
-    params["objectId"] = object_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['objectId'] = object_id.to_json()
     if object_group is not None:
-        params["objectGroup"] = object_group
+        params['objectGroup'] = object_group
     cmd_dict: T_JSON_DICT = {
-        "method": "HeapProfiler.getObjectByHeapObjectId",
-        "params": params,
+        'method': 'HeapProfiler.getObjectByHeapObjectId',
+        'params': params,
     }
     json = yield cmd_dict
-    return runtime.RemoteObject.from_json(json["result"])
+    return runtime.RemoteObject.from_json(json['result'])
 
 
-def get_sampling_profile() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, SamplingHeapProfile]
-):
+def get_sampling_profile() -> Generator[T_JSON_DICT, T_JSON_DICT, SamplingHeapProfile]:
     """
 
 
-    :returns: Return the sampling profile being collected.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, SamplingHeapProfile]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "HeapProfiler.getSamplingProfile",
+        'method': 'HeapProfiler.getSamplingProfile',
     }
     json = yield cmd_dict
-    return SamplingHeapProfile.from_json(json["profile"])
+    return SamplingHeapProfile.from_json(json['profile'])
 
 
 def start_sampling(
-    sampling_interval: typing.Optional[float] = None,
-    include_objects_collected_by_major_gc: typing.Optional[bool] = None,
-    include_objects_collected_by_minor_gc: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    sampling_interval: float | None = None,
+    stack_depth: float | None = None,
+    include_objects_collected_by_major_gc: bool | None = None,
+    include_objects_collected_by_minor_gc: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param sampling_interval: *(Optional)* Average sample interval in bytes. Poisson distribution is used for the intervals. The default value is 32768 bytes.
+    :param stack_depth: *(Optional)* Maximum stack depth. The default value is 128.
     :param include_objects_collected_by_major_gc: *(Optional)* By default, the sampling heap profiler reports only objects which are still alive when the profile is returned via getSamplingProfile or stopSampling, which is useful for determining what functions contribute the most to steady-state memory usage. This flag instructs the sampling heap profiler to also include information about objects discarded by major GC, which will show which functions cause large temporary memory usage or long GC pauses.
     :param include_objects_collected_by_minor_gc: *(Optional)* By default, the sampling heap profiler reports only objects which are still alive when the profile is returned via getSamplingProfile or stopSampling, which is useful for determining what functions contribute the most to steady-state memory usage. This flag instructs the sampling heap profiler to also include information about objects discarded by minor GC, which is useful when tuning a latency-sensitive application for minimal GC activity.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if sampling_interval is not None:
-        params["samplingInterval"] = sampling_interval
+        params['samplingInterval'] = sampling_interval
+    if stack_depth is not None:
+        params['stackDepth'] = stack_depth
     if include_objects_collected_by_major_gc is not None:
-        params["includeObjectsCollectedByMajorGC"] = (
-            include_objects_collected_by_major_gc
-        )
+        params['includeObjectsCollectedByMajorGC'] = include_objects_collected_by_major_gc
     if include_objects_collected_by_minor_gc is not None:
-        params["includeObjectsCollectedByMinorGC"] = (
-            include_objects_collected_by_minor_gc
-        )
+        params['includeObjectsCollectedByMinorGC'] = include_objects_collected_by_minor_gc
     cmd_dict: T_JSON_DICT = {
-        "method": "HeapProfiler.startSampling",
-        "params": params,
+        'method': 'HeapProfiler.startSampling',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def start_tracking_heap_objects(
-    track_allocations: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    track_allocations: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param track_allocations: *(Optional)*
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if track_allocations is not None:
-        params["trackAllocations"] = track_allocations
+        params['trackAllocations'] = track_allocations
     cmd_dict: T_JSON_DICT = {
-        "method": "HeapProfiler.startTrackingHeapObjects",
-        "params": params,
+        'method': 'HeapProfiler.startTrackingHeapObjects',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def stop_sampling() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, SamplingHeapProfile]:
+def stop_sampling() -> Generator[T_JSON_DICT, T_JSON_DICT, SamplingHeapProfile]:
     """
 
 
-    :returns: Recorded sampling heap profile.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, SamplingHeapProfile]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "HeapProfiler.stopSampling",
+        'method': 'HeapProfiler.stopSampling',
     }
     json = yield cmd_dict
-    return SamplingHeapProfile.from_json(json["profile"])
+    return SamplingHeapProfile.from_json(json['profile'])
 
 
 def stop_tracking_heap_objects(
-    report_progress: typing.Optional[bool] = None,
-    treat_global_objects_as_roots: typing.Optional[bool] = None,
-    capture_numeric_value: typing.Optional[bool] = None,
-    expose_internals: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    report_progress: bool | None = None,
+    treat_global_objects_as_roots: bool | None = None,
+    capture_numeric_value: bool | None = None,
+    expose_internals: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param report_progress: *(Optional)* If true 'reportHeapSnapshotProgress' events will be generated while snapshot is being taken when the tracking is stopped.
     :param treat_global_objects_as_roots: **(DEPRECATED)** *(Optional)* Deprecated in favor of ```exposeInternals```.
     :param capture_numeric_value: *(Optional)* If true, numerical values are included in the snapshot
     :param expose_internals: **(EXPERIMENTAL)** *(Optional)* If true, exposes internals of the snapshot.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if report_progress is not None:
-        params["reportProgress"] = report_progress
+        params['reportProgress'] = report_progress
     if treat_global_objects_as_roots is not None:
-        params["treatGlobalObjectsAsRoots"] = treat_global_objects_as_roots
+        params['treatGlobalObjectsAsRoots'] = treat_global_objects_as_roots
     if capture_numeric_value is not None:
-        params["captureNumericValue"] = capture_numeric_value
+        params['captureNumericValue'] = capture_numeric_value
     if expose_internals is not None:
-        params["exposeInternals"] = expose_internals
+        params['exposeInternals'] = expose_internals
     cmd_dict: T_JSON_DICT = {
-        "method": "HeapProfiler.stopTrackingHeapObjects",
-        "params": params,
+        'method': 'HeapProfiler.stopTrackingHeapObjects',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def take_heap_snapshot(
-    report_progress: typing.Optional[bool] = None,
-    treat_global_objects_as_roots: typing.Optional[bool] = None,
-    capture_numeric_value: typing.Optional[bool] = None,
-    expose_internals: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    report_progress: bool | None = None,
+    treat_global_objects_as_roots: bool | None = None,
+    capture_numeric_value: bool | None = None,
+    expose_internals: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param report_progress: *(Optional)* If true 'reportHeapSnapshotProgress' events will be generated while snapshot is being taken.
     :param treat_global_objects_as_roots: **(DEPRECATED)** *(Optional)* If true, a raw snapshot without artificial roots will be generated. Deprecated in favor of ```exposeInternals```.
     :param capture_numeric_value: *(Optional)* If true, numerical values are included in the snapshot
     :param expose_internals: **(EXPERIMENTAL)** *(Optional)* If true, exposes internals of the snapshot.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if report_progress is not None:
-        params["reportProgress"] = report_progress
+        params['reportProgress'] = report_progress
     if treat_global_objects_as_roots is not None:
-        params["treatGlobalObjectsAsRoots"] = treat_global_objects_as_roots
+        params['treatGlobalObjectsAsRoots'] = treat_global_objects_as_roots
     if capture_numeric_value is not None:
-        params["captureNumericValue"] = capture_numeric_value
+        params['captureNumericValue'] = capture_numeric_value
     if expose_internals is not None:
-        params["exposeInternals"] = expose_internals
+        params['exposeInternals'] = expose_internals
     cmd_dict: T_JSON_DICT = {
-        "method": "HeapProfiler.takeHeapSnapshot",
-        "params": params,
+        'method': 'HeapProfiler.takeHeapSnapshot',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@event_class("HeapProfiler.addHeapSnapshotChunk")
+@event_type('HeapProfiler.addHeapSnapshotChunk')
 @dataclass
 class AddHeapSnapshotChunk:
     chunk: str
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AddHeapSnapshotChunk:
-        return cls(chunk=str(json["chunk"]))
+        return cls(chunk=str(json['chunk']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AddHeapSnapshotChunk | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("HeapProfiler.heapStatsUpdate")
+@event_type('HeapProfiler.heapStatsUpdate')
 @dataclass
 class HeapStatsUpdate:
     """
@@ -346,14 +435,20 @@ class HeapStatsUpdate:
     #: An array of triplets. Each triplet describes a fragment. The first integer is the fragment
     #: index, the second integer is a total count of objects for the fragment, the third integer is
     #: a total size of the objects for the fragment.
-    stats_update: typing.List[int]
+    stats_update: list[int]
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> HeapStatsUpdate:
-        return cls(stats_update=[int(i) for i in json["statsUpdate"]])
+        return cls(stats_update=[int(i) for i in json.get('statsUpdate', [])])
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> HeapStatsUpdate | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("HeapProfiler.lastSeenObjectId")
+@event_type('HeapProfiler.lastSeenObjectId')
 @dataclass
 class LastSeenObjectId:
     """
@@ -368,32 +463,48 @@ class LastSeenObjectId:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> LastSeenObjectId:
         return cls(
-            last_seen_object_id=int(json["lastSeenObjectId"]),
-            timestamp=float(json["timestamp"]),
+            last_seen_object_id=int(json['lastSeenObjectId']),
+            timestamp=float(json['timestamp']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> LastSeenObjectId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("HeapProfiler.reportHeapSnapshotProgress")
+
+@event_type('HeapProfiler.reportHeapSnapshotProgress')
 @dataclass
 class ReportHeapSnapshotProgress:
     done: int
     total: int
-    finished: typing.Optional[bool]
+    finished: bool | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ReportHeapSnapshotProgress:
         return cls(
-            done=int(json["done"]),
-            total=int(json["total"]),
-            finished=bool(json["finished"])
-            if json.get("finished", None) is not None
-            else None,
+            done=int(json['done']),
+            total=int(json['total']),
+            finished=None if json.get('finished') is None else bool(json['finished']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ReportHeapSnapshotProgress | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("HeapProfiler.resetProfiles")
+
+@event_type('HeapProfiler.resetProfiles')
 @dataclass
 class ResetProfiles:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ResetProfiles:
         return cls()
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ResetProfiles | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

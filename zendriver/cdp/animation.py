@@ -3,16 +3,24 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Animation (experimental)
 
 from __future__ import annotations
-import enum
+
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
 
-from . import dom
-from . import runtime
+from . import dom, runtime
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 @dataclass
@@ -49,54 +57,54 @@ class Animation:
     type_: str
 
     #: ``Animation``'s source animation node.
-    source: typing.Optional[AnimationEffect] = None
+    source: AnimationEffect | None = None
 
     #: A unique ID for ``Animation`` representing the sources that triggered this CSS
     #: animation/transition.
-    css_id: typing.Optional[str] = None
+    css_id: str | None = None
 
     #: View or scroll timeline
-    view_or_scroll_timeline: typing.Optional[ViewOrScrollTimeline] = None
+    view_or_scroll_timeline: ViewOrScrollTimeline | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["id"] = self.id_
-        json["name"] = self.name
-        json["pausedState"] = self.paused_state
-        json["playState"] = self.play_state
-        json["playbackRate"] = self.playback_rate
-        json["startTime"] = self.start_time
-        json["currentTime"] = self.current_time
-        json["type"] = self.type_
+        json: T_JSON_DICT = {}
+        json['id'] = self.id_
+        json['name'] = self.name
+        json['pausedState'] = self.paused_state
+        json['playState'] = self.play_state
+        json['playbackRate'] = self.playback_rate
+        json['startTime'] = self.start_time
+        json['currentTime'] = self.current_time
+        json['type'] = self.type_
         if self.source is not None:
-            json["source"] = self.source.to_json()
+            json['source'] = self.source.to_json()
         if self.css_id is not None:
-            json["cssId"] = self.css_id
+            json['cssId'] = self.css_id
         if self.view_or_scroll_timeline is not None:
-            json["viewOrScrollTimeline"] = self.view_or_scroll_timeline.to_json()
+            json['viewOrScrollTimeline'] = self.view_or_scroll_timeline.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Animation:
         return cls(
-            id_=str(json["id"]),
-            name=str(json["name"]),
-            paused_state=bool(json["pausedState"]),
-            play_state=str(json["playState"]),
-            playback_rate=float(json["playbackRate"]),
-            start_time=float(json["startTime"]),
-            current_time=float(json["currentTime"]),
-            type_=str(json["type"]),
-            source=AnimationEffect.from_json(json["source"])
-            if json.get("source", None) is not None
-            else None,
-            css_id=str(json["cssId"]) if json.get("cssId", None) is not None else None,
-            view_or_scroll_timeline=ViewOrScrollTimeline.from_json(
-                json["viewOrScrollTimeline"]
-            )
-            if json.get("viewOrScrollTimeline", None) is not None
-            else None,
+            id_=str(json['id']),
+            name=str(json['name']),
+            paused_state=bool(json['pausedState']),
+            play_state=str(json['playState']),
+            playback_rate=float(json['playbackRate']),
+            start_time=float(json['startTime']),
+            current_time=float(json['currentTime']),
+            type_=str(json['type']),
+            source=AnimationEffect.from_json_optional(json.get('source')),
+            css_id=None if json.get('cssId') is None else str(json['cssId']),
+            view_or_scroll_timeline=ViewOrScrollTimeline.from_json_optional(json.get('viewOrScrollTimeline')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Animation | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -109,51 +117,49 @@ class ViewOrScrollTimeline:
     axis: dom.ScrollOrientation
 
     #: Scroll container node
-    source_node_id: typing.Optional[dom.BackendNodeId] = None
+    source_node_id: dom.BackendNodeId | None = None
 
     #: Represents the starting scroll position of the timeline
     #: as a length offset in pixels from scroll origin.
-    start_offset: typing.Optional[float] = None
+    start_offset: float | None = None
 
     #: Represents the ending scroll position of the timeline
     #: as a length offset in pixels from scroll origin.
-    end_offset: typing.Optional[float] = None
+    end_offset: float | None = None
 
     #: The element whose principal box's visibility in the
     #: scrollport defined the progress of the timeline.
     #: Does not exist for animations with ScrollTimeline
-    subject_node_id: typing.Optional[dom.BackendNodeId] = None
+    subject_node_id: dom.BackendNodeId | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["axis"] = self.axis.to_json()
+        json: T_JSON_DICT = {}
+        json['axis'] = self.axis.to_json()
         if self.source_node_id is not None:
-            json["sourceNodeId"] = self.source_node_id.to_json()
+            json['sourceNodeId'] = self.source_node_id.to_json()
         if self.start_offset is not None:
-            json["startOffset"] = self.start_offset
+            json['startOffset'] = self.start_offset
         if self.end_offset is not None:
-            json["endOffset"] = self.end_offset
+            json['endOffset'] = self.end_offset
         if self.subject_node_id is not None:
-            json["subjectNodeId"] = self.subject_node_id.to_json()
+            json['subjectNodeId'] = self.subject_node_id.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ViewOrScrollTimeline:
         return cls(
-            axis=dom.ScrollOrientation.from_json(json["axis"]),
-            source_node_id=dom.BackendNodeId.from_json(json["sourceNodeId"])
-            if json.get("sourceNodeId", None) is not None
-            else None,
-            start_offset=float(json["startOffset"])
-            if json.get("startOffset", None) is not None
-            else None,
-            end_offset=float(json["endOffset"])
-            if json.get("endOffset", None) is not None
-            else None,
-            subject_node_id=dom.BackendNodeId.from_json(json["subjectNodeId"])
-            if json.get("subjectNodeId", None) is not None
-            else None,
+            axis=dom.ScrollOrientation.from_json(json['axis']),
+            source_node_id=dom.BackendNodeId.from_json_optional(json.get('sourceNodeId')),
+            start_offset=None if json.get('startOffset') is None else float(json['startOffset']),
+            end_offset=None if json.get('endOffset') is None else float(json['endOffset']),
+            subject_node_id=dom.BackendNodeId.from_json_optional(json.get('subjectNodeId')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ViewOrScrollTimeline | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -190,45 +196,47 @@ class AnimationEffect:
     easing: str
 
     #: ``AnimationEffect``'s target node.
-    backend_node_id: typing.Optional[dom.BackendNodeId] = None
+    backend_node_id: dom.BackendNodeId | None = None
 
     #: ``AnimationEffect``'s keyframes.
-    keyframes_rule: typing.Optional[KeyframesRule] = None
+    keyframes_rule: KeyframesRule | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["delay"] = self.delay
-        json["endDelay"] = self.end_delay
-        json["iterationStart"] = self.iteration_start
-        json["iterations"] = self.iterations
-        json["duration"] = self.duration
-        json["direction"] = self.direction
-        json["fill"] = self.fill
-        json["easing"] = self.easing
+        json: T_JSON_DICT = {}
+        json['delay'] = self.delay
+        json['endDelay'] = self.end_delay
+        json['iterationStart'] = self.iteration_start
+        json['iterations'] = self.iterations
+        json['duration'] = self.duration
+        json['direction'] = self.direction
+        json['fill'] = self.fill
+        json['easing'] = self.easing
         if self.backend_node_id is not None:
-            json["backendNodeId"] = self.backend_node_id.to_json()
+            json['backendNodeId'] = self.backend_node_id.to_json()
         if self.keyframes_rule is not None:
-            json["keyframesRule"] = self.keyframes_rule.to_json()
+            json['keyframesRule'] = self.keyframes_rule.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AnimationEffect:
         return cls(
-            delay=float(json["delay"]),
-            end_delay=float(json["endDelay"]),
-            iteration_start=float(json["iterationStart"]),
-            iterations=float(json["iterations"]),
-            duration=float(json["duration"]),
-            direction=str(json["direction"]),
-            fill=str(json["fill"]),
-            easing=str(json["easing"]),
-            backend_node_id=dom.BackendNodeId.from_json(json["backendNodeId"])
-            if json.get("backendNodeId", None) is not None
-            else None,
-            keyframes_rule=KeyframesRule.from_json(json["keyframesRule"])
-            if json.get("keyframesRule", None) is not None
-            else None,
+            delay=float(json['delay']),
+            end_delay=float(json['endDelay']),
+            iteration_start=float(json['iterationStart']),
+            iterations=float(json['iterations']),
+            duration=float(json['duration']),
+            direction=str(json['direction']),
+            fill=str(json['fill']),
+            easing=str(json['easing']),
+            backend_node_id=dom.BackendNodeId.from_json_optional(json.get('backendNodeId')),
+            keyframes_rule=KeyframesRule.from_json_optional(json.get('keyframesRule')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AnimationEffect | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -238,24 +246,30 @@ class KeyframesRule:
     """
 
     #: List of animation keyframes.
-    keyframes: typing.List[KeyframeStyle]
+    keyframes: list[KeyframeStyle]
 
     #: CSS keyframed animation's name.
-    name: typing.Optional[str] = None
+    name: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["keyframes"] = [i.to_json() for i in self.keyframes]
+        json: T_JSON_DICT = {}
+        json['keyframes'] = [i.to_json() for i in self.keyframes]
         if self.name is not None:
-            json["name"] = self.name
+            json['name'] = self.name
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> KeyframesRule:
         return cls(
-            keyframes=[KeyframeStyle.from_json(i) for i in json["keyframes"]],
-            name=str(json["name"]) if json.get("name", None) is not None else None,
+            keyframes=[KeyframeStyle.from_json(i) for i in json.get('keyframes', [])],
+            name=None if json.get('name') is None else str(json['name']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> KeyframesRule | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -271,182 +285,222 @@ class KeyframeStyle:
     easing: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["offset"] = self.offset
-        json["easing"] = self.easing
+        json: T_JSON_DICT = {}
+        json['offset'] = self.offset
+        json['easing'] = self.easing
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> KeyframeStyle:
         return cls(
-            offset=str(json["offset"]),
-            easing=str(json["easing"]),
+            offset=str(json['offset']),
+            easing=str(json['easing']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> KeyframeStyle | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disables animation domain notifications.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Animation.disable",
+        'method': 'Animation.disable',
     }
     json = yield cmd_dict
 
 
-def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def enable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables animation domain notifications.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Animation.enable",
+        'method': 'Animation.enable',
     }
     json = yield cmd_dict
 
 
-def get_current_time(id_: str) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, float]:
+def get_current_time(
+    id_: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, float]:
     """
     Returns the current time of the an animation.
 
     :param id_: Id of animation.
-    :returns: Current time of the page.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, float]
     """
-    params: T_JSON_DICT = dict()
-    params["id"] = id_
+
+    params: T_JSON_DICT = {}
+    params['id'] = id_
     cmd_dict: T_JSON_DICT = {
-        "method": "Animation.getCurrentTime",
-        "params": params,
+        'method': 'Animation.getCurrentTime',
+        'params': params,
     }
     json = yield cmd_dict
-    return float(json["currentTime"])
+    return float(json['currentTime'])
 
 
-def get_playback_rate() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, float]:
+def get_playback_rate() -> Generator[T_JSON_DICT, T_JSON_DICT, float]:
     """
     Gets the playback rate of the document timeline.
 
-    :returns: Playback rate for animations on page.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, float]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Animation.getPlaybackRate",
+        'method': 'Animation.getPlaybackRate',
     }
     json = yield cmd_dict
-    return float(json["playbackRate"])
+    return float(json['playbackRate'])
 
 
 def release_animations(
-    animations: typing.List[str],
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    animations: list[str],
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Releases a set of animations to no longer be manipulated.
 
     :param animations: List of animation ids to seek.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["animations"] = [i for i in animations]
+
+    params: T_JSON_DICT = {}
+    params['animations'] = animations
     cmd_dict: T_JSON_DICT = {
-        "method": "Animation.releaseAnimations",
-        "params": params,
+        'method': 'Animation.releaseAnimations',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def resolve_animation(
     animation_id: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, runtime.RemoteObject]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, runtime.RemoteObject]:
     """
     Gets the remote object of the Animation.
 
     :param animation_id: Animation id.
-    :returns: Corresponding remote object.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, runtime.RemoteObject]
     """
-    params: T_JSON_DICT = dict()
-    params["animationId"] = animation_id
+
+    params: T_JSON_DICT = {}
+    params['animationId'] = animation_id
     cmd_dict: T_JSON_DICT = {
-        "method": "Animation.resolveAnimation",
-        "params": params,
+        'method': 'Animation.resolveAnimation',
+        'params': params,
     }
     json = yield cmd_dict
-    return runtime.RemoteObject.from_json(json["remoteObject"])
+    return runtime.RemoteObject.from_json(json['remoteObject'])
 
 
 def seek_animations(
-    animations: typing.List[str], current_time: float
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    animations: list[str],
+    current_time: float,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Seek a set of animations to a particular time within each animation.
 
     :param animations: List of animation ids to seek.
     :param current_time: Set the current time of each animation.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["animations"] = [i for i in animations]
-    params["currentTime"] = current_time
+
+    params: T_JSON_DICT = {}
+    params['animations'] = animations
+    params['currentTime'] = current_time
     cmd_dict: T_JSON_DICT = {
-        "method": "Animation.seekAnimations",
-        "params": params,
+        'method': 'Animation.seekAnimations',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_paused(
-    animations: typing.List[str], paused: bool
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    animations: list[str],
+    *,
+    paused: bool,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets the paused state of a set of animations.
 
     :param animations: Animations to set the pause state of.
     :param paused: Paused state to set to.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["animations"] = [i for i in animations]
-    params["paused"] = paused
+
+    params: T_JSON_DICT = {}
+    params['animations'] = animations
+    params['paused'] = paused
     cmd_dict: T_JSON_DICT = {
-        "method": "Animation.setPaused",
-        "params": params,
+        'method': 'Animation.setPaused',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_playback_rate(
     playback_rate: float,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets the playback rate of the document timeline.
 
     :param playback_rate: Playback rate for animations on page
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["playbackRate"] = playback_rate
+
+    params: T_JSON_DICT = {}
+    params['playbackRate'] = playback_rate
     cmd_dict: T_JSON_DICT = {
-        "method": "Animation.setPlaybackRate",
-        "params": params,
+        'method': 'Animation.setPlaybackRate',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_timing(
-    animation_id: str, duration: float, delay: float
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    animation_id: str,
+    duration: float,
+    delay: float,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets the timing of an animation node.
 
     :param animation_id: Animation id.
     :param duration: Duration of the animation.
     :param delay: Delay of the animation.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["animationId"] = animation_id
-    params["duration"] = duration
-    params["delay"] = delay
+
+    params: T_JSON_DICT = {}
+    params['animationId'] = animation_id
+    params['duration'] = duration
+    params['delay'] = delay
     cmd_dict: T_JSON_DICT = {
-        "method": "Animation.setTiming",
-        "params": params,
+        'method': 'Animation.setTiming',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@event_class("Animation.animationCanceled")
+@event_type('Animation.animationCanceled')
 @dataclass
 class AnimationCanceled:
     """
@@ -458,10 +512,16 @@ class AnimationCanceled:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AnimationCanceled:
-        return cls(id_=str(json["id"]))
+        return cls(id_=str(json['id']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AnimationCanceled | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Animation.animationCreated")
+@event_type('Animation.animationCreated')
 @dataclass
 class AnimationCreated:
     """
@@ -473,10 +533,16 @@ class AnimationCreated:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AnimationCreated:
-        return cls(id_=str(json["id"]))
+        return cls(id_=str(json['id']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AnimationCreated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Animation.animationStarted")
+@event_type('Animation.animationStarted')
 @dataclass
 class AnimationStarted:
     """
@@ -488,10 +554,16 @@ class AnimationStarted:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AnimationStarted:
-        return cls(animation=Animation.from_json(json["animation"]))
+        return cls(animation=Animation.from_json(json['animation']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AnimationStarted | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Animation.animationUpdated")
+@event_type('Animation.animationUpdated')
 @dataclass
 class AnimationUpdated:
     """
@@ -503,4 +575,10 @@ class AnimationUpdated:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AnimationUpdated:
-        return cls(animation=Animation.from_json(json["animation"]))
+        return cls(animation=Animation.from_json(json['animation']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AnimationUpdated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

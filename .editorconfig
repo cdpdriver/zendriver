@@ -1,0 +1,23 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+tab_width = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{py,pyc}]
+indent_size = 4
+tab_width = 4
+
+[*.{gql,graphql,har,html,js,json,jsonp,mpd,toml,xml,yaml,yamlc,yml,ymlc,graphqlrc.js}]
+indent_size = 2
+tab_width = 2
+
+[*.{bat,cmd}]
+end_of_line = crlf

@@ -3,16 +3,24 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Profiler
 
 from __future__ import annotations
-import enum
-import typing
-from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
 
-from . import debugger
-from . import runtime
+import typing
+from dataclasses import dataclass, field
+
+from . import debugger, runtime
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 @dataclass
@@ -28,52 +36,48 @@ class ProfileNode:
     call_frame: runtime.CallFrame
 
     #: Number of samples where this node was on top of the call stack.
-    hit_count: typing.Optional[int] = None
+    hit_count: int | None = None
 
     #: Child node ids.
-    children: typing.Optional[typing.List[int]] = None
+    children: list[int] = field(default_factory=list)
 
     #: The reason of being not optimized. The function may be deoptimized or marked as don't
     #: optimize.
-    deopt_reason: typing.Optional[str] = None
+    deopt_reason: str | None = None
 
     #: An array of source position ticks.
-    position_ticks: typing.Optional[typing.List[PositionTickInfo]] = None
+    position_ticks: list[PositionTickInfo] = field(default_factory=list)
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["id"] = self.id_
-        json["callFrame"] = self.call_frame.to_json()
+        json: T_JSON_DICT = {}
+        json['id'] = self.id_
+        json['callFrame'] = self.call_frame.to_json()
         if self.hit_count is not None:
-            json["hitCount"] = self.hit_count
+            json['hitCount'] = self.hit_count
         if self.children is not None:
-            json["children"] = [i for i in self.children]
+            json['children'] = self.children
         if self.deopt_reason is not None:
-            json["deoptReason"] = self.deopt_reason
+            json['deoptReason'] = self.deopt_reason
         if self.position_ticks is not None:
-            json["positionTicks"] = [i.to_json() for i in self.position_ticks]
+            json['positionTicks'] = [i.to_json() for i in self.position_ticks]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ProfileNode:
         return cls(
-            id_=int(json["id"]),
-            call_frame=runtime.CallFrame.from_json(json["callFrame"]),
-            hit_count=int(json["hitCount"])
-            if json.get("hitCount", None) is not None
-            else None,
-            children=[int(i) for i in json["children"]]
-            if json.get("children", None) is not None
-            else None,
-            deopt_reason=str(json["deoptReason"])
-            if json.get("deoptReason", None) is not None
-            else None,
-            position_ticks=[
-                PositionTickInfo.from_json(i) for i in json["positionTicks"]
-            ]
-            if json.get("positionTicks", None) is not None
-            else None,
+            id_=int(json['id']),
+            call_frame=runtime.CallFrame.from_json(json['callFrame']),
+            hit_count=None if json.get('hitCount') is None else int(json['hitCount']),
+            children=[int(i) for i in json.get('children', [])],
+            deopt_reason=None if json.get('deoptReason') is None else str(json['deoptReason']),
+            position_ticks=[PositionTickInfo.from_json(i) for i in json.get('positionTicks', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ProfileNode | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -83,7 +87,7 @@ class Profile:
     """
 
     #: The list of profile nodes. First item is the root node.
-    nodes: typing.List[ProfileNode]
+    nodes: list[ProfileNode]
 
     #: Profiling start timestamp in microseconds.
     start_time: float
@@ -92,36 +96,38 @@ class Profile:
     end_time: float
 
     #: Ids of samples top nodes.
-    samples: typing.Optional[typing.List[int]] = None
+    samples: list[int] = field(default_factory=list)
 
     #: Time intervals between adjacent samples in microseconds. The first delta is relative to the
     #: profile startTime.
-    time_deltas: typing.Optional[typing.List[int]] = None
+    time_deltas: list[int] = field(default_factory=list)
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["nodes"] = [i.to_json() for i in self.nodes]
-        json["startTime"] = self.start_time
-        json["endTime"] = self.end_time
+        json: T_JSON_DICT = {}
+        json['nodes'] = [i.to_json() for i in self.nodes]
+        json['startTime'] = self.start_time
+        json['endTime'] = self.end_time
         if self.samples is not None:
-            json["samples"] = [i for i in self.samples]
+            json['samples'] = self.samples
         if self.time_deltas is not None:
-            json["timeDeltas"] = [i for i in self.time_deltas]
+            json['timeDeltas'] = self.time_deltas
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Profile:
         return cls(
-            nodes=[ProfileNode.from_json(i) for i in json["nodes"]],
-            start_time=float(json["startTime"]),
-            end_time=float(json["endTime"]),
-            samples=[int(i) for i in json["samples"]]
-            if json.get("samples", None) is not None
-            else None,
-            time_deltas=[int(i) for i in json["timeDeltas"]]
-            if json.get("timeDeltas", None) is not None
-            else None,
+            nodes=[ProfileNode.from_json(i) for i in json.get('nodes', [])],
+            start_time=float(json['startTime']),
+            end_time=float(json['endTime']),
+            samples=[int(i) for i in json.get('samples', [])],
+            time_deltas=[int(i) for i in json.get('timeDeltas', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Profile | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -137,17 +143,23 @@ class PositionTickInfo:
     ticks: int
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["line"] = self.line
-        json["ticks"] = self.ticks
+        json: T_JSON_DICT = {}
+        json['line'] = self.line
+        json['ticks'] = self.ticks
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> PositionTickInfo:
         return cls(
-            line=int(json["line"]),
-            ticks=int(json["ticks"]),
+            line=int(json['line']),
+            ticks=int(json['ticks']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> PositionTickInfo | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -166,19 +178,25 @@ class CoverageRange:
     count: int
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["startOffset"] = self.start_offset
-        json["endOffset"] = self.end_offset
-        json["count"] = self.count
+        json: T_JSON_DICT = {}
+        json['startOffset'] = self.start_offset
+        json['endOffset'] = self.end_offset
+        json['count'] = self.count
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CoverageRange:
         return cls(
-            start_offset=int(json["startOffset"]),
-            end_offset=int(json["endOffset"]),
-            count=int(json["count"]),
+            start_offset=int(json['startOffset']),
+            end_offset=int(json['endOffset']),
+            count=int(json['count']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CoverageRange | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -191,25 +209,31 @@ class FunctionCoverage:
     function_name: str
 
     #: Source ranges inside the function with coverage data.
-    ranges: typing.List[CoverageRange]
+    ranges: list[CoverageRange]
 
     #: Whether coverage data for this function has block granularity.
     is_block_coverage: bool
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["functionName"] = self.function_name
-        json["ranges"] = [i.to_json() for i in self.ranges]
-        json["isBlockCoverage"] = self.is_block_coverage
+        json: T_JSON_DICT = {}
+        json['functionName'] = self.function_name
+        json['ranges'] = [i.to_json() for i in self.ranges]
+        json['isBlockCoverage'] = self.is_block_coverage
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FunctionCoverage:
         return cls(
-            function_name=str(json["functionName"]),
-            ranges=[CoverageRange.from_json(i) for i in json["ranges"]],
-            is_block_coverage=bool(json["isBlockCoverage"]),
+            function_name=str(json['functionName']),
+            ranges=[CoverageRange.from_json(i) for i in json.get('ranges', [])],
+            is_block_coverage=bool(json['isBlockCoverage']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FunctionCoverage | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -225,83 +249,111 @@ class ScriptCoverage:
     url: str
 
     #: Functions contained in the script that has coverage data.
-    functions: typing.List[FunctionCoverage]
+    functions: list[FunctionCoverage]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["scriptId"] = self.script_id.to_json()
-        json["url"] = self.url
-        json["functions"] = [i.to_json() for i in self.functions]
+        json: T_JSON_DICT = {}
+        json['scriptId'] = self.script_id.to_json()
+        json['url'] = self.url
+        json['functions'] = [i.to_json() for i in self.functions]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ScriptCoverage:
         return cls(
-            script_id=runtime.ScriptId.from_json(json["scriptId"]),
-            url=str(json["url"]),
-            functions=[FunctionCoverage.from_json(i) for i in json["functions"]],
+            script_id=runtime.ScriptId.from_json(json['scriptId']),
+            url=str(json['url']),
+            functions=[FunctionCoverage.from_json(i) for i in json.get('functions', [])],
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ScriptCoverage | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
+    """
+
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
+    """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Profiler.disable",
+        'method': 'Profiler.disable',
     }
     json = yield cmd_dict
 
 
-def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def enable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
+    """
+
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
+    """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Profiler.enable",
+        'method': 'Profiler.enable',
     }
     json = yield cmd_dict
 
 
-def get_best_effort_coverage() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[ScriptCoverage]]
-):
+def get_best_effort_coverage() -> Generator[T_JSON_DICT, T_JSON_DICT, list[ScriptCoverage]]:
     """
     Collect coverage data for the current isolate. The coverage data may be incomplete due to
     garbage collection.
 
-    :returns: Coverage data for the current isolate.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[ScriptCoverage]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Profiler.getBestEffortCoverage",
+        'method': 'Profiler.getBestEffortCoverage',
     }
     json = yield cmd_dict
-    return [ScriptCoverage.from_json(i) for i in json["result"]]
+    return [ScriptCoverage.from_json(i) for i in json.get('result', [])]
 
 
 def set_sampling_interval(
     interval: int,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Changes CPU profiler sampling interval. Must be called before CPU profiles recording started.
 
     :param interval: New sampling interval in microseconds.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["interval"] = interval
+
+    params: T_JSON_DICT = {}
+    params['interval'] = interval
     cmd_dict: T_JSON_DICT = {
-        "method": "Profiler.setSamplingInterval",
-        "params": params,
+        'method': 'Profiler.setSamplingInterval',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def start() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def start() -> Generator[T_JSON_DICT, T_JSON_DICT]:
+    """
+
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
+    """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Profiler.start",
+        'method': 'Profiler.start',
     }
     json = yield cmd_dict
 
 
 def start_precise_coverage(
-    call_count: typing.Optional[bool] = None,
-    detailed: typing.Optional[bool] = None,
-    allow_triggered_updates: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, float]:
+    *,
+    call_count: bool | None = None,
+    detailed: bool | None = None,
+    allow_triggered_updates: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, float]:
     """
     Enable precise code coverage. Coverage data for JavaScript executed before enabling precise code
     coverage may be incomplete. Enabling prevents running optimized code and resets execution
@@ -310,72 +362,71 @@ def start_precise_coverage(
     :param call_count: *(Optional)* Collect accurate call counts beyond simple 'covered' or 'not covered'.
     :param detailed: *(Optional)* Collect block-based coverage.
     :param allow_triggered_updates: *(Optional)* Allow the backend to send updates on its own initiative
-    :returns: Monotonically increasing time (in seconds) when the coverage update was taken in the backend.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, float]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if call_count is not None:
-        params["callCount"] = call_count
+        params['callCount'] = call_count
     if detailed is not None:
-        params["detailed"] = detailed
+        params['detailed'] = detailed
     if allow_triggered_updates is not None:
-        params["allowTriggeredUpdates"] = allow_triggered_updates
+        params['allowTriggeredUpdates'] = allow_triggered_updates
     cmd_dict: T_JSON_DICT = {
-        "method": "Profiler.startPreciseCoverage",
-        "params": params,
+        'method': 'Profiler.startPreciseCoverage',
+        'params': params,
     }
     json = yield cmd_dict
-    return float(json["timestamp"])
+    return float(json['timestamp'])
 
 
-def stop() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, Profile]:
+def stop() -> Generator[T_JSON_DICT, T_JSON_DICT, Profile]:
     """
 
 
-    :returns: Recorded profile.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, Profile]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Profiler.stop",
+        'method': 'Profiler.stop',
     }
     json = yield cmd_dict
-    return Profile.from_json(json["profile"])
+    return Profile.from_json(json['profile'])
 
 
-def stop_precise_coverage() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def stop_precise_coverage() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disable precise code coverage. Disabling releases unnecessary execution count records and allows
     executing optimized code.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Profiler.stopPreciseCoverage",
+        'method': 'Profiler.stopPreciseCoverage',
     }
     json = yield cmd_dict
 
 
-def take_precise_coverage() -> (
-    typing.Generator[
-        T_JSON_DICT, T_JSON_DICT, typing.Tuple[typing.List[ScriptCoverage], float]
-    ]
-):
+def take_precise_coverage() -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[list[ScriptCoverage], float]]:
     """
     Collect coverage data for the current isolate, and resets execution counters. Precise code
     coverage needs to have started.
 
-    :returns: A tuple with the following items:
-
-        0. **result** - Coverage data for the current isolate.
-        1. **timestamp** - Monotonically increasing time (in seconds) when the coverage update was taken in the backend.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[list[ScriptCoverage], float]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Profiler.takePreciseCoverage",
+        'method': 'Profiler.takePreciseCoverage',
     }
     json = yield cmd_dict
-    return (
-        [ScriptCoverage.from_json(i) for i in json["result"]],
-        float(json["timestamp"]),
-    )
+    return ([ScriptCoverage.from_json(i) for i in json.get('result', [])], float(json['timestamp']))
 
 
-@event_class("Profiler.consoleProfileFinished")
+@event_type('Profiler.consoleProfileFinished')
 @dataclass
 class ConsoleProfileFinished:
     id_: str
@@ -383,19 +434,25 @@ class ConsoleProfileFinished:
     location: debugger.Location
     profile: Profile
     #: Profile title passed as an argument to console.profile().
-    title: typing.Optional[str]
+    title: str | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ConsoleProfileFinished:
         return cls(
-            id_=str(json["id"]),
-            location=debugger.Location.from_json(json["location"]),
-            profile=Profile.from_json(json["profile"]),
-            title=str(json["title"]) if json.get("title", None) is not None else None,
+            id_=str(json['id']),
+            location=debugger.Location.from_json(json['location']),
+            profile=Profile.from_json(json['profile']),
+            title=None if json.get('title') is None else str(json['title']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ConsoleProfileFinished | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Profiler.consoleProfileStarted")
+
+@event_type('Profiler.consoleProfileStarted')
 @dataclass
 class ConsoleProfileStarted:
     """
@@ -406,18 +463,24 @@ class ConsoleProfileStarted:
     #: Location of console.profile().
     location: debugger.Location
     #: Profile title passed as an argument to console.profile().
-    title: typing.Optional[str]
+    title: str | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ConsoleProfileStarted:
         return cls(
-            id_=str(json["id"]),
-            location=debugger.Location.from_json(json["location"]),
-            title=str(json["title"]) if json.get("title", None) is not None else None,
+            id_=str(json['id']),
+            location=debugger.Location.from_json(json['location']),
+            title=None if json.get('title') is None else str(json['title']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ConsoleProfileStarted | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Profiler.preciseCoverageDeltaUpdate")
+
+@event_type('Profiler.preciseCoverageDeltaUpdate')
 @dataclass
 class PreciseCoverageDeltaUpdate:
     """
@@ -434,12 +497,18 @@ class PreciseCoverageDeltaUpdate:
     #: Identifier for distinguishing coverage events.
     occasion: str
     #: Coverage data for the current isolate.
-    result: typing.List[ScriptCoverage]
+    result: list[ScriptCoverage]
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> PreciseCoverageDeltaUpdate:
         return cls(
-            timestamp=float(json["timestamp"]),
-            occasion=str(json["occasion"]),
-            result=[ScriptCoverage.from_json(i) for i in json["result"]],
+            timestamp=float(json['timestamp']),
+            occasion=str(json['occasion']),
+            result=[ScriptCoverage.from_json(i) for i in json.get('result', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> PreciseCoverageDeltaUpdate | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

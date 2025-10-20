@@ -3,19 +3,34 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: DeviceAccess (experimental)
 
 from __future__ import annotations
-import enum
+
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
+
+
+# ruff: noqa: FURB189
 
 
 class RequestId(str):
     """
     Device request id.
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -24,14 +39,22 @@ class RequestId(str):
     def from_json(cls, json: str) -> RequestId:
         return cls(json)
 
-    def __repr__(self):
-        return "RequestId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> RequestId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'RequestId({super().__repr__()})'
 
 
 class DeviceId(str):
     """
     A device id.
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -40,8 +63,14 @@ class DeviceId(str):
     def from_json(cls, json: str) -> DeviceId:
         return cls(json)
 
-    def __repr__(self):
-        return "DeviceId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> DeviceId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'DeviceId({super().__repr__()})'
 
 
 @dataclass
@@ -56,74 +85,95 @@ class PromptDevice:
     name: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["id"] = self.id_.to_json()
-        json["name"] = self.name
+        json: T_JSON_DICT = {}
+        json['id'] = self.id_.to_json()
+        json['name'] = self.name
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> PromptDevice:
         return cls(
-            id_=DeviceId.from_json(json["id"]),
-            name=str(json["name"]),
+            id_=DeviceId.from_json(json['id']),
+            name=str(json['name']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> PromptDevice | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+
+def enable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enable events in this domain.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "DeviceAccess.enable",
+        'method': 'DeviceAccess.enable',
     }
     json = yield cmd_dict
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disable events in this domain.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "DeviceAccess.disable",
+        'method': 'DeviceAccess.disable',
     }
     json = yield cmd_dict
 
 
 def select_prompt(
-    id_: RequestId, device_id: DeviceId
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    id_: RequestId,
+    device_id: DeviceId,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Select a device in response to a DeviceAccess.deviceRequestPrompted event.
 
     :param id_:
     :param device_id:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["id"] = id_.to_json()
-    params["deviceId"] = device_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['id'] = id_.to_json()
+    params['deviceId'] = device_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "DeviceAccess.selectPrompt",
-        "params": params,
+        'method': 'DeviceAccess.selectPrompt',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def cancel_prompt(id_: RequestId) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def cancel_prompt(
+    id_: RequestId,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Cancel a prompt in response to a DeviceAccess.deviceRequestPrompted event.
 
     :param id_:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["id"] = id_.to_json()
+
+    params: T_JSON_DICT = {}
+    params['id'] = id_.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "DeviceAccess.cancelPrompt",
-        "params": params,
+        'method': 'DeviceAccess.cancelPrompt',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@event_class("DeviceAccess.deviceRequestPrompted")
+@event_type('DeviceAccess.deviceRequestPrompted')
 @dataclass
 class DeviceRequestPrompted:
     """
@@ -132,11 +182,17 @@ class DeviceRequestPrompted:
     """
 
     id_: RequestId
-    devices: typing.List[PromptDevice]
+    devices: list[PromptDevice]
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DeviceRequestPrompted:
         return cls(
-            id_=RequestId.from_json(json["id"]),
-            devices=[PromptDevice.from_json(i) for i in json["devices"]],
+            id_=RequestId.from_json(json['id']),
+            devices=[PromptDevice.from_json(i) for i in json.get('devices', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DeviceRequestPrompted | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

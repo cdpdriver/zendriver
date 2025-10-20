@@ -3,16 +3,32 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: WebAuthn (experimental)
 
 from __future__ import annotations
+
 import enum
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
+
+
+# ruff: noqa: FURB189
 
 
 class AuthenticatorId(str):
+    __slots__ = ()
+
     def to_json(self) -> str:
         return self
 
@@ -20,13 +36,19 @@ class AuthenticatorId(str):
     def from_json(cls, json: str) -> AuthenticatorId:
         return cls(json)
 
-    def __repr__(self):
-        return "AuthenticatorId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AuthenticatorId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'AuthenticatorId({super().__repr__()})'
 
 
 class AuthenticatorProtocol(enum.Enum):
-    U2F = "u2f"
-    CTAP2 = "ctap2"
+    U2F = 'u2f'
+    CTAP2 = 'ctap2'
 
     def to_json(self) -> str:
         return self.value
@@ -35,10 +57,16 @@ class AuthenticatorProtocol(enum.Enum):
     def from_json(cls, json: str) -> AuthenticatorProtocol:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AuthenticatorProtocol | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class Ctap2Version(enum.Enum):
-    CTAP2_0 = "ctap2_0"
-    CTAP2_1 = "ctap2_1"
+    CTAP2_0 = 'ctap2_0'
+    CTAP2_1 = 'ctap2_1'
 
     def to_json(self) -> str:
         return self.value
@@ -47,13 +75,19 @@ class Ctap2Version(enum.Enum):
     def from_json(cls, json: str) -> Ctap2Version:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> Ctap2Version | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class AuthenticatorTransport(enum.Enum):
-    USB = "usb"
-    NFC = "nfc"
-    BLE = "ble"
-    CABLE = "cable"
-    INTERNAL = "internal"
+    USB = 'usb'
+    NFC = 'nfc'
+    BLE = 'ble'
+    CABLE = 'cable'
+    INTERNAL = 'internal'
 
     def to_json(self) -> str:
         return self.value
@@ -61,6 +95,12 @@ class AuthenticatorTransport(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> AuthenticatorTransport:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AuthenticatorTransport | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -70,119 +110,109 @@ class VirtualAuthenticatorOptions:
     transport: AuthenticatorTransport
 
     #: Defaults to ctap2_0. Ignored if ``protocol`` == u2f.
-    ctap2_version: typing.Optional[Ctap2Version] = None
+    ctap2_version: Ctap2Version | None = None
 
     #: Defaults to false.
-    has_resident_key: typing.Optional[bool] = None
+    has_resident_key: bool | None = None
 
     #: Defaults to false.
-    has_user_verification: typing.Optional[bool] = None
+    has_user_verification: bool | None = None
 
     #: If set to true, the authenticator will support the largeBlob extension.
     #: https://w3c.github.io/webauthn#largeBlob
     #: Defaults to false.
-    has_large_blob: typing.Optional[bool] = None
+    has_large_blob: bool | None = None
 
     #: If set to true, the authenticator will support the credBlob extension.
     #: https://fidoalliance.org/specs/fido-v2.1-rd-20201208/fido-client-to-authenticator-protocol-v2.1-rd-20201208.html#sctn-credBlob-extension
     #: Defaults to false.
-    has_cred_blob: typing.Optional[bool] = None
+    has_cred_blob: bool | None = None
 
     #: If set to true, the authenticator will support the minPinLength extension.
     #: https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-minpinlength-extension
     #: Defaults to false.
-    has_min_pin_length: typing.Optional[bool] = None
+    has_min_pin_length: bool | None = None
 
     #: If set to true, the authenticator will support the prf extension.
     #: https://w3c.github.io/webauthn/#prf-extension
     #: Defaults to false.
-    has_prf: typing.Optional[bool] = None
+    has_prf: bool | None = None
 
     #: If set to true, tests of user presence will succeed immediately.
     #: Otherwise, they will not be resolved. Defaults to true.
-    automatic_presence_simulation: typing.Optional[bool] = None
+    automatic_presence_simulation: bool | None = None
 
     #: Sets whether User Verification succeeds or fails for an authenticator.
     #: Defaults to false.
-    is_user_verified: typing.Optional[bool] = None
+    is_user_verified: bool | None = None
 
     #: Credentials created by this authenticator will have the backup
     #: eligibility (BE) flag set to this value. Defaults to false.
     #: https://w3c.github.io/webauthn/#sctn-credential-backup
-    default_backup_eligibility: typing.Optional[bool] = None
+    default_backup_eligibility: bool | None = None
 
     #: Credentials created by this authenticator will have the backup state
     #: (BS) flag set to this value. Defaults to false.
     #: https://w3c.github.io/webauthn/#sctn-credential-backup
-    default_backup_state: typing.Optional[bool] = None
+    default_backup_state: bool | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["protocol"] = self.protocol.to_json()
-        json["transport"] = self.transport.to_json()
+        json: T_JSON_DICT = {}
+        json['protocol'] = self.protocol.to_json()
+        json['transport'] = self.transport.to_json()
         if self.ctap2_version is not None:
-            json["ctap2Version"] = self.ctap2_version.to_json()
+            json['ctap2Version'] = self.ctap2_version.to_json()
         if self.has_resident_key is not None:
-            json["hasResidentKey"] = self.has_resident_key
+            json['hasResidentKey'] = self.has_resident_key
         if self.has_user_verification is not None:
-            json["hasUserVerification"] = self.has_user_verification
+            json['hasUserVerification'] = self.has_user_verification
         if self.has_large_blob is not None:
-            json["hasLargeBlob"] = self.has_large_blob
+            json['hasLargeBlob'] = self.has_large_blob
         if self.has_cred_blob is not None:
-            json["hasCredBlob"] = self.has_cred_blob
+            json['hasCredBlob'] = self.has_cred_blob
         if self.has_min_pin_length is not None:
-            json["hasMinPinLength"] = self.has_min_pin_length
+            json['hasMinPinLength'] = self.has_min_pin_length
         if self.has_prf is not None:
-            json["hasPrf"] = self.has_prf
+            json['hasPrf'] = self.has_prf
         if self.automatic_presence_simulation is not None:
-            json["automaticPresenceSimulation"] = self.automatic_presence_simulation
+            json['automaticPresenceSimulation'] = self.automatic_presence_simulation
         if self.is_user_verified is not None:
-            json["isUserVerified"] = self.is_user_verified
+            json['isUserVerified'] = self.is_user_verified
         if self.default_backup_eligibility is not None:
-            json["defaultBackupEligibility"] = self.default_backup_eligibility
+            json['defaultBackupEligibility'] = self.default_backup_eligibility
         if self.default_backup_state is not None:
-            json["defaultBackupState"] = self.default_backup_state
+            json['defaultBackupState'] = self.default_backup_state
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> VirtualAuthenticatorOptions:
         return cls(
-            protocol=AuthenticatorProtocol.from_json(json["protocol"]),
-            transport=AuthenticatorTransport.from_json(json["transport"]),
-            ctap2_version=Ctap2Version.from_json(json["ctap2Version"])
-            if json.get("ctap2Version", None) is not None
-            else None,
-            has_resident_key=bool(json["hasResidentKey"])
-            if json.get("hasResidentKey", None) is not None
-            else None,
-            has_user_verification=bool(json["hasUserVerification"])
-            if json.get("hasUserVerification", None) is not None
-            else None,
-            has_large_blob=bool(json["hasLargeBlob"])
-            if json.get("hasLargeBlob", None) is not None
-            else None,
-            has_cred_blob=bool(json["hasCredBlob"])
-            if json.get("hasCredBlob", None) is not None
-            else None,
-            has_min_pin_length=bool(json["hasMinPinLength"])
-            if json.get("hasMinPinLength", None) is not None
-            else None,
-            has_prf=bool(json["hasPrf"])
-            if json.get("hasPrf", None) is not None
-            else None,
-            automatic_presence_simulation=bool(json["automaticPresenceSimulation"])
-            if json.get("automaticPresenceSimulation", None) is not None
-            else None,
-            is_user_verified=bool(json["isUserVerified"])
-            if json.get("isUserVerified", None) is not None
-            else None,
-            default_backup_eligibility=bool(json["defaultBackupEligibility"])
-            if json.get("defaultBackupEligibility", None) is not None
-            else None,
-            default_backup_state=bool(json["defaultBackupState"])
-            if json.get("defaultBackupState", None) is not None
-            else None,
+            protocol=AuthenticatorProtocol.from_json(json['protocol']),
+            transport=AuthenticatorTransport.from_json(json['transport']),
+            ctap2_version=Ctap2Version.from_json_optional(json.get('ctap2Version')),
+            has_resident_key=None if json.get('hasResidentKey') is None else bool(json['hasResidentKey']),
+            has_user_verification=None
+            if json.get('hasUserVerification') is None
+            else bool(json['hasUserVerification']),
+            has_large_blob=None if json.get('hasLargeBlob') is None else bool(json['hasLargeBlob']),
+            has_cred_blob=None if json.get('hasCredBlob') is None else bool(json['hasCredBlob']),
+            has_min_pin_length=None if json.get('hasMinPinLength') is None else bool(json['hasMinPinLength']),
+            has_prf=None if json.get('hasPrf') is None else bool(json['hasPrf']),
+            automatic_presence_simulation=None
+            if json.get('automaticPresenceSimulation') is None
+            else bool(json['automaticPresenceSimulation']),
+            is_user_verified=None if json.get('isUserVerified') is None else bool(json['isUserVerified']),
+            default_backup_eligibility=None
+            if json.get('defaultBackupEligibility') is None
+            else bool(json['defaultBackupEligibility']),
+            default_backup_state=None if json.get('defaultBackupState') is None else bool(json['defaultBackupState']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> VirtualAuthenticatorOptions | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -201,140 +231,144 @@ class Credential:
 
     #: Relying Party ID the credential is scoped to. Must be set when adding a
     #: credential.
-    rp_id: typing.Optional[str] = None
+    rp_id: str | None = None
 
     #: An opaque byte sequence with a maximum size of 64 bytes mapping the
     #: credential to a specific user. (Encoded as a base64 string when passed over JSON)
-    user_handle: typing.Optional[str] = None
+    user_handle: str | None = None
 
     #: The large blob associated with the credential.
     #: See https://w3c.github.io/webauthn/#sctn-large-blob-extension (Encoded as a base64 string when passed over JSON)
-    large_blob: typing.Optional[str] = None
+    large_blob: str | None = None
 
     #: Assertions returned by this credential will have the backup eligibility
     #: (BE) flag set to this value. Defaults to the authenticator's
     #: defaultBackupEligibility value.
-    backup_eligibility: typing.Optional[bool] = None
+    backup_eligibility: bool | None = None
 
     #: Assertions returned by this credential will have the backup state (BS)
     #: flag set to this value. Defaults to the authenticator's
     #: defaultBackupState value.
-    backup_state: typing.Optional[bool] = None
+    backup_state: bool | None = None
 
     #: The credential's user.name property. Equivalent to empty if not set.
     #: https://w3c.github.io/webauthn/#dom-publickeycredentialentity-name
-    user_name: typing.Optional[str] = None
+    user_name: str | None = None
 
     #: The credential's user.displayName property. Equivalent to empty if
     #: not set.
     #: https://w3c.github.io/webauthn/#dom-publickeycredentialuserentity-displayname
-    user_display_name: typing.Optional[str] = None
+    user_display_name: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["credentialId"] = self.credential_id
-        json["isResidentCredential"] = self.is_resident_credential
-        json["privateKey"] = self.private_key
-        json["signCount"] = self.sign_count
+        json: T_JSON_DICT = {}
+        json['credentialId'] = self.credential_id
+        json['isResidentCredential'] = self.is_resident_credential
+        json['privateKey'] = self.private_key
+        json['signCount'] = self.sign_count
         if self.rp_id is not None:
-            json["rpId"] = self.rp_id
+            json['rpId'] = self.rp_id
         if self.user_handle is not None:
-            json["userHandle"] = self.user_handle
+            json['userHandle'] = self.user_handle
         if self.large_blob is not None:
-            json["largeBlob"] = self.large_blob
+            json['largeBlob'] = self.large_blob
         if self.backup_eligibility is not None:
-            json["backupEligibility"] = self.backup_eligibility
+            json['backupEligibility'] = self.backup_eligibility
         if self.backup_state is not None:
-            json["backupState"] = self.backup_state
+            json['backupState'] = self.backup_state
         if self.user_name is not None:
-            json["userName"] = self.user_name
+            json['userName'] = self.user_name
         if self.user_display_name is not None:
-            json["userDisplayName"] = self.user_display_name
+            json['userDisplayName'] = self.user_display_name
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Credential:
         return cls(
-            credential_id=str(json["credentialId"]),
-            is_resident_credential=bool(json["isResidentCredential"]),
-            private_key=str(json["privateKey"]),
-            sign_count=int(json["signCount"]),
-            rp_id=str(json["rpId"]) if json.get("rpId", None) is not None else None,
-            user_handle=str(json["userHandle"])
-            if json.get("userHandle", None) is not None
-            else None,
-            large_blob=str(json["largeBlob"])
-            if json.get("largeBlob", None) is not None
-            else None,
-            backup_eligibility=bool(json["backupEligibility"])
-            if json.get("backupEligibility", None) is not None
-            else None,
-            backup_state=bool(json["backupState"])
-            if json.get("backupState", None) is not None
-            else None,
-            user_name=str(json["userName"])
-            if json.get("userName", None) is not None
-            else None,
-            user_display_name=str(json["userDisplayName"])
-            if json.get("userDisplayName", None) is not None
-            else None,
+            credential_id=str(json['credentialId']),
+            is_resident_credential=bool(json['isResidentCredential']),
+            private_key=str(json['privateKey']),
+            sign_count=int(json['signCount']),
+            rp_id=None if json.get('rpId') is None else str(json['rpId']),
+            user_handle=None if json.get('userHandle') is None else str(json['userHandle']),
+            large_blob=None if json.get('largeBlob') is None else str(json['largeBlob']),
+            backup_eligibility=None if json.get('backupEligibility') is None else bool(json['backupEligibility']),
+            backup_state=None if json.get('backupState') is None else bool(json['backupState']),
+            user_name=None if json.get('userName') is None else str(json['userName']),
+            user_display_name=None if json.get('userDisplayName') is None else str(json['userDisplayName']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Credential | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 def enable(
-    enable_ui: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    enable_ui: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enable the WebAuthn domain and start intercepting credential storage and
     retrieval with a virtual authenticator.
 
     :param enable_ui: *(Optional)* Whether to enable the WebAuthn user interface. Enabling the UI is recommended for debugging and demo purposes, as it is closer to the real experience. Disabling the UI is recommended for automated testing. Supported at the embedder's discretion if UI is available. Defaults to false.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if enable_ui is not None:
-        params["enableUI"] = enable_ui
+        params['enableUI'] = enable_ui
     cmd_dict: T_JSON_DICT = {
-        "method": "WebAuthn.enable",
-        "params": params,
+        'method': 'WebAuthn.enable',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disable the WebAuthn domain.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "WebAuthn.disable",
+        'method': 'WebAuthn.disable',
     }
     json = yield cmd_dict
 
 
 def add_virtual_authenticator(
     options: VirtualAuthenticatorOptions,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, AuthenticatorId]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, AuthenticatorId]:
     """
     Creates and adds a virtual authenticator.
 
     :param options:
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, AuthenticatorId]
     """
-    params: T_JSON_DICT = dict()
-    params["options"] = options.to_json()
+
+    params: T_JSON_DICT = {}
+    params['options'] = options.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "WebAuthn.addVirtualAuthenticator",
-        "params": params,
+        'method': 'WebAuthn.addVirtualAuthenticator',
+        'params': params,
     }
     json = yield cmd_dict
-    return AuthenticatorId.from_json(json["authenticatorId"])
+    return AuthenticatorId.from_json(json['authenticatorId'])
 
 
 def set_response_override_bits(
     authenticator_id: AuthenticatorId,
-    is_bogus_signature: typing.Optional[bool] = None,
-    is_bad_uv: typing.Optional[bool] = None,
-    is_bad_up: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    is_bogus_signature: bool | None = None,
+    is_bad_uv: bool | None = None,
+    is_bad_up: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Resets parameters isBogusSignature, isBadUV, isBadUP to false if they are not present.
 
@@ -342,171 +376,203 @@ def set_response_override_bits(
     :param is_bogus_signature: *(Optional)* If isBogusSignature is set, overrides the signature in the authenticator response to be zero. Defaults to false.
     :param is_bad_uv: *(Optional)* If isBadUV is set, overrides the UV bit in the flags in the authenticator response to be zero. Defaults to false.
     :param is_bad_up: *(Optional)* If isBadUP is set, overrides the UP bit in the flags in the authenticator response to be zero. Defaults to false.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["authenticatorId"] = authenticator_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['authenticatorId'] = authenticator_id.to_json()
     if is_bogus_signature is not None:
-        params["isBogusSignature"] = is_bogus_signature
+        params['isBogusSignature'] = is_bogus_signature
     if is_bad_uv is not None:
-        params["isBadUV"] = is_bad_uv
+        params['isBadUV'] = is_bad_uv
     if is_bad_up is not None:
-        params["isBadUP"] = is_bad_up
+        params['isBadUP'] = is_bad_up
     cmd_dict: T_JSON_DICT = {
-        "method": "WebAuthn.setResponseOverrideBits",
-        "params": params,
+        'method': 'WebAuthn.setResponseOverrideBits',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def remove_virtual_authenticator(
     authenticator_id: AuthenticatorId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Removes the given authenticator.
 
     :param authenticator_id:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["authenticatorId"] = authenticator_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['authenticatorId'] = authenticator_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "WebAuthn.removeVirtualAuthenticator",
-        "params": params,
+        'method': 'WebAuthn.removeVirtualAuthenticator',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def add_credential(
-    authenticator_id: AuthenticatorId, credential: Credential
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    authenticator_id: AuthenticatorId,
+    credential: Credential,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Adds the credential to the specified authenticator.
 
     :param authenticator_id:
     :param credential:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["authenticatorId"] = authenticator_id.to_json()
-    params["credential"] = credential.to_json()
+
+    params: T_JSON_DICT = {}
+    params['authenticatorId'] = authenticator_id.to_json()
+    params['credential'] = credential.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "WebAuthn.addCredential",
-        "params": params,
+        'method': 'WebAuthn.addCredential',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def get_credential(
-    authenticator_id: AuthenticatorId, credential_id: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, Credential]:
+    authenticator_id: AuthenticatorId,
+    credential_id: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, Credential]:
     """
     Returns a single credential stored in the given virtual authenticator that
     matches the credential ID.
 
     :param authenticator_id:
     :param credential_id:
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, Credential]
     """
-    params: T_JSON_DICT = dict()
-    params["authenticatorId"] = authenticator_id.to_json()
-    params["credentialId"] = credential_id
+
+    params: T_JSON_DICT = {}
+    params['authenticatorId'] = authenticator_id.to_json()
+    params['credentialId'] = credential_id
     cmd_dict: T_JSON_DICT = {
-        "method": "WebAuthn.getCredential",
-        "params": params,
+        'method': 'WebAuthn.getCredential',
+        'params': params,
     }
     json = yield cmd_dict
-    return Credential.from_json(json["credential"])
+    return Credential.from_json(json['credential'])
 
 
 def get_credentials(
     authenticator_id: AuthenticatorId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[Credential]]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[Credential]]:
     """
     Returns all the credentials stored in the given virtual authenticator.
 
     :param authenticator_id:
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[Credential]]
     """
-    params: T_JSON_DICT = dict()
-    params["authenticatorId"] = authenticator_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['authenticatorId'] = authenticator_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "WebAuthn.getCredentials",
-        "params": params,
+        'method': 'WebAuthn.getCredentials',
+        'params': params,
     }
     json = yield cmd_dict
-    return [Credential.from_json(i) for i in json["credentials"]]
+    return [Credential.from_json(i) for i in json.get('credentials', [])]
 
 
 def remove_credential(
-    authenticator_id: AuthenticatorId, credential_id: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    authenticator_id: AuthenticatorId,
+    credential_id: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Removes a credential from the authenticator.
 
     :param authenticator_id:
     :param credential_id:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["authenticatorId"] = authenticator_id.to_json()
-    params["credentialId"] = credential_id
+
+    params: T_JSON_DICT = {}
+    params['authenticatorId'] = authenticator_id.to_json()
+    params['credentialId'] = credential_id
     cmd_dict: T_JSON_DICT = {
-        "method": "WebAuthn.removeCredential",
-        "params": params,
+        'method': 'WebAuthn.removeCredential',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def clear_credentials(
     authenticator_id: AuthenticatorId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Clears all the credentials from the specified device.
 
     :param authenticator_id:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["authenticatorId"] = authenticator_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['authenticatorId'] = authenticator_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "WebAuthn.clearCredentials",
-        "params": params,
+        'method': 'WebAuthn.clearCredentials',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_user_verified(
-    authenticator_id: AuthenticatorId, is_user_verified: bool
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    authenticator_id: AuthenticatorId,
+    *,
+    is_user_verified: bool,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets whether User Verification succeeds or fails for an authenticator.
     The default is true.
 
     :param authenticator_id:
     :param is_user_verified:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["authenticatorId"] = authenticator_id.to_json()
-    params["isUserVerified"] = is_user_verified
+
+    params: T_JSON_DICT = {}
+    params['authenticatorId'] = authenticator_id.to_json()
+    params['isUserVerified'] = is_user_verified
     cmd_dict: T_JSON_DICT = {
-        "method": "WebAuthn.setUserVerified",
-        "params": params,
+        'method': 'WebAuthn.setUserVerified',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_automatic_presence_simulation(
-    authenticator_id: AuthenticatorId, enabled: bool
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    authenticator_id: AuthenticatorId,
+    *,
+    enabled: bool,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets whether tests of user presence will succeed immediately (if true) or fail to resolve (if false) for an authenticator.
     The default is true.
 
     :param authenticator_id:
     :param enabled:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["authenticatorId"] = authenticator_id.to_json()
-    params["enabled"] = enabled
+
+    params: T_JSON_DICT = {}
+    params['authenticatorId'] = authenticator_id.to_json()
+    params['enabled'] = enabled
     cmd_dict: T_JSON_DICT = {
-        "method": "WebAuthn.setAutomaticPresenceSimulation",
-        "params": params,
+        'method': 'WebAuthn.setAutomaticPresenceSimulation',
+        'params': params,
     }
     json = yield cmd_dict
 
@@ -514,9 +580,10 @@ def set_automatic_presence_simulation(
 def set_credential_properties(
     authenticator_id: AuthenticatorId,
     credential_id: str,
-    backup_eligibility: typing.Optional[bool] = None,
-    backup_state: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    backup_eligibility: bool | None = None,
+    backup_state: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Allows setting credential properties.
     https://w3c.github.io/webauthn/#sctn-automation-set-credential-properties
@@ -525,22 +592,25 @@ def set_credential_properties(
     :param credential_id:
     :param backup_eligibility: *(Optional)*
     :param backup_state: *(Optional)*
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["authenticatorId"] = authenticator_id.to_json()
-    params["credentialId"] = credential_id
+
+    params: T_JSON_DICT = {}
+    params['authenticatorId'] = authenticator_id.to_json()
+    params['credentialId'] = credential_id
     if backup_eligibility is not None:
-        params["backupEligibility"] = backup_eligibility
+        params['backupEligibility'] = backup_eligibility
     if backup_state is not None:
-        params["backupState"] = backup_state
+        params['backupState'] = backup_state
     cmd_dict: T_JSON_DICT = {
-        "method": "WebAuthn.setCredentialProperties",
-        "params": params,
+        'method': 'WebAuthn.setCredentialProperties',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@event_class("WebAuthn.credentialAdded")
+@event_type('WebAuthn.credentialAdded')
 @dataclass
 class CredentialAdded:
     """
@@ -553,12 +623,18 @@ class CredentialAdded:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CredentialAdded:
         return cls(
-            authenticator_id=AuthenticatorId.from_json(json["authenticatorId"]),
-            credential=Credential.from_json(json["credential"]),
+            authenticator_id=AuthenticatorId.from_json(json['authenticatorId']),
+            credential=Credential.from_json(json['credential']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CredentialAdded | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("WebAuthn.credentialDeleted")
+
+@event_type('WebAuthn.credentialDeleted')
 @dataclass
 class CredentialDeleted:
     """
@@ -572,12 +648,18 @@ class CredentialDeleted:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CredentialDeleted:
         return cls(
-            authenticator_id=AuthenticatorId.from_json(json["authenticatorId"]),
-            credential_id=str(json["credentialId"]),
+            authenticator_id=AuthenticatorId.from_json(json['authenticatorId']),
+            credential_id=str(json['credentialId']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CredentialDeleted | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("WebAuthn.credentialUpdated")
+
+@event_type('WebAuthn.credentialUpdated')
 @dataclass
 class CredentialUpdated:
     """
@@ -591,12 +673,18 @@ class CredentialUpdated:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CredentialUpdated:
         return cls(
-            authenticator_id=AuthenticatorId.from_json(json["authenticatorId"]),
-            credential=Credential.from_json(json["credential"]),
+            authenticator_id=AuthenticatorId.from_json(json['authenticatorId']),
+            credential=Credential.from_json(json['credential']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CredentialUpdated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("WebAuthn.credentialAsserted")
+
+@event_type('WebAuthn.credentialAsserted')
 @dataclass
 class CredentialAsserted:
     """
@@ -609,6 +697,12 @@ class CredentialAsserted:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CredentialAsserted:
         return cls(
-            authenticator_id=AuthenticatorId.from_json(json["authenticatorId"]),
-            credential=Credential.from_json(json["credential"]),
+            authenticator_id=AuthenticatorId.from_json(json['authenticatorId']),
+            credential=Credential.from_json(json['credential']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CredentialAsserted | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

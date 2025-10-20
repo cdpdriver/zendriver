@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from zendriver import cdp, util
 from zendriver.core.element import Element
@@ -27,17 +27,18 @@ async def cf_find_interactive_challenge(
         A tuple containing the host element, the shadow root element, and the
         challenge iframe element if found, otherwise (None, None, None).
     """
-    logger.debug("Searching for Cloudflare interactive challenge elements...")
+    logger.debug('Searching for Cloudflare interactive challenge elements...')
     doc = await tab.send(cdp.dom.get_document(-1, True))
     if not doc:
-        logger.debug("DOM document not found.")
+        logger.debug('DOM document not found.')
         return None, None, None
 
     # Find all nodes that have a "shadow root" (an isolated DOM).
     shadow_host_nodes = util.filter_recurse_all(
-        doc, lambda n: hasattr(n, "shadow_roots") and bool(n.shadow_roots)
+        doc,
+        lambda n: hasattr(n, 'shadow_roots') and bool(n.shadow_roots),
     )
-    logger.debug(f"Found {len(shadow_host_nodes)} shadow host nodes.")
+    logger.debug('Found %d shadow host nodes.', len(shadow_host_nodes))
 
     # Iterate over each shadow DOM host node.
     for host_node in shadow_host_nodes:
@@ -52,24 +53,25 @@ async def cf_find_interactive_challenge(
 
             # Check if the shadow root content is the Cloudflare challenge.
             html_content = await shadow_root_element.get_html()
-            if "challenges.cloudflare.com" in html_content:
-                logger.debug("Found Cloudflare challenge in a shadow root.")
+            if 'challenges.cloudflare.com' in html_content:
+                logger.debug('Found Cloudflare challenge in a shadow root.')
                 # If the shadow root is found, search for the specific iframe within it.
                 for child_element in shadow_root_element.children:
-                    if "challenges.cloudflare.com" in await child_element.get_html():
+                    if 'challenges.cloudflare.com' in await child_element.get_html():
                         # Found! Create the host element and return everything.
-                        logger.debug("Found challenge iframe.")
+                        logger.debug('Found challenge iframe.')
                         host_element = Element(host_node, tab, doc)
                         challenge_iframe = child_element
                         return host_element, shadow_root_element, challenge_iframe
 
     # If the loops finish without finding anything, return None.
-    logger.debug("Cloudflare interactive challenge not found.")
+    logger.debug('Cloudflare interactive challenge not found.')
     return None, None, None
 
 
 async def cf_wait_for_interactive_challenge(
-    tab: Tab, timeout: float = 5
+    tab: Tab,
+    timeout: float = 5,
 ) -> tuple[Element | None, Element | None, Element | None]:
     """
     Waits for the Cloudflare challenge iframe to appear and be visible.
@@ -85,21 +87,23 @@ async def cf_wait_for_interactive_challenge(
     start_time = loop.time()
 
     while loop.time() - start_time < timeout:
-        logger.debug("Waiting for challenge elements to appear...")
+        logger.debug('Waiting for challenge elements to appear...')
         (
             host_element,
             shadow_root_element,
             challenge_iframe,
         ) = await cf_find_interactive_challenge(tab)
-        if challenge_iframe and "display: none" not in challenge_iframe.attrs.get(
-            "style", ""
+        if challenge_iframe and 'display: none' not in challenge_iframe.attrs.get(
+            'style',
+            '',
         ):
-            logger.debug("Cloudflare challenge elements found and visible.")
+            logger.debug('Cloudflare challenge elements found and visible.')
             return host_element, shadow_root_element, challenge_iframe
         await asyncio.sleep(0.5)
 
     logger.warning(
-        f"Timeout: Cloudflare challenge elements not found or not visible within {timeout} seconds."
+        'Timeout: Cloudflare challenge elements not found or not visible within %s seconds.',
+        timeout,
     )
     return None, None, None
 
@@ -115,11 +119,12 @@ async def cf_is_interactive_challenge_present(tab: Tab, timeout: float = 5) -> b
         True if the challenge is present and visible, False otherwise.
     """
     logger.debug(
-        f"Checking for Cloudflare challenge with a timeout of {timeout} seconds."
+        'Checking for Cloudflare challenge with a timeout of %s seconds.',
+        timeout,
     )
     _, _, challenge_iframe = await cf_wait_for_interactive_challenge(tab, timeout)
     is_present = challenge_iframe is not None
-    logger.debug(f"Challenge present: {is_present}")
+    logger.debug('Challenge present: %s', is_present)
     return is_present
 
 
@@ -127,7 +132,7 @@ async def verify_cf(
     tab: Tab,
     click_delay: float = 5,
     timeout: float = 15,
-    challenge_selector: Optional[str] = None,
+    challenge_selector: str | None = None,
     flash_corners: bool = False,
 ) -> None:
     """
@@ -144,7 +149,7 @@ async def verify_cf(
     Raises:
         TimeoutError: If the checkbox is not found or solved within the timeout.
     """
-    logger.debug("Waiting for Cloudflare checkbox...")
+    logger.debug('Waiting for Cloudflare checkbox...')
     loop = asyncio.get_running_loop()
     start_time = loop.time()
 
@@ -156,20 +161,20 @@ async def verify_cf(
 
     if not challenge_iframe:
         raise TimeoutError(
-            f"Cloudflare checkbox not found or not visible within {timeout} seconds."
+            f'Cloudflare checkbox not found or not visible within {timeout} seconds.',
         )
 
-    logger.debug("Cloudflare checkbox found, starting clicks.")
+    logger.debug('Cloudflare checkbox found, starting clicks.')
 
     await challenge_iframe.scroll_into_view()
 
     # To get the element's dimensions, its numeric 'node_id' is needed.
     # This ID is obtained from the underlying node object.
     logger.debug(
-        f"Getting box model for challenge iframe (node_id: {challenge_iframe.node.node_id})"
+        f'Getting box model for challenge iframe (node_id: {challenge_iframe.node.node_id})',
     )
     box_model_result = await tab.send(
-        cdp.dom.get_box_model(node_id=challenge_iframe.node.node_id)
+        cdp.dom.get_box_model(node_id=challenge_iframe.node.node_id),
     )
     # 'content_quad' is a list of 8 numbers representing the (x, y) coordinates
     # of the four corners of the element's "content-box": [x1, y1, x2, y2, x3, y3, x4, y4].
@@ -189,12 +194,12 @@ async def verify_cf(
     click_y = min_y + (max_y - min_y) / 2
 
     logger.debug(
-        f"Checkbox dimensions (content box): width={max_x - min_x}, height={max_y - min_y}"
+        f'Checkbox dimensions (content box): width={max_x - min_x}, height={max_y - min_y}',
     )
 
     if flash_corners:
-        logger.debug("Showing flash_point at the 4 corners.")
-        corners = list(zip(x_coords, y_coords))
+        logger.debug('Showing flash_point at the 4 corners.')
+        corners = list(zip(x_coords, y_coords, strict=False))
         for x_corner, y_corner in corners:
             await tab.flash_point(x=x_corner, y=y_corner, duration=10)
 
@@ -212,15 +217,11 @@ async def verify_cf(
     # sometimes turnstile challenge have inputs 2 and 3.
     # input 2 is default for turnstile challenge.
 
-    current_selector = (
-        challenge_selector
-        if challenge_selector
-        else "input[name=cf-turnstile-response]"
-    )
+    current_selector = challenge_selector or 'input[name=cf-turnstile-response]'
     input_element = await host_element.query_selector(current_selector)
 
     if not input_element and not challenge_selector:
-        current_selector = "input[name=cf_challenge_response]"
+        current_selector = 'input[name=cf_challenge_response]'
         input_element = await host_element.query_selector(current_selector)
 
     if not input_element:
@@ -229,7 +230,10 @@ async def verify_cf(
     checkbox_clicked = False
 
     async def check_input(
-        input_el: Element, current_sltr: str, host_el: Element, ckbx_clckd: bool
+        input_el: Element,
+        current_sltr: str,
+        host_el: Element,
+        ckbx_clckd: bool,
     ) -> bool:
         """Checks if the input element is still present and without a value."""
         if not input_el:
@@ -238,10 +242,10 @@ async def verify_cf(
             await input_el
             fresh_input = await host_el.query_selector(current_sltr)
         except Exception as e:
-            raise Exception(f"Error checking input element: {e}.")
-        if (input_el.attrs.get("value") or not fresh_input) and ckbx_clckd:
+            raise Exception(f'Error checking input element: {e}.')
+        if (input_el.attrs.get('value') or not fresh_input) and ckbx_clckd:
             # If the input disappears or gets a value, assume it's successfully completed.
-            logger.debug("Input element check successful (disappeared or has value).")
+            logger.debug('Input element check successful (disappeared or has value).')
             return False
         return True
 
@@ -253,17 +257,17 @@ async def verify_cf(
     ):
         if loop.time() - start_time >= timeout:
             raise TimeoutError(
-                f"Could not solve the checkbox in {timeout} seconds (timeout during clicks)."
+                f'Could not solve the checkbox in {timeout} seconds (timeout during clicks).',
             )
         try:
             await tab.mouse_click(click_x, click_y)
             await asyncio.sleep(click_delay)
             checkbox_clicked = True
         except Exception as e:
-            if "could not find position" in str(e) and checkbox_clicked:
-                logger.debug("Checkbox disappeared after click. Assuming success.")
+            if 'could not find position' in str(e) and checkbox_clicked:
+                logger.debug('Checkbox disappeared after click. Assuming success.')
                 break
-            raise Exception(f"Error clicking checkbox: {e}.")
+            raise Exception(f'Error clicking checkbox: {e}.')
 
-    logger.debug("Checkbox challenge completed. ✔")
+    logger.debug('Checkbox challenge completed. ✔')
     return

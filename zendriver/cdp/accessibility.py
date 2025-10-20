@@ -3,23 +3,37 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Accessibility (experimental)
 
 from __future__ import annotations
+
 import enum
 import typing
-from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+from dataclasses import dataclass, field
 
-from . import dom
-from . import page
-from . import runtime
+from . import dom, page
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from . import runtime
+    from .util import T_JSON_DICT
+
+
+# ruff: noqa: FURB189, S105
 
 
 class AXNodeId(str):
     """
     Unique accessibility node identifier.
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -28,8 +42,14 @@ class AXNodeId(str):
     def from_json(cls, json: str) -> AXNodeId:
         return cls(json)
 
-    def __repr__(self):
-        return "AXNodeId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AXNodeId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'AXNodeId({super().__repr__()})'
 
 
 class AXValueType(enum.Enum):
@@ -37,23 +57,23 @@ class AXValueType(enum.Enum):
     Enum of possible property types.
     """
 
-    BOOLEAN = "boolean"
-    TRISTATE = "tristate"
-    BOOLEAN_OR_UNDEFINED = "booleanOrUndefined"
-    IDREF = "idref"
-    IDREF_LIST = "idrefList"
-    INTEGER = "integer"
-    NODE = "node"
-    NODE_LIST = "nodeList"
-    NUMBER = "number"
-    STRING = "string"
-    COMPUTED_STRING = "computedString"
-    TOKEN = "token"
-    TOKEN_LIST = "tokenList"
-    DOM_RELATION = "domRelation"
-    ROLE = "role"
-    INTERNAL_ROLE = "internalRole"
-    VALUE_UNDEFINED = "valueUndefined"
+    BOOLEAN = 'boolean'
+    TRISTATE = 'tristate'
+    BOOLEAN_OR_UNDEFINED = 'booleanOrUndefined'
+    IDREF = 'idref'
+    IDREF_LIST = 'idrefList'
+    INTEGER = 'integer'
+    NODE = 'node'
+    NODE_LIST = 'nodeList'
+    NUMBER = 'number'
+    STRING = 'string'
+    COMPUTED_STRING = 'computedString'
+    TOKEN = 'token'
+    TOKEN_LIST = 'tokenList'
+    DOM_RELATION = 'domRelation'
+    ROLE = 'role'
+    INTERNAL_ROLE = 'internalRole'
+    VALUE_UNDEFINED = 'valueUndefined'
 
     def to_json(self) -> str:
         return self.value
@@ -62,18 +82,24 @@ class AXValueType(enum.Enum):
     def from_json(cls, json: str) -> AXValueType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AXValueType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class AXValueSourceType(enum.Enum):
     """
     Enum of possible property sources.
     """
 
-    ATTRIBUTE = "attribute"
-    IMPLICIT = "implicit"
-    STYLE = "style"
-    CONTENTS = "contents"
-    PLACEHOLDER = "placeholder"
-    RELATED_ELEMENT = "relatedElement"
+    ATTRIBUTE = 'attribute'
+    IMPLICIT = 'implicit'
+    STYLE = 'style'
+    CONTENTS = 'contents'
+    PLACEHOLDER = 'placeholder'
+    RELATED_ELEMENT = 'relatedElement'
 
     def to_json(self) -> str:
         return self.value
@@ -82,22 +108,28 @@ class AXValueSourceType(enum.Enum):
     def from_json(cls, json: str) -> AXValueSourceType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AXValueSourceType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class AXValueNativeSourceType(enum.Enum):
     """
     Enum of possible native property sources (as a subtype of a particular AXValueSourceType).
     """
 
-    DESCRIPTION = "description"
-    FIGCAPTION = "figcaption"
-    LABEL = "label"
-    LABELFOR = "labelfor"
-    LABELWRAPPED = "labelwrapped"
-    LEGEND = "legend"
-    RUBYANNOTATION = "rubyannotation"
-    TABLECAPTION = "tablecaption"
-    TITLE = "title"
-    OTHER = "other"
+    DESCRIPTION = 'description'
+    FIGCAPTION = 'figcaption'
+    LABEL = 'label'
+    LABELFOR = 'labelfor'
+    LABELWRAPPED = 'labelwrapped'
+    LEGEND = 'legend'
+    RUBYANNOTATION = 'rubyannotation'
+    TABLECAPTION = 'tablecaption'
+    TITLE = 'title'
+    OTHER = 'other'
 
     def to_json(self) -> str:
         return self.value
@@ -105,6 +137,12 @@ class AXValueNativeSourceType(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> AXValueNativeSourceType:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AXValueNativeSourceType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -117,79 +155,69 @@ class AXValueSource:
     type_: AXValueSourceType
 
     #: The value of this property source.
-    value: typing.Optional[AXValue] = None
+    value: AXValue | None = None
 
     #: The name of the relevant attribute, if any.
-    attribute: typing.Optional[str] = None
+    attribute: str | None = None
 
     #: The value of the relevant attribute, if any.
-    attribute_value: typing.Optional[AXValue] = None
+    attribute_value: AXValue | None = None
 
     #: Whether this source is superseded by a higher priority source.
-    superseded: typing.Optional[bool] = None
+    superseded: bool | None = None
 
     #: The native markup source for this value, e.g. a ``<label>`` element.
-    native_source: typing.Optional[AXValueNativeSourceType] = None
+    native_source: AXValueNativeSourceType | None = None
 
     #: The value, such as a node or node list, of the native source.
-    native_source_value: typing.Optional[AXValue] = None
+    native_source_value: AXValue | None = None
 
     #: Whether the value for this property is invalid.
-    invalid: typing.Optional[bool] = None
+    invalid: bool | None = None
 
     #: Reason for the value being invalid, if it is.
-    invalid_reason: typing.Optional[str] = None
+    invalid_reason: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["type"] = self.type_.to_json()
+        json: T_JSON_DICT = {}
+        json['type'] = self.type_.to_json()
         if self.value is not None:
-            json["value"] = self.value.to_json()
+            json['value'] = self.value.to_json()
         if self.attribute is not None:
-            json["attribute"] = self.attribute
+            json['attribute'] = self.attribute
         if self.attribute_value is not None:
-            json["attributeValue"] = self.attribute_value.to_json()
+            json['attributeValue'] = self.attribute_value.to_json()
         if self.superseded is not None:
-            json["superseded"] = self.superseded
+            json['superseded'] = self.superseded
         if self.native_source is not None:
-            json["nativeSource"] = self.native_source.to_json()
+            json['nativeSource'] = self.native_source.to_json()
         if self.native_source_value is not None:
-            json["nativeSourceValue"] = self.native_source_value.to_json()
+            json['nativeSourceValue'] = self.native_source_value.to_json()
         if self.invalid is not None:
-            json["invalid"] = self.invalid
+            json['invalid'] = self.invalid
         if self.invalid_reason is not None:
-            json["invalidReason"] = self.invalid_reason
+            json['invalidReason'] = self.invalid_reason
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AXValueSource:
         return cls(
-            type_=AXValueSourceType.from_json(json["type"]),
-            value=AXValue.from_json(json["value"])
-            if json.get("value", None) is not None
-            else None,
-            attribute=str(json["attribute"])
-            if json.get("attribute", None) is not None
-            else None,
-            attribute_value=AXValue.from_json(json["attributeValue"])
-            if json.get("attributeValue", None) is not None
-            else None,
-            superseded=bool(json["superseded"])
-            if json.get("superseded", None) is not None
-            else None,
-            native_source=AXValueNativeSourceType.from_json(json["nativeSource"])
-            if json.get("nativeSource", None) is not None
-            else None,
-            native_source_value=AXValue.from_json(json["nativeSourceValue"])
-            if json.get("nativeSourceValue", None) is not None
-            else None,
-            invalid=bool(json["invalid"])
-            if json.get("invalid", None) is not None
-            else None,
-            invalid_reason=str(json["invalidReason"])
-            if json.get("invalidReason", None) is not None
-            else None,
+            type_=AXValueSourceType.from_json(json['type']),
+            value=AXValue.from_json_optional(json.get('value')),
+            attribute=None if json.get('attribute') is None else str(json['attribute']),
+            attribute_value=AXValue.from_json_optional(json.get('attributeValue')),
+            superseded=None if json.get('superseded') is None else bool(json['superseded']),
+            native_source=AXValueNativeSourceType.from_json_optional(json.get('nativeSource')),
+            native_source_value=AXValue.from_json_optional(json.get('nativeSourceValue')),
+            invalid=None if json.get('invalid') is None else bool(json['invalid']),
+            invalid_reason=None if json.get('invalidReason') is None else str(json['invalidReason']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AXValueSource | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -198,27 +226,33 @@ class AXRelatedNode:
     backend_dom_node_id: dom.BackendNodeId
 
     #: The IDRef value provided, if any.
-    idref: typing.Optional[str] = None
+    idref: str | None = None
 
     #: The text alternative of this node in the current context.
-    text: typing.Optional[str] = None
+    text: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["backendDOMNodeId"] = self.backend_dom_node_id.to_json()
+        json: T_JSON_DICT = {}
+        json['backendDOMNodeId'] = self.backend_dom_node_id.to_json()
         if self.idref is not None:
-            json["idref"] = self.idref
+            json['idref'] = self.idref
         if self.text is not None:
-            json["text"] = self.text
+            json['text'] = self.text
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AXRelatedNode:
         return cls(
-            backend_dom_node_id=dom.BackendNodeId.from_json(json["backendDOMNodeId"]),
-            idref=str(json["idref"]) if json.get("idref", None) is not None else None,
-            text=str(json["text"]) if json.get("text", None) is not None else None,
+            backend_dom_node_id=dom.BackendNodeId.from_json(json['backendDOMNodeId']),
+            idref=None if json.get('idref') is None else str(json['idref']),
+            text=None if json.get('text') is None else str(json['text']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AXRelatedNode | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -230,17 +264,23 @@ class AXProperty:
     value: AXValue
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name.to_json()
-        json["value"] = self.value.to_json()
+        json: T_JSON_DICT = {}
+        json['name'] = self.name.to_json()
+        json['value'] = self.value.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AXProperty:
         return cls(
-            name=AXPropertyName.from_json(json["name"]),
-            value=AXValue.from_json(json["value"]),
+            name=AXPropertyName.from_json(json['name']),
+            value=AXValue.from_json(json['value']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AXProperty | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -253,37 +293,39 @@ class AXValue:
     type_: AXValueType
 
     #: The computed value of this property.
-    value: typing.Optional[typing.Any] = None
+    value: typing.Any | None = None
 
     #: One or more related nodes, if applicable.
-    related_nodes: typing.Optional[typing.List[AXRelatedNode]] = None
+    related_nodes: list[AXRelatedNode] = field(default_factory=list)
 
     #: The sources which contributed to the computation of this property.
-    sources: typing.Optional[typing.List[AXValueSource]] = None
+    sources: list[AXValueSource] = field(default_factory=list)
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["type"] = self.type_.to_json()
+        json: T_JSON_DICT = {}
+        json['type'] = self.type_.to_json()
         if self.value is not None:
-            json["value"] = self.value
+            json['value'] = self.value
         if self.related_nodes is not None:
-            json["relatedNodes"] = [i.to_json() for i in self.related_nodes]
+            json['relatedNodes'] = [i.to_json() for i in self.related_nodes]
         if self.sources is not None:
-            json["sources"] = [i.to_json() for i in self.sources]
+            json['sources'] = [i.to_json() for i in self.sources]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AXValue:
         return cls(
-            type_=AXValueType.from_json(json["type"]),
-            value=json["value"] if json.get("value", None) is not None else None,
-            related_nodes=[AXRelatedNode.from_json(i) for i in json["relatedNodes"]]
-            if json.get("relatedNodes", None) is not None
-            else None,
-            sources=[AXValueSource.from_json(i) for i in json["sources"]]
-            if json.get("sources", None) is not None
-            else None,
+            type_=AXValueType.from_json(json['type']),
+            value=None if json.get('value') is None else json['value'],
+            related_nodes=[AXRelatedNode.from_json(i) for i in json.get('relatedNodes', [])],
+            sources=[AXValueSource.from_json(i) for i in json.get('sources', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AXValue | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class AXPropertyName(enum.Enum):
@@ -293,50 +335,68 @@ class AXPropertyName(enum.Enum):
     - from 'live' to 'root': attributes which apply to nodes in live regions
     - from 'autocomplete' to 'valuetext': attributes which apply to widgets
     - from 'checked' to 'selected': states which apply to widgets
-    - from 'activedescendant' to 'owns' - relationships between elements other than parent/child/sibling.
+    - from 'activedescendant' to 'owns': relationships between elements other than parent/child/sibling
+    - from 'activeFullscreenElement' to 'uninteresting': reasons why this noode is hidden
     """
 
-    ACTIONS = "actions"
-    BUSY = "busy"
-    DISABLED = "disabled"
-    EDITABLE = "editable"
-    FOCUSABLE = "focusable"
-    FOCUSED = "focused"
-    HIDDEN = "hidden"
-    HIDDEN_ROOT = "hiddenRoot"
-    INVALID = "invalid"
-    KEYSHORTCUTS = "keyshortcuts"
-    SETTABLE = "settable"
-    ROLEDESCRIPTION = "roledescription"
-    LIVE = "live"
-    ATOMIC = "atomic"
-    RELEVANT = "relevant"
-    ROOT = "root"
-    AUTOCOMPLETE = "autocomplete"
-    HAS_POPUP = "hasPopup"
-    LEVEL = "level"
-    MULTISELECTABLE = "multiselectable"
-    ORIENTATION = "orientation"
-    MULTILINE = "multiline"
-    READONLY = "readonly"
-    REQUIRED = "required"
-    VALUEMIN = "valuemin"
-    VALUEMAX = "valuemax"
-    VALUETEXT = "valuetext"
-    CHECKED = "checked"
-    EXPANDED = "expanded"
-    MODAL = "modal"
-    PRESSED = "pressed"
-    SELECTED = "selected"
-    ACTIVEDESCENDANT = "activedescendant"
-    CONTROLS = "controls"
-    DESCRIBEDBY = "describedby"
-    DETAILS = "details"
-    ERRORMESSAGE = "errormessage"
-    FLOWTO = "flowto"
-    LABELLEDBY = "labelledby"
-    OWNS = "owns"
-    URL = "url"
+    ACTIONS = 'actions'
+    BUSY = 'busy'
+    DISABLED = 'disabled'
+    EDITABLE = 'editable'
+    FOCUSABLE = 'focusable'
+    FOCUSED = 'focused'
+    HIDDEN = 'hidden'
+    HIDDEN_ROOT = 'hiddenRoot'
+    INVALID = 'invalid'
+    KEYSHORTCUTS = 'keyshortcuts'
+    SETTABLE = 'settable'
+    ROLEDESCRIPTION = 'roledescription'
+    LIVE = 'live'
+    ATOMIC = 'atomic'
+    RELEVANT = 'relevant'
+    ROOT = 'root'
+    AUTOCOMPLETE = 'autocomplete'
+    HAS_POPUP = 'hasPopup'
+    LEVEL = 'level'
+    MULTISELECTABLE = 'multiselectable'
+    ORIENTATION = 'orientation'
+    MULTILINE = 'multiline'
+    READONLY = 'readonly'
+    REQUIRED = 'required'
+    VALUEMIN = 'valuemin'
+    VALUEMAX = 'valuemax'
+    VALUETEXT = 'valuetext'
+    CHECKED = 'checked'
+    EXPANDED = 'expanded'
+    MODAL = 'modal'
+    PRESSED = 'pressed'
+    SELECTED = 'selected'
+    ACTIVEDESCENDANT = 'activedescendant'
+    CONTROLS = 'controls'
+    DESCRIBEDBY = 'describedby'
+    DETAILS = 'details'
+    ERRORMESSAGE = 'errormessage'
+    FLOWTO = 'flowto'
+    LABELLEDBY = 'labelledby'
+    OWNS = 'owns'
+    URL = 'url'
+    ACTIVE_FULLSCREEN_ELEMENT = 'activeFullscreenElement'
+    ACTIVE_MODAL_DIALOG = 'activeModalDialog'
+    ACTIVE_ARIA_MODAL_DIALOG = 'activeAriaModalDialog'
+    ARIA_HIDDEN_ELEMENT = 'ariaHiddenElement'
+    ARIA_HIDDEN_SUBTREE = 'ariaHiddenSubtree'
+    EMPTY_ALT = 'emptyAlt'
+    EMPTY_TEXT = 'emptyText'
+    INERT_ELEMENT = 'inertElement'
+    INERT_SUBTREE = 'inertSubtree'
+    LABEL_CONTAINER = 'labelContainer'
+    LABEL_FOR = 'labelFor'
+    NOT_RENDERED = 'notRendered'
+    NOT_VISIBLE = 'notVisible'
+    PRESENTATIONAL_ROLE = 'presentationalRole'
+    PROBABLY_PRESENTATIONAL = 'probablyPresentational'
+    INACTIVE_CAROUSEL_TAB_CONTENT = 'inactiveCarouselTabContent'
+    UNINTERESTING = 'uninteresting'
 
     def to_json(self) -> str:
         return self.value
@@ -344,6 +404,12 @@ class AXPropertyName(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> AXPropertyName:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AXPropertyName | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -359,134 +425,125 @@ class AXNode:
     ignored: bool
 
     #: Collection of reasons why this node is hidden.
-    ignored_reasons: typing.Optional[typing.List[AXProperty]] = None
+    ignored_reasons: list[AXProperty] = field(default_factory=list)
 
     #: This ``Node``'s role, whether explicit or implicit.
-    role: typing.Optional[AXValue] = None
+    role: AXValue | None = None
 
     #: This ``Node``'s Chrome raw role.
-    chrome_role: typing.Optional[AXValue] = None
+    chrome_role: AXValue | None = None
 
     #: The accessible name for this ``Node``.
-    name: typing.Optional[AXValue] = None
+    name: AXValue | None = None
 
     #: The accessible description for this ``Node``.
-    description: typing.Optional[AXValue] = None
+    description: AXValue | None = None
 
     #: The value for this ``Node``.
-    value: typing.Optional[AXValue] = None
+    value: AXValue | None = None
 
     #: All other properties
-    properties: typing.Optional[typing.List[AXProperty]] = None
+    properties: list[AXProperty] = field(default_factory=list)
 
     #: ID for this node's parent.
-    parent_id: typing.Optional[AXNodeId] = None
+    parent_id: AXNodeId | None = None
 
     #: IDs for each of this node's child nodes.
-    child_ids: typing.Optional[typing.List[AXNodeId]] = None
+    child_ids: list[AXNodeId] = field(default_factory=list)
 
     #: The backend ID for the associated DOM node, if any.
-    backend_dom_node_id: typing.Optional[dom.BackendNodeId] = None
+    backend_dom_node_id: dom.BackendNodeId | None = None
 
     #: The frame ID for the frame associated with this nodes document.
-    frame_id: typing.Optional[page.FrameId] = None
+    frame_id: page.FrameId | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["nodeId"] = self.node_id.to_json()
-        json["ignored"] = self.ignored
+        json: T_JSON_DICT = {}
+        json['nodeId'] = self.node_id.to_json()
+        json['ignored'] = self.ignored
         if self.ignored_reasons is not None:
-            json["ignoredReasons"] = [i.to_json() for i in self.ignored_reasons]
+            json['ignoredReasons'] = [i.to_json() for i in self.ignored_reasons]
         if self.role is not None:
-            json["role"] = self.role.to_json()
+            json['role'] = self.role.to_json()
         if self.chrome_role is not None:
-            json["chromeRole"] = self.chrome_role.to_json()
+            json['chromeRole'] = self.chrome_role.to_json()
         if self.name is not None:
-            json["name"] = self.name.to_json()
+            json['name'] = self.name.to_json()
         if self.description is not None:
-            json["description"] = self.description.to_json()
+            json['description'] = self.description.to_json()
         if self.value is not None:
-            json["value"] = self.value.to_json()
+            json['value'] = self.value.to_json()
         if self.properties is not None:
-            json["properties"] = [i.to_json() for i in self.properties]
+            json['properties'] = [i.to_json() for i in self.properties]
         if self.parent_id is not None:
-            json["parentId"] = self.parent_id.to_json()
+            json['parentId'] = self.parent_id.to_json()
         if self.child_ids is not None:
-            json["childIds"] = [i.to_json() for i in self.child_ids]
+            json['childIds'] = [i.to_json() for i in self.child_ids]
         if self.backend_dom_node_id is not None:
-            json["backendDOMNodeId"] = self.backend_dom_node_id.to_json()
+            json['backendDOMNodeId'] = self.backend_dom_node_id.to_json()
         if self.frame_id is not None:
-            json["frameId"] = self.frame_id.to_json()
+            json['frameId'] = self.frame_id.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AXNode:
         return cls(
-            node_id=AXNodeId.from_json(json["nodeId"]),
-            ignored=bool(json["ignored"]),
-            ignored_reasons=[AXProperty.from_json(i) for i in json["ignoredReasons"]]
-            if json.get("ignoredReasons", None) is not None
-            else None,
-            role=AXValue.from_json(json["role"])
-            if json.get("role", None) is not None
-            else None,
-            chrome_role=AXValue.from_json(json["chromeRole"])
-            if json.get("chromeRole", None) is not None
-            else None,
-            name=AXValue.from_json(json["name"])
-            if json.get("name", None) is not None
-            else None,
-            description=AXValue.from_json(json["description"])
-            if json.get("description", None) is not None
-            else None,
-            value=AXValue.from_json(json["value"])
-            if json.get("value", None) is not None
-            else None,
-            properties=[AXProperty.from_json(i) for i in json["properties"]]
-            if json.get("properties", None) is not None
-            else None,
-            parent_id=AXNodeId.from_json(json["parentId"])
-            if json.get("parentId", None) is not None
-            else None,
-            child_ids=[AXNodeId.from_json(i) for i in json["childIds"]]
-            if json.get("childIds", None) is not None
-            else None,
-            backend_dom_node_id=dom.BackendNodeId.from_json(json["backendDOMNodeId"])
-            if json.get("backendDOMNodeId", None) is not None
-            else None,
-            frame_id=page.FrameId.from_json(json["frameId"])
-            if json.get("frameId", None) is not None
-            else None,
+            node_id=AXNodeId.from_json(json['nodeId']),
+            ignored=bool(json['ignored']),
+            ignored_reasons=[AXProperty.from_json(i) for i in json.get('ignoredReasons', [])],
+            role=AXValue.from_json_optional(json.get('role')),
+            chrome_role=AXValue.from_json_optional(json.get('chromeRole')),
+            name=AXValue.from_json_optional(json.get('name')),
+            description=AXValue.from_json_optional(json.get('description')),
+            value=AXValue.from_json_optional(json.get('value')),
+            properties=[AXProperty.from_json(i) for i in json.get('properties', [])],
+            parent_id=AXNodeId.from_json_optional(json.get('parentId')),
+            child_ids=[AXNodeId.from_json(i) for i in json.get('childIds', [])],
+            backend_dom_node_id=dom.BackendNodeId.from_json_optional(json.get('backendDOMNodeId')),
+            frame_id=page.FrameId.from_json_optional(json.get('frameId')),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AXNode | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disables the accessibility domain.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Accessibility.disable",
+        'method': 'Accessibility.disable',
     }
     json = yield cmd_dict
 
 
-def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def enable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables the accessibility domain which causes ``AXNodeId``'s to remain consistent between method calls.
     This turns on accessibility for the page, which can impact performance until accessibility is disabled.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Accessibility.enable",
+        'method': 'Accessibility.enable',
     }
     json = yield cmd_dict
 
 
 def get_partial_ax_tree(
-    node_id: typing.Optional[dom.NodeId] = None,
-    backend_node_id: typing.Optional[dom.BackendNodeId] = None,
-    object_id: typing.Optional[runtime.RemoteObjectId] = None,
-    fetch_relatives: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[AXNode]]:
+    *,
+    node_id: dom.NodeId | None = None,
+    backend_node_id: dom.BackendNodeId | None = None,
+    object_id: runtime.RemoteObjectId | None = None,
+    fetch_relatives: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[AXNode]]:
     """
     Fetches the accessibility node and partial accessibility tree for this DOM node, if it exists.
 
@@ -496,28 +553,32 @@ def get_partial_ax_tree(
     :param backend_node_id: *(Optional)* Identifier of the backend node to get the partial accessibility tree for.
     :param object_id: *(Optional)* JavaScript object id of the node wrapper to get the partial accessibility tree for.
     :param fetch_relatives: *(Optional)* Whether to fetch this node's ancestors, siblings and children. Defaults to true.
-    :returns: The ``Accessibility.AXNode`` for this DOM node, if it exists, plus its ancestors, siblings and children, if requested.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[AXNode]]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if node_id is not None:
-        params["nodeId"] = node_id.to_json()
+        params['nodeId'] = node_id.to_json()
     if backend_node_id is not None:
-        params["backendNodeId"] = backend_node_id.to_json()
+        params['backendNodeId'] = backend_node_id.to_json()
     if object_id is not None:
-        params["objectId"] = object_id.to_json()
+        params['objectId'] = object_id.to_json()
     if fetch_relatives is not None:
-        params["fetchRelatives"] = fetch_relatives
+        params['fetchRelatives'] = fetch_relatives
     cmd_dict: T_JSON_DICT = {
-        "method": "Accessibility.getPartialAXTree",
-        "params": params,
+        'method': 'Accessibility.getPartialAXTree',
+        'params': params,
     }
     json = yield cmd_dict
-    return [AXNode.from_json(i) for i in json["nodes"]]
+    return [AXNode.from_json(i) for i in json.get('nodes', [])]
 
 
 def get_full_ax_tree(
-    depth: typing.Optional[int] = None, frame_id: typing.Optional[page.FrameId] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[AXNode]]:
+    *,
+    depth: int | None = None,
+    frame_id: page.FrameId | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[AXNode]]:
     """
     Fetches the entire accessibility tree for the root Document
 
@@ -525,24 +586,26 @@ def get_full_ax_tree(
 
     :param depth: *(Optional)* The maximum depth at which descendants of the root node should be retrieved. If omitted, the full tree is returned.
     :param frame_id: *(Optional)* The frame for whose document the AX tree should be retrieved. If omitted, the root frame is used.
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[AXNode]]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if depth is not None:
-        params["depth"] = depth
+        params['depth'] = depth
     if frame_id is not None:
-        params["frameId"] = frame_id.to_json()
+        params['frameId'] = frame_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Accessibility.getFullAXTree",
-        "params": params,
+        'method': 'Accessibility.getFullAXTree',
+        'params': params,
     }
     json = yield cmd_dict
-    return [AXNode.from_json(i) for i in json["nodes"]]
+    return [AXNode.from_json(i) for i in json.get('nodes', [])]
 
 
 def get_root_ax_node(
-    frame_id: typing.Optional[page.FrameId] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, AXNode]:
+    frame_id: page.FrameId | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, AXNode]:
     """
     Fetches the root node.
     Requires ``enable()`` to have been called previously.
@@ -550,24 +613,27 @@ def get_root_ax_node(
     **EXPERIMENTAL**
 
     :param frame_id: *(Optional)* The frame in whose document the node resides. If omitted, the root frame is used.
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, AXNode]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if frame_id is not None:
-        params["frameId"] = frame_id.to_json()
+        params['frameId'] = frame_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Accessibility.getRootAXNode",
-        "params": params,
+        'method': 'Accessibility.getRootAXNode',
+        'params': params,
     }
     json = yield cmd_dict
-    return AXNode.from_json(json["node"])
+    return AXNode.from_json(json['node'])
 
 
 def get_ax_node_and_ancestors(
-    node_id: typing.Optional[dom.NodeId] = None,
-    backend_node_id: typing.Optional[dom.BackendNodeId] = None,
-    object_id: typing.Optional[runtime.RemoteObjectId] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[AXNode]]:
+    *,
+    node_id: dom.NodeId | None = None,
+    backend_node_id: dom.BackendNodeId | None = None,
+    object_id: runtime.RemoteObjectId | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[AXNode]]:
     """
     Fetches a node and all ancestors up to and including the root.
     Requires ``enable()`` to have been called previously.
@@ -577,26 +643,30 @@ def get_ax_node_and_ancestors(
     :param node_id: *(Optional)* Identifier of the node to get.
     :param backend_node_id: *(Optional)* Identifier of the backend node to get.
     :param object_id: *(Optional)* JavaScript object id of the node wrapper to get.
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[AXNode]]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if node_id is not None:
-        params["nodeId"] = node_id.to_json()
+        params['nodeId'] = node_id.to_json()
     if backend_node_id is not None:
-        params["backendNodeId"] = backend_node_id.to_json()
+        params['backendNodeId'] = backend_node_id.to_json()
     if object_id is not None:
-        params["objectId"] = object_id.to_json()
+        params['objectId'] = object_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Accessibility.getAXNodeAndAncestors",
-        "params": params,
+        'method': 'Accessibility.getAXNodeAndAncestors',
+        'params': params,
     }
     json = yield cmd_dict
-    return [AXNode.from_json(i) for i in json["nodes"]]
+    return [AXNode.from_json(i) for i in json.get('nodes', [])]
 
 
 def get_child_ax_nodes(
-    id_: AXNodeId, frame_id: typing.Optional[page.FrameId] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[AXNode]]:
+    id_: AXNodeId,
+    *,
+    frame_id: page.FrameId | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[AXNode]]:
     """
     Fetches a particular accessibility node by AXNodeId.
     Requires ``enable()`` to have been called previously.
@@ -605,27 +675,30 @@ def get_child_ax_nodes(
 
     :param id_:
     :param frame_id: *(Optional)* The frame in whose document the node resides. If omitted, the root frame is used.
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[AXNode]]
     """
-    params: T_JSON_DICT = dict()
-    params["id"] = id_.to_json()
+
+    params: T_JSON_DICT = {}
+    params['id'] = id_.to_json()
     if frame_id is not None:
-        params["frameId"] = frame_id.to_json()
+        params['frameId'] = frame_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Accessibility.getChildAXNodes",
-        "params": params,
+        'method': 'Accessibility.getChildAXNodes',
+        'params': params,
     }
     json = yield cmd_dict
-    return [AXNode.from_json(i) for i in json["nodes"]]
+    return [AXNode.from_json(i) for i in json.get('nodes', [])]
 
 
 def query_ax_tree(
-    node_id: typing.Optional[dom.NodeId] = None,
-    backend_node_id: typing.Optional[dom.BackendNodeId] = None,
-    object_id: typing.Optional[runtime.RemoteObjectId] = None,
-    accessible_name: typing.Optional[str] = None,
-    role: typing.Optional[str] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[AXNode]]:
+    *,
+    node_id: dom.NodeId | None = None,
+    backend_node_id: dom.BackendNodeId | None = None,
+    object_id: runtime.RemoteObjectId | None = None,
+    accessible_name: str | None = None,
+    role: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[AXNode]]:
     """
     Query a DOM node's accessibility subtree for accessible name and role.
     This command computes the name and role for all nodes in the subtree, including those that are
@@ -640,28 +713,30 @@ def query_ax_tree(
     :param object_id: *(Optional)* JavaScript object id of the node wrapper for the root to query.
     :param accessible_name: *(Optional)* Find nodes with this computed name.
     :param role: *(Optional)* Find nodes with this computed role.
-    :returns: A list of ``Accessibility.AXNode`` matching the specified attributes, including nodes that are ignored for accessibility.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[AXNode]]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if node_id is not None:
-        params["nodeId"] = node_id.to_json()
+        params['nodeId'] = node_id.to_json()
     if backend_node_id is not None:
-        params["backendNodeId"] = backend_node_id.to_json()
+        params['backendNodeId'] = backend_node_id.to_json()
     if object_id is not None:
-        params["objectId"] = object_id.to_json()
+        params['objectId'] = object_id.to_json()
     if accessible_name is not None:
-        params["accessibleName"] = accessible_name
+        params['accessibleName'] = accessible_name
     if role is not None:
-        params["role"] = role
+        params['role'] = role
     cmd_dict: T_JSON_DICT = {
-        "method": "Accessibility.queryAXTree",
-        "params": params,
+        'method': 'Accessibility.queryAXTree',
+        'params': params,
     }
     json = yield cmd_dict
-    return [AXNode.from_json(i) for i in json["nodes"]]
+    return [AXNode.from_json(i) for i in json.get('nodes', [])]
 
 
-@event_class("Accessibility.loadComplete")
+@event_type('Accessibility.loadComplete')
 @dataclass
 class LoadComplete:
     """
@@ -676,10 +751,16 @@ class LoadComplete:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> LoadComplete:
-        return cls(root=AXNode.from_json(json["root"]))
+        return cls(root=AXNode.from_json(json['root']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> LoadComplete | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Accessibility.nodesUpdated")
+@event_type('Accessibility.nodesUpdated')
 @dataclass
 class NodesUpdated:
     """
@@ -689,8 +770,14 @@ class NodesUpdated:
     """
 
     #: Updated node data.
-    nodes: typing.List[AXNode]
+    nodes: list[AXNode]
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> NodesUpdated:
-        return cls(nodes=[AXNode.from_json(i) for i in json["nodes"]])
+        return cls(nodes=[AXNode.from_json(i) for i in json.get('nodes', [])])
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> NodesUpdated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

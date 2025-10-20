@@ -3,54 +3,70 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: EventBreakpoints (experimental)
 
 from __future__ import annotations
-import enum
+
 import typing
-from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 def set_instrumentation_breakpoint(
     event_name: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets breakpoint on particular native event.
 
     :param event_name: Instrumentation name to stop on.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["eventName"] = event_name
+
+    params: T_JSON_DICT = {}
+    params['eventName'] = event_name
     cmd_dict: T_JSON_DICT = {
-        "method": "EventBreakpoints.setInstrumentationBreakpoint",
-        "params": params,
+        'method': 'EventBreakpoints.setInstrumentationBreakpoint',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def remove_instrumentation_breakpoint(
     event_name: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Removes breakpoint on particular native event.
 
     :param event_name: Instrumentation name to stop on.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["eventName"] = event_name
+
+    params: T_JSON_DICT = {}
+    params['eventName'] = event_name
     cmd_dict: T_JSON_DICT = {
-        "method": "EventBreakpoints.removeInstrumentationBreakpoint",
-        "params": params,
+        'method': 'EventBreakpoints.removeInstrumentationBreakpoint',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Removes all breakpoints
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "EventBreakpoints.disable",
+        'method': 'EventBreakpoints.disable',
     }
     json = yield cmd_dict

@@ -3,13 +3,22 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: SystemInfo (experimental)
 
 from __future__ import annotations
+
 import enum
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 @dataclass
@@ -37,41 +46,43 @@ class GPUDevice:
     driver_version: str
 
     #: Sub sys ID of the GPU, only available on Windows.
-    sub_sys_id: typing.Optional[float] = None
+    sub_sys_id: float | None = None
 
     #: Revision of the GPU, only available on Windows.
-    revision: typing.Optional[float] = None
+    revision: float | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["vendorId"] = self.vendor_id
-        json["deviceId"] = self.device_id
-        json["vendorString"] = self.vendor_string
-        json["deviceString"] = self.device_string
-        json["driverVendor"] = self.driver_vendor
-        json["driverVersion"] = self.driver_version
+        json: T_JSON_DICT = {}
+        json['vendorId'] = self.vendor_id
+        json['deviceId'] = self.device_id
+        json['vendorString'] = self.vendor_string
+        json['deviceString'] = self.device_string
+        json['driverVendor'] = self.driver_vendor
+        json['driverVersion'] = self.driver_version
         if self.sub_sys_id is not None:
-            json["subSysId"] = self.sub_sys_id
+            json['subSysId'] = self.sub_sys_id
         if self.revision is not None:
-            json["revision"] = self.revision
+            json['revision'] = self.revision
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> GPUDevice:
         return cls(
-            vendor_id=float(json["vendorId"]),
-            device_id=float(json["deviceId"]),
-            vendor_string=str(json["vendorString"]),
-            device_string=str(json["deviceString"]),
-            driver_vendor=str(json["driverVendor"]),
-            driver_version=str(json["driverVersion"]),
-            sub_sys_id=float(json["subSysId"])
-            if json.get("subSysId", None) is not None
-            else None,
-            revision=float(json["revision"])
-            if json.get("revision", None) is not None
-            else None,
+            vendor_id=float(json['vendorId']),
+            device_id=float(json['deviceId']),
+            vendor_string=str(json['vendorString']),
+            device_string=str(json['deviceString']),
+            driver_vendor=str(json['driverVendor']),
+            driver_version=str(json['driverVersion']),
+            sub_sys_id=None if json.get('subSysId') is None else float(json['subSysId']),
+            revision=None if json.get('revision') is None else float(json['revision']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> GPUDevice | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -87,17 +98,23 @@ class Size:
     height: int
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["width"] = self.width
-        json["height"] = self.height
+        json: T_JSON_DICT = {}
+        json['width'] = self.width
+        json['height'] = self.height
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Size:
         return cls(
-            width=int(json["width"]),
-            height=int(json["height"]),
+            width=int(json['width']),
+            height=int(json['height']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Size | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -117,19 +134,25 @@ class VideoDecodeAcceleratorCapability:
     min_resolution: Size
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["profile"] = self.profile
-        json["maxResolution"] = self.max_resolution.to_json()
-        json["minResolution"] = self.min_resolution.to_json()
+        json: T_JSON_DICT = {}
+        json['profile'] = self.profile
+        json['maxResolution'] = self.max_resolution.to_json()
+        json['minResolution'] = self.min_resolution.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> VideoDecodeAcceleratorCapability:
         return cls(
-            profile=str(json["profile"]),
-            max_resolution=Size.from_json(json["maxResolution"]),
-            min_resolution=Size.from_json(json["minResolution"]),
+            profile=str(json['profile']),
+            max_resolution=Size.from_json(json['maxResolution']),
+            min_resolution=Size.from_json(json['minResolution']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> VideoDecodeAcceleratorCapability | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -153,21 +176,27 @@ class VideoEncodeAcceleratorCapability:
     max_framerate_denominator: int
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["profile"] = self.profile
-        json["maxResolution"] = self.max_resolution.to_json()
-        json["maxFramerateNumerator"] = self.max_framerate_numerator
-        json["maxFramerateDenominator"] = self.max_framerate_denominator
+        json: T_JSON_DICT = {}
+        json['profile'] = self.profile
+        json['maxResolution'] = self.max_resolution.to_json()
+        json['maxFramerateNumerator'] = self.max_framerate_numerator
+        json['maxFramerateDenominator'] = self.max_framerate_denominator
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> VideoEncodeAcceleratorCapability:
         return cls(
-            profile=str(json["profile"]),
-            max_resolution=Size.from_json(json["maxResolution"]),
-            max_framerate_numerator=int(json["maxFramerateNumerator"]),
-            max_framerate_denominator=int(json["maxFramerateDenominator"]),
+            profile=str(json['profile']),
+            max_resolution=Size.from_json(json['maxResolution']),
+            max_framerate_numerator=int(json['maxFramerateNumerator']),
+            max_framerate_denominator=int(json['maxFramerateDenominator']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> VideoEncodeAcceleratorCapability | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class SubsamplingFormat(enum.Enum):
@@ -175,9 +204,9 @@ class SubsamplingFormat(enum.Enum):
     YUV subsampling type of the pixels of a given image.
     """
 
-    YUV420 = "yuv420"
-    YUV422 = "yuv422"
-    YUV444 = "yuv444"
+    YUV420 = 'yuv420'
+    YUV422 = 'yuv422'
+    YUV444 = 'yuv444'
 
     def to_json(self) -> str:
         return self.value
@@ -186,15 +215,21 @@ class SubsamplingFormat(enum.Enum):
     def from_json(cls, json: str) -> SubsamplingFormat:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> SubsamplingFormat | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class ImageType(enum.Enum):
     """
     Image format of a given image.
     """
 
-    JPEG = "jpeg"
-    WEBP = "webp"
-    UNKNOWN = "unknown"
+    JPEG = 'jpeg'
+    WEBP = 'webp'
+    UNKNOWN = 'unknown'
 
     def to_json(self) -> str:
         return self.value
@@ -202,6 +237,12 @@ class ImageType(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> ImageType:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> ImageType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -221,24 +262,30 @@ class ImageDecodeAcceleratorCapability:
     min_dimensions: Size
 
     #: Optional array of supported subsampling formats, e.g. 4:2:0, if known.
-    subsamplings: typing.List[SubsamplingFormat]
+    subsamplings: list[SubsamplingFormat]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["imageType"] = self.image_type.to_json()
-        json["maxDimensions"] = self.max_dimensions.to_json()
-        json["minDimensions"] = self.min_dimensions.to_json()
-        json["subsamplings"] = [i.to_json() for i in self.subsamplings]
+        json: T_JSON_DICT = {}
+        json['imageType'] = self.image_type.to_json()
+        json['maxDimensions'] = self.max_dimensions.to_json()
+        json['minDimensions'] = self.min_dimensions.to_json()
+        json['subsamplings'] = [i.to_json() for i in self.subsamplings]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ImageDecodeAcceleratorCapability:
         return cls(
-            image_type=ImageType.from_json(json["imageType"]),
-            max_dimensions=Size.from_json(json["maxDimensions"]),
-            min_dimensions=Size.from_json(json["minDimensions"]),
-            subsamplings=[SubsamplingFormat.from_json(i) for i in json["subsamplings"]],
+            image_type=ImageType.from_json(json['imageType']),
+            max_dimensions=Size.from_json(json['maxDimensions']),
+            min_dimensions=Size.from_json(json['minDimensions']),
+            subsamplings=[SubsamplingFormat.from_json(i) for i in json.get('subsamplings', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ImageDecodeAcceleratorCapability | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -248,63 +295,56 @@ class GPUInfo:
     """
 
     #: The graphics devices on the system. Element 0 is the primary GPU.
-    devices: typing.List[GPUDevice]
+    devices: list[GPUDevice]
 
     #: An optional array of GPU driver bug workarounds.
-    driver_bug_workarounds: typing.List[str]
+    driver_bug_workarounds: list[str]
 
     #: Supported accelerated video decoding capabilities.
-    video_decoding: typing.List[VideoDecodeAcceleratorCapability]
+    video_decoding: list[VideoDecodeAcceleratorCapability]
 
     #: Supported accelerated video encoding capabilities.
-    video_encoding: typing.List[VideoEncodeAcceleratorCapability]
+    video_encoding: list[VideoEncodeAcceleratorCapability]
 
     #: Supported accelerated image decoding capabilities.
-    image_decoding: typing.List[ImageDecodeAcceleratorCapability]
+    image_decoding: list[ImageDecodeAcceleratorCapability]
 
     #: An optional dictionary of additional GPU related attributes.
-    aux_attributes: typing.Optional[dict] = None
+    aux_attributes: dict | None = None
 
     #: An optional dictionary of graphics features and their status.
-    feature_status: typing.Optional[dict] = None
+    feature_status: dict | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["devices"] = [i.to_json() for i in self.devices]
-        json["driverBugWorkarounds"] = [i for i in self.driver_bug_workarounds]
-        json["videoDecoding"] = [i.to_json() for i in self.video_decoding]
-        json["videoEncoding"] = [i.to_json() for i in self.video_encoding]
-        json["imageDecoding"] = [i.to_json() for i in self.image_decoding]
+        json: T_JSON_DICT = {}
+        json['devices'] = [i.to_json() for i in self.devices]
+        json['driverBugWorkarounds'] = self.driver_bug_workarounds
+        json['videoDecoding'] = [i.to_json() for i in self.video_decoding]
+        json['videoEncoding'] = [i.to_json() for i in self.video_encoding]
+        json['imageDecoding'] = [i.to_json() for i in self.image_decoding]
         if self.aux_attributes is not None:
-            json["auxAttributes"] = self.aux_attributes
+            json['auxAttributes'] = self.aux_attributes
         if self.feature_status is not None:
-            json["featureStatus"] = self.feature_status
+            json['featureStatus'] = self.feature_status
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> GPUInfo:
         return cls(
-            devices=[GPUDevice.from_json(i) for i in json["devices"]],
-            driver_bug_workarounds=[str(i) for i in json["driverBugWorkarounds"]],
-            video_decoding=[
-                VideoDecodeAcceleratorCapability.from_json(i)
-                for i in json["videoDecoding"]
-            ],
-            video_encoding=[
-                VideoEncodeAcceleratorCapability.from_json(i)
-                for i in json["videoEncoding"]
-            ],
-            image_decoding=[
-                ImageDecodeAcceleratorCapability.from_json(i)
-                for i in json["imageDecoding"]
-            ],
-            aux_attributes=dict(json["auxAttributes"])
-            if json.get("auxAttributes", None) is not None
-            else None,
-            feature_status=dict(json["featureStatus"])
-            if json.get("featureStatus", None) is not None
-            else None,
+            devices=[GPUDevice.from_json(i) for i in json.get('devices', [])],
+            driver_bug_workarounds=[str(i) for i in json.get('driverBugWorkarounds', [])],
+            video_decoding=[VideoDecodeAcceleratorCapability.from_json(i) for i in json.get('videoDecoding', [])],
+            video_encoding=[VideoEncodeAcceleratorCapability.from_json(i) for i in json.get('videoEncoding', [])],
+            image_decoding=[ImageDecodeAcceleratorCapability.from_json(i) for i in json.get('imageDecoding', [])],
+            aux_attributes=None if json.get('auxAttributes') is None else dict(json['auxAttributes']),
+            feature_status=None if json.get('featureStatus') is None else dict(json['featureStatus']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> GPUInfo | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -324,75 +364,73 @@ class ProcessInfo:
     cpu_time: float
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["type"] = self.type_
-        json["id"] = self.id_
-        json["cpuTime"] = self.cpu_time
+        json: T_JSON_DICT = {}
+        json['type'] = self.type_
+        json['id'] = self.id_
+        json['cpuTime'] = self.cpu_time
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ProcessInfo:
         return cls(
-            type_=str(json["type"]),
-            id_=int(json["id"]),
-            cpu_time=float(json["cpuTime"]),
+            type_=str(json['type']),
+            id_=int(json['id']),
+            cpu_time=float(json['cpuTime']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ProcessInfo | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-def get_info() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.Tuple[GPUInfo, str, str, str]]
-):
+
+def get_info() -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[GPUInfo, str, str, str]]:
     """
     Returns information about the system.
 
-    :returns: A tuple with the following items:
-
-        0. **gpu** - Information about the GPUs on the system.
-        1. **modelName** - A platform-dependent description of the model of the machine. On Mac OS, this is, for example, 'MacBookPro'. Will be the empty string if not supported.
-        2. **modelVersion** - A platform-dependent description of the version of the machine. On Mac OS, this is, for example, '10.1'. Will be the empty string if not supported.
-        3. **commandLine** - The command line string used to launch the browser. Will be the empty string if not supported.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[GPUInfo, str, str, str]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "SystemInfo.getInfo",
+        'method': 'SystemInfo.getInfo',
     }
     json = yield cmd_dict
-    return (
-        GPUInfo.from_json(json["gpu"]),
-        str(json["modelName"]),
-        str(json["modelVersion"]),
-        str(json["commandLine"]),
-    )
+    return (GPUInfo.from_json(json['gpu']), str(json['modelName']), str(json['modelVersion']), str(json['commandLine']))
 
 
 def get_feature_state(
     feature_state: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, bool]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, bool]:
     """
     Returns information about the feature state.
 
     :param feature_state:
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, bool]
     """
-    params: T_JSON_DICT = dict()
-    params["featureState"] = feature_state
+
+    params: T_JSON_DICT = {}
+    params['featureState'] = feature_state
     cmd_dict: T_JSON_DICT = {
-        "method": "SystemInfo.getFeatureState",
-        "params": params,
+        'method': 'SystemInfo.getFeatureState',
+        'params': params,
     }
     json = yield cmd_dict
-    return bool(json["featureEnabled"])
+    return bool(json['featureEnabled'])
 
 
-def get_process_info() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[ProcessInfo]]
-):
+def get_process_info() -> Generator[T_JSON_DICT, T_JSON_DICT, list[ProcessInfo]]:
     """
     Returns information about all running processes.
 
-    :returns: An array of process info blocks.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[ProcessInfo]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "SystemInfo.getProcessInfo",
+        'method': 'SystemInfo.getProcessInfo',
     }
     json = yield cmd_dict
-    return [ProcessInfo.from_json(i) for i in json["processInfo"]]
+    return [ProcessInfo.from_json(i) for i in json.get('processInfo', [])]

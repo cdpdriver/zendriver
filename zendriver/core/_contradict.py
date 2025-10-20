@@ -3,15 +3,19 @@ import warnings as _warnings
 from collections.abc import Mapping as _Mapping
 from collections.abc import Sequence as _Sequence
 
+
 __logger__ = logging.getLogger(__name__)
 
 
-__all__ = ["cdict", "ContraDict"]
+__all__ = [
+    'ContraDict',
+    'cdict',
+]
 
 from typing import Any
 
 
-class ContraDict(dict[str, Any]):
+class ContraDict(dict[str, Any]):  # noqa: FURB189
     """
     directly inherited from dict
 
@@ -31,16 +35,15 @@ class ContraDict(dict[str, Any]):
     recursive action. dict assignments will be converted too.
     """
 
-    def __init__(self, *args: Any, **kwargs: Any):
+    def __init__(self, *args: Any, silent: bool = False, **kwargs: Any) -> None:
         super().__init__()
-        silent = kwargs.pop("silent", False)
         _ = dict(*args, **kwargs)
 
         # for key, val in dict(*args, **kwargs).items():
         #     _[key] = val
-        super().__setattr__("__dict__", self)
+        super().__setattr__('__dict__', self)
         for k, v in _.items():
-            _check_key(k, self, False, silent)
+            _check_key(k, self, boolean=False, silent=silent)
             super().__setitem__(k, _wrap(self.__class__, v))
 
     def __setitem__(self, key: str, value: Any) -> None:
@@ -52,7 +55,7 @@ class ContraDict(dict[str, Any]):
     def __getattribute__(self, attribute: str) -> Any:
         if attribute in self:
             return self[attribute]
-        if not _check_key(attribute, self, True, silent=True):
+        if not _check_key(attribute, self, boolean=True, silent=True):
             return getattr(super(), attribute)
 
         return object.__getattribute__(self, attribute)
@@ -61,31 +64,32 @@ class ContraDict(dict[str, Any]):
 def _wrap(cls: Any, v: Any) -> Any:
     if isinstance(v, _Mapping):
         v = cls(v)
-
     elif isinstance(v, _Sequence) and not isinstance(
-        v, (str, bytes, bytearray, set, tuple)
+        v,
+        (str, bytes, bytearray, set, tuple),
     ):
-        v = list([_wrap(cls, x) for x in v])
+        v = [_wrap(cls, x) for x in v]
+
     return v
 
 
 _warning_names = (
-    "items",
-    "keys",
-    "values",
-    "update",
-    "clear",
-    "copy",
-    "fromkeys",
-    "get",
-    "items",
-    "keys",
-    "pop",
-    "popitem",
-    "setdefault",
-    "update",
-    "values",
-    "class",
+    'items',
+    'keys',
+    'values',
+    'update',
+    'clear',
+    'copy',
+    'fromkeys',
+    'get',
+    'items',
+    'keys',
+    'pop',
+    'popitem',
+    'setdefault',
+    'update',
+    'values',
+    'class',
 )
 
 _warning_names_message = """\n\
@@ -102,7 +106,11 @@ def cdict(*args: Any, **kwargs: Any) -> ContraDict:
 
 
 def _check_key(
-    key: str, mapping: _Mapping[str, Any], boolean: bool = False, silent: bool = False
+    key: str,
+    mapping: _Mapping[str, Any],
+    *,
+    boolean: bool = False,
+    silent: bool = False,
 ) -> str | bool:
     """checks `key` and warns if needed
 
@@ -115,9 +123,9 @@ def _check_key(
         if boolean:
             return True
         return key
-    if key.lower() in _warning_names or any(_ in key for _ in ("-", ".")):
+    if key.lower() in _warning_names or any(_ in key for _ in ('-', '.')):
         if not silent:
-            _warnings.warn(_warning_names_message.format(key))
+            _warnings.warn(_warning_names_message.format(key), stacklevel=1)
         e = True
     if not boolean:
         return key

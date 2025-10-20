@@ -3,17 +3,26 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: DOMDebugger
 
 from __future__ import annotations
+
 import enum
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
 
-from . import dom
-from . import runtime
-from deprecated.sphinx import deprecated  # type: ignore
+from deprecated.sphinx import deprecated
+
+from . import dom, runtime
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 class DOMBreakpointType(enum.Enum):
@@ -21,9 +30,9 @@ class DOMBreakpointType(enum.Enum):
     DOM breakpoint type.
     """
 
-    SUBTREE_MODIFIED = "subtree-modified"
-    ATTRIBUTE_MODIFIED = "attribute-modified"
-    NODE_REMOVED = "node-removed"
+    SUBTREE_MODIFIED = 'subtree-modified'
+    ATTRIBUTE_MODIFIED = 'attribute-modified'
+    NODE_REMOVED = 'node-removed'
 
     def to_json(self) -> str:
         return self.value
@@ -32,14 +41,20 @@ class DOMBreakpointType(enum.Enum):
     def from_json(cls, json: str) -> DOMBreakpointType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> DOMBreakpointType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class CSPViolationType(enum.Enum):
     """
     CSP Violation type.
     """
 
-    TRUSTEDTYPE_SINK_VIOLATION = "trustedtype-sink-violation"
-    TRUSTEDTYPE_POLICY_VIOLATION = "trustedtype-policy-violation"
+    TRUSTEDTYPE_SINK_VIOLATION = 'trustedtype-sink-violation'
+    TRUSTEDTYPE_POLICY_VIOLATION = 'trustedtype-policy-violation'
 
     def to_json(self) -> str:
         return self.value
@@ -47,6 +62,12 @@ class CSPViolationType(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> CSPViolationType:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> CSPViolationType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -77,123 +98,135 @@ class EventListener:
     column_number: int
 
     #: Event handler function value.
-    handler: typing.Optional[runtime.RemoteObject] = None
+    handler: runtime.RemoteObject | None = None
 
     #: Event original handler function value.
-    original_handler: typing.Optional[runtime.RemoteObject] = None
+    original_handler: runtime.RemoteObject | None = None
 
     #: Node the listener is added to (if any).
-    backend_node_id: typing.Optional[dom.BackendNodeId] = None
+    backend_node_id: dom.BackendNodeId | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["type"] = self.type_
-        json["useCapture"] = self.use_capture
-        json["passive"] = self.passive
-        json["once"] = self.once
-        json["scriptId"] = self.script_id.to_json()
-        json["lineNumber"] = self.line_number
-        json["columnNumber"] = self.column_number
+        json: T_JSON_DICT = {}
+        json['type'] = self.type_
+        json['useCapture'] = self.use_capture
+        json['passive'] = self.passive
+        json['once'] = self.once
+        json['scriptId'] = self.script_id.to_json()
+        json['lineNumber'] = self.line_number
+        json['columnNumber'] = self.column_number
         if self.handler is not None:
-            json["handler"] = self.handler.to_json()
+            json['handler'] = self.handler.to_json()
         if self.original_handler is not None:
-            json["originalHandler"] = self.original_handler.to_json()
+            json['originalHandler'] = self.original_handler.to_json()
         if self.backend_node_id is not None:
-            json["backendNodeId"] = self.backend_node_id.to_json()
+            json['backendNodeId'] = self.backend_node_id.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> EventListener:
         return cls(
-            type_=str(json["type"]),
-            use_capture=bool(json["useCapture"]),
-            passive=bool(json["passive"]),
-            once=bool(json["once"]),
-            script_id=runtime.ScriptId.from_json(json["scriptId"]),
-            line_number=int(json["lineNumber"]),
-            column_number=int(json["columnNumber"]),
-            handler=runtime.RemoteObject.from_json(json["handler"])
-            if json.get("handler", None) is not None
-            else None,
-            original_handler=runtime.RemoteObject.from_json(json["originalHandler"])
-            if json.get("originalHandler", None) is not None
-            else None,
-            backend_node_id=dom.BackendNodeId.from_json(json["backendNodeId"])
-            if json.get("backendNodeId", None) is not None
-            else None,
+            type_=str(json['type']),
+            use_capture=bool(json['useCapture']),
+            passive=bool(json['passive']),
+            once=bool(json['once']),
+            script_id=runtime.ScriptId.from_json(json['scriptId']),
+            line_number=int(json['lineNumber']),
+            column_number=int(json['columnNumber']),
+            handler=runtime.RemoteObject.from_json_optional(json.get('handler')),
+            original_handler=runtime.RemoteObject.from_json_optional(json.get('originalHandler')),
+            backend_node_id=dom.BackendNodeId.from_json_optional(json.get('backendNodeId')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> EventListener | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 def get_event_listeners(
     object_id: runtime.RemoteObjectId,
-    depth: typing.Optional[int] = None,
-    pierce: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[EventListener]]:
+    *,
+    depth: int | None = None,
+    pierce: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[EventListener]]:
     """
     Returns event listeners of the given object.
 
     :param object_id: Identifier of the object to return listeners for.
     :param depth: *(Optional)* The maximum depth at which Node children should be retrieved, defaults to 1. Use -1 for the entire subtree or provide an integer larger than 0.
     :param pierce: *(Optional)* Whether or not iframes and shadow roots should be traversed when returning the subtree (default is false). Reports listeners for all contexts if pierce is enabled.
-    :returns: Array of relevant listeners.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[EventListener]]
     """
-    params: T_JSON_DICT = dict()
-    params["objectId"] = object_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['objectId'] = object_id.to_json()
     if depth is not None:
-        params["depth"] = depth
+        params['depth'] = depth
     if pierce is not None:
-        params["pierce"] = pierce
+        params['pierce'] = pierce
     cmd_dict: T_JSON_DICT = {
-        "method": "DOMDebugger.getEventListeners",
-        "params": params,
+        'method': 'DOMDebugger.getEventListeners',
+        'params': params,
     }
     json = yield cmd_dict
-    return [EventListener.from_json(i) for i in json["listeners"]]
+    return [EventListener.from_json(i) for i in json.get('listeners', [])]
 
 
 def remove_dom_breakpoint(
-    node_id: dom.NodeId, type_: DOMBreakpointType
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    node_id: dom.NodeId,
+    type_: DOMBreakpointType,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Removes DOM breakpoint that was set using ``setDOMBreakpoint``.
 
     :param node_id: Identifier of the node to remove breakpoint from.
     :param type_: Type of the breakpoint to remove.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["nodeId"] = node_id.to_json()
-    params["type"] = type_.to_json()
+
+    params: T_JSON_DICT = {}
+    params['nodeId'] = node_id.to_json()
+    params['type'] = type_.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "DOMDebugger.removeDOMBreakpoint",
-        "params": params,
+        'method': 'DOMDebugger.removeDOMBreakpoint',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def remove_event_listener_breakpoint(
-    event_name: str, target_name: typing.Optional[str] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    event_name: str,
+    *,
+    target_name: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Removes breakpoint on particular DOM event.
 
     :param event_name: Event name.
     :param target_name: **(EXPERIMENTAL)** *(Optional)* EventTarget interface name.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["eventName"] = event_name
+
+    params: T_JSON_DICT = {}
+    params['eventName'] = event_name
     if target_name is not None:
-        params["targetName"] = target_name
+        params['targetName'] = target_name
     cmd_dict: T_JSON_DICT = {
-        "method": "DOMDebugger.removeEventListenerBreakpoint",
-        "params": params,
+        'method': 'DOMDebugger.removeEventListenerBreakpoint',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@deprecated(version="1.3")
+@deprecated(version='1.3')
 def remove_instrumentation_breakpoint(
     event_name: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Removes breakpoint on particular native event.
 
@@ -202,93 +235,113 @@ def remove_instrumentation_breakpoint(
     **EXPERIMENTAL**
 
     :param event_name: Instrumentation name to stop on.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["eventName"] = event_name
+
+    params: T_JSON_DICT = {}
+    params['eventName'] = event_name
     cmd_dict: T_JSON_DICT = {
-        "method": "DOMDebugger.removeInstrumentationBreakpoint",
-        "params": params,
+        'method': 'DOMDebugger.removeInstrumentationBreakpoint',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def remove_xhr_breakpoint(url: str) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def remove_xhr_breakpoint(
+    url: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Removes breakpoint from XMLHttpRequest.
 
     :param url: Resource URL substring.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["url"] = url
+
+    params: T_JSON_DICT = {}
+    params['url'] = url
     cmd_dict: T_JSON_DICT = {
-        "method": "DOMDebugger.removeXHRBreakpoint",
-        "params": params,
+        'method': 'DOMDebugger.removeXHRBreakpoint',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_break_on_csp_violation(
-    violation_types: typing.List[CSPViolationType],
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    violation_types: list[CSPViolationType],
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets breakpoint on particular CSP violations.
 
     **EXPERIMENTAL**
 
     :param violation_types: CSP Violations to stop upon.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["violationTypes"] = [i.to_json() for i in violation_types]
+
+    params: T_JSON_DICT = {}
+    params['violationTypes'] = [i.to_json() for i in violation_types]
     cmd_dict: T_JSON_DICT = {
-        "method": "DOMDebugger.setBreakOnCSPViolation",
-        "params": params,
+        'method': 'DOMDebugger.setBreakOnCSPViolation',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_dom_breakpoint(
-    node_id: dom.NodeId, type_: DOMBreakpointType
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    node_id: dom.NodeId,
+    type_: DOMBreakpointType,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets breakpoint on particular operation with DOM.
 
     :param node_id: Identifier of the node to set breakpoint on.
     :param type_: Type of the operation to stop upon.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["nodeId"] = node_id.to_json()
-    params["type"] = type_.to_json()
+
+    params: T_JSON_DICT = {}
+    params['nodeId'] = node_id.to_json()
+    params['type'] = type_.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "DOMDebugger.setDOMBreakpoint",
-        "params": params,
+        'method': 'DOMDebugger.setDOMBreakpoint',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_event_listener_breakpoint(
-    event_name: str, target_name: typing.Optional[str] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    event_name: str,
+    *,
+    target_name: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets breakpoint on particular DOM event.
 
     :param event_name: DOM Event name to stop on (any DOM event will do).
     :param target_name: **(EXPERIMENTAL)** *(Optional)* EventTarget interface name to stop on. If equal to ```"*"``` or not provided, will stop on any EventTarget.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["eventName"] = event_name
+
+    params: T_JSON_DICT = {}
+    params['eventName'] = event_name
     if target_name is not None:
-        params["targetName"] = target_name
+        params['targetName'] = target_name
     cmd_dict: T_JSON_DICT = {
-        "method": "DOMDebugger.setEventListenerBreakpoint",
-        "params": params,
+        'method': 'DOMDebugger.setEventListenerBreakpoint',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@deprecated(version="1.3")
+@deprecated(version='1.3')
 def set_instrumentation_breakpoint(
     event_name: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets breakpoint on particular native event.
 
@@ -297,26 +350,34 @@ def set_instrumentation_breakpoint(
     **EXPERIMENTAL**
 
     :param event_name: Instrumentation name to stop on.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["eventName"] = event_name
+
+    params: T_JSON_DICT = {}
+    params['eventName'] = event_name
     cmd_dict: T_JSON_DICT = {
-        "method": "DOMDebugger.setInstrumentationBreakpoint",
-        "params": params,
+        'method': 'DOMDebugger.setInstrumentationBreakpoint',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def set_xhr_breakpoint(url: str) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def set_xhr_breakpoint(
+    url: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets breakpoint on XMLHttpRequest.
 
     :param url: Resource URL substring. All XHRs having this substring in the URL will get stopped upon.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["url"] = url
+
+    params: T_JSON_DICT = {}
+    params['url'] = url
     cmd_dict: T_JSON_DICT = {
-        "method": "DOMDebugger.setXHRBreakpoint",
-        "params": params,
+        'method': 'DOMDebugger.setXHRBreakpoint',
+        'params': params,
     }
     json = yield cmd_dict

@@ -3,16 +3,25 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: BackgroundService (experimental)
 
 from __future__ import annotations
+
 import enum
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
 
-from . import network
-from . import service_worker
+from . import network, service_worker
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 class ServiceName(enum.Enum):
@@ -22,12 +31,12 @@ class ServiceName(enum.Enum):
     API.
     """
 
-    BACKGROUND_FETCH = "backgroundFetch"
-    BACKGROUND_SYNC = "backgroundSync"
-    PUSH_MESSAGING = "pushMessaging"
-    NOTIFICATIONS = "notifications"
-    PAYMENT_HANDLER = "paymentHandler"
-    PERIODIC_BACKGROUND_SYNC = "periodicBackgroundSync"
+    BACKGROUND_FETCH = 'backgroundFetch'
+    BACKGROUND_SYNC = 'backgroundSync'
+    PUSH_MESSAGING = 'pushMessaging'
+    NOTIFICATIONS = 'notifications'
+    PAYMENT_HANDLER = 'paymentHandler'
+    PERIODIC_BACKGROUND_SYNC = 'periodicBackgroundSync'
 
     def to_json(self) -> str:
         return self.value
@@ -35,6 +44,12 @@ class ServiceName(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> ServiceName:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> ServiceName | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -48,17 +63,23 @@ class EventMetadata:
     value: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["key"] = self.key
-        json["value"] = self.value
+        json: T_JSON_DICT = {}
+        json['key'] = self.key
+        json['value'] = self.value
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> EventMetadata:
         return cls(
-            key=str(json["key"]),
-            value=str(json["value"]),
+            key=str(json['key']),
+            value=str(json['value']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> EventMetadata | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -82,112 +103,128 @@ class BackgroundServiceEvent:
     instance_id: str
 
     #: A list of event-specific information.
-    event_metadata: typing.List[EventMetadata]
+    event_metadata: list[EventMetadata]
 
     #: Storage key this event belongs to.
     storage_key: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["timestamp"] = self.timestamp.to_json()
-        json["origin"] = self.origin
-        json["serviceWorkerRegistrationId"] = (
-            self.service_worker_registration_id.to_json()
-        )
-        json["service"] = self.service.to_json()
-        json["eventName"] = self.event_name
-        json["instanceId"] = self.instance_id
-        json["eventMetadata"] = [i.to_json() for i in self.event_metadata]
-        json["storageKey"] = self.storage_key
+        json: T_JSON_DICT = {}
+        json['timestamp'] = self.timestamp.to_json()
+        json['origin'] = self.origin
+        json['serviceWorkerRegistrationId'] = self.service_worker_registration_id.to_json()
+        json['service'] = self.service.to_json()
+        json['eventName'] = self.event_name
+        json['instanceId'] = self.instance_id
+        json['eventMetadata'] = [i.to_json() for i in self.event_metadata]
+        json['storageKey'] = self.storage_key
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> BackgroundServiceEvent:
         return cls(
-            timestamp=network.TimeSinceEpoch.from_json(json["timestamp"]),
-            origin=str(json["origin"]),
-            service_worker_registration_id=service_worker.RegistrationID.from_json(
-                json["serviceWorkerRegistrationId"]
-            ),
-            service=ServiceName.from_json(json["service"]),
-            event_name=str(json["eventName"]),
-            instance_id=str(json["instanceId"]),
-            event_metadata=[EventMetadata.from_json(i) for i in json["eventMetadata"]],
-            storage_key=str(json["storageKey"]),
+            timestamp=network.TimeSinceEpoch.from_json(json['timestamp']),
+            origin=str(json['origin']),
+            service_worker_registration_id=service_worker.RegistrationID.from_json(json['serviceWorkerRegistrationId']),
+            service=ServiceName.from_json(json['service']),
+            event_name=str(json['eventName']),
+            instance_id=str(json['instanceId']),
+            event_metadata=[EventMetadata.from_json(i) for i in json.get('eventMetadata', [])],
+            storage_key=str(json['storageKey']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> BackgroundServiceEvent | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 def start_observing(
     service: ServiceName,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables event updates for the service.
 
     :param service:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["service"] = service.to_json()
+
+    params: T_JSON_DICT = {}
+    params['service'] = service.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "BackgroundService.startObserving",
-        "params": params,
+        'method': 'BackgroundService.startObserving',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def stop_observing(
     service: ServiceName,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disables event updates for the service.
 
     :param service:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["service"] = service.to_json()
+
+    params: T_JSON_DICT = {}
+    params['service'] = service.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "BackgroundService.stopObserving",
-        "params": params,
+        'method': 'BackgroundService.stopObserving',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_recording(
-    should_record: bool, service: ServiceName
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    service: ServiceName,
+    *,
+    should_record: bool,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Set the recording state for the service.
 
     :param should_record:
     :param service:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["shouldRecord"] = should_record
-    params["service"] = service.to_json()
+
+    params: T_JSON_DICT = {}
+    params['shouldRecord'] = should_record
+    params['service'] = service.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "BackgroundService.setRecording",
-        "params": params,
+        'method': 'BackgroundService.setRecording',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def clear_events(
     service: ServiceName,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Clears all stored data for the service.
 
     :param service:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["service"] = service.to_json()
+
+    params: T_JSON_DICT = {}
+    params['service'] = service.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "BackgroundService.clearEvents",
-        "params": params,
+        'method': 'BackgroundService.clearEvents',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@event_class("BackgroundService.recordingStateChanged")
+@event_type('BackgroundService.recordingStateChanged')
 @dataclass
 class RecordingStateChanged:
     """
@@ -200,12 +237,18 @@ class RecordingStateChanged:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> RecordingStateChanged:
         return cls(
-            is_recording=bool(json["isRecording"]),
-            service=ServiceName.from_json(json["service"]),
+            is_recording=bool(json['isRecording']),
+            service=ServiceName.from_json(json['service']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> RecordingStateChanged | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("BackgroundService.backgroundServiceEventReceived")
+
+@event_type('BackgroundService.backgroundServiceEventReceived')
 @dataclass
 class BackgroundServiceEventReceived:
     """
@@ -218,7 +261,11 @@ class BackgroundServiceEventReceived:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> BackgroundServiceEventReceived:
         return cls(
-            background_service_event=BackgroundServiceEvent.from_json(
-                json["backgroundServiceEvent"]
-            )
+            background_service_event=BackgroundServiceEvent.from_json(json['backgroundServiceEvent']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> BackgroundServiceEventReceived | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

@@ -3,16 +3,27 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Security
 
 from __future__ import annotations
+
 import enum
 import typing
-from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+from dataclasses import dataclass, field
+
+from deprecated.sphinx import deprecated
 
 from . import network
-from deprecated.sphinx import deprecated  # type: ignore
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 class CertificateId(int):
@@ -27,8 +38,14 @@ class CertificateId(int):
     def from_json(cls, json: int) -> CertificateId:
         return cls(json)
 
-    def __repr__(self):
-        return "CertificateId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: int | None) -> CertificateId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'CertificateId({super().__repr__()})'
 
 
 class MixedContentType(enum.Enum):
@@ -37,9 +54,9 @@ class MixedContentType(enum.Enum):
     https://www.w3.org/TR/mixed-content/#categories
     """
 
-    BLOCKABLE = "blockable"
-    OPTIONALLY_BLOCKABLE = "optionally-blockable"
-    NONE = "none"
+    BLOCKABLE = 'blockable'
+    OPTIONALLY_BLOCKABLE = 'optionally-blockable'
+    NONE = 'none'
 
     def to_json(self) -> str:
         return self.value
@@ -48,18 +65,24 @@ class MixedContentType(enum.Enum):
     def from_json(cls, json: str) -> MixedContentType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> MixedContentType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class SecurityState(enum.Enum):
     """
     The security level of a page or resource.
     """
 
-    UNKNOWN = "unknown"
-    NEUTRAL = "neutral"
-    INSECURE = "insecure"
-    SECURE = "secure"
-    INFO = "info"
-    INSECURE_BROKEN = "insecure-broken"
+    UNKNOWN = 'unknown'
+    NEUTRAL = 'neutral'
+    INSECURE = 'insecure'
+    SECURE = 'secure'
+    INFO = 'info'
+    INSECURE_BROKEN = 'insecure-broken'
 
     def to_json(self) -> str:
         return self.value
@@ -67,6 +90,12 @@ class SecurityState(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> SecurityState:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> SecurityState | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -85,7 +114,7 @@ class CertificateSecurityState:
     cipher: str
 
     #: Page certificate.
-    certificate: typing.List[str]
+    certificate: list[str]
 
     #: Certificate subject name.
     subject_name: str
@@ -121,70 +150,74 @@ class CertificateSecurityState:
     obsolete_ssl_signature: bool
 
     #: (EC)DH group used by the connection, if applicable.
-    key_exchange_group: typing.Optional[str] = None
+    key_exchange_group: str | None = None
 
     #: TLS MAC. Note that AEAD ciphers do not have separate MACs.
-    mac: typing.Optional[str] = None
+    mac: str | None = None
 
     #: The highest priority network error code, if the certificate has an error.
-    certificate_network_error: typing.Optional[str] = None
+    certificate_network_error: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["protocol"] = self.protocol
-        json["keyExchange"] = self.key_exchange
-        json["cipher"] = self.cipher
-        json["certificate"] = [i for i in self.certificate]
-        json["subjectName"] = self.subject_name
-        json["issuer"] = self.issuer
-        json["validFrom"] = self.valid_from.to_json()
-        json["validTo"] = self.valid_to.to_json()
-        json["certificateHasWeakSignature"] = self.certificate_has_weak_signature
-        json["certificateHasSha1Signature"] = self.certificate_has_sha1_signature
-        json["modernSSL"] = self.modern_ssl
-        json["obsoleteSslProtocol"] = self.obsolete_ssl_protocol
-        json["obsoleteSslKeyExchange"] = self.obsolete_ssl_key_exchange
-        json["obsoleteSslCipher"] = self.obsolete_ssl_cipher
-        json["obsoleteSslSignature"] = self.obsolete_ssl_signature
+        json: T_JSON_DICT = {}
+        json['protocol'] = self.protocol
+        json['keyExchange'] = self.key_exchange
+        json['cipher'] = self.cipher
+        json['certificate'] = self.certificate
+        json['subjectName'] = self.subject_name
+        json['issuer'] = self.issuer
+        json['validFrom'] = self.valid_from.to_json()
+        json['validTo'] = self.valid_to.to_json()
+        json['certificateHasWeakSignature'] = self.certificate_has_weak_signature
+        json['certificateHasSha1Signature'] = self.certificate_has_sha1_signature
+        json['modernSSL'] = self.modern_ssl
+        json['obsoleteSslProtocol'] = self.obsolete_ssl_protocol
+        json['obsoleteSslKeyExchange'] = self.obsolete_ssl_key_exchange
+        json['obsoleteSslCipher'] = self.obsolete_ssl_cipher
+        json['obsoleteSslSignature'] = self.obsolete_ssl_signature
         if self.key_exchange_group is not None:
-            json["keyExchangeGroup"] = self.key_exchange_group
+            json['keyExchangeGroup'] = self.key_exchange_group
         if self.mac is not None:
-            json["mac"] = self.mac
+            json['mac'] = self.mac
         if self.certificate_network_error is not None:
-            json["certificateNetworkError"] = self.certificate_network_error
+            json['certificateNetworkError'] = self.certificate_network_error
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CertificateSecurityState:
         return cls(
-            protocol=str(json["protocol"]),
-            key_exchange=str(json["keyExchange"]),
-            cipher=str(json["cipher"]),
-            certificate=[str(i) for i in json["certificate"]],
-            subject_name=str(json["subjectName"]),
-            issuer=str(json["issuer"]),
-            valid_from=network.TimeSinceEpoch.from_json(json["validFrom"]),
-            valid_to=network.TimeSinceEpoch.from_json(json["validTo"]),
-            certificate_has_weak_signature=bool(json["certificateHasWeakSignature"]),
-            certificate_has_sha1_signature=bool(json["certificateHasSha1Signature"]),
-            modern_ssl=bool(json["modernSSL"]),
-            obsolete_ssl_protocol=bool(json["obsoleteSslProtocol"]),
-            obsolete_ssl_key_exchange=bool(json["obsoleteSslKeyExchange"]),
-            obsolete_ssl_cipher=bool(json["obsoleteSslCipher"]),
-            obsolete_ssl_signature=bool(json["obsoleteSslSignature"]),
-            key_exchange_group=str(json["keyExchangeGroup"])
-            if json.get("keyExchangeGroup", None) is not None
-            else None,
-            mac=str(json["mac"]) if json.get("mac", None) is not None else None,
-            certificate_network_error=str(json["certificateNetworkError"])
-            if json.get("certificateNetworkError", None) is not None
-            else None,
+            protocol=str(json['protocol']),
+            key_exchange=str(json['keyExchange']),
+            cipher=str(json['cipher']),
+            certificate=[str(i) for i in json.get('certificate', [])],
+            subject_name=str(json['subjectName']),
+            issuer=str(json['issuer']),
+            valid_from=network.TimeSinceEpoch.from_json(json['validFrom']),
+            valid_to=network.TimeSinceEpoch.from_json(json['validTo']),
+            certificate_has_weak_signature=bool(json['certificateHasWeakSignature']),
+            certificate_has_sha1_signature=bool(json['certificateHasSha1Signature']),
+            modern_ssl=bool(json['modernSSL']),
+            obsolete_ssl_protocol=bool(json['obsoleteSslProtocol']),
+            obsolete_ssl_key_exchange=bool(json['obsoleteSslKeyExchange']),
+            obsolete_ssl_cipher=bool(json['obsoleteSslCipher']),
+            obsolete_ssl_signature=bool(json['obsoleteSslSignature']),
+            key_exchange_group=None if json.get('keyExchangeGroup') is None else str(json['keyExchangeGroup']),
+            mac=None if json.get('mac') is None else str(json['mac']),
+            certificate_network_error=None
+            if json.get('certificateNetworkError') is None
+            else str(json['certificateNetworkError']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CertificateSecurityState | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class SafetyTipStatus(enum.Enum):
-    BAD_REPUTATION = "badReputation"
-    LOOKALIKE = "lookalike"
+    BAD_REPUTATION = 'badReputation'
+    LOOKALIKE = 'lookalike'
 
     def to_json(self) -> str:
         return self.value
@@ -193,6 +226,12 @@ class SafetyTipStatus(enum.Enum):
     def from_json(cls, json: str) -> SafetyTipStatus:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> SafetyTipStatus | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 @dataclass
 class SafetyTipInfo:
@@ -200,23 +239,27 @@ class SafetyTipInfo:
     safety_tip_status: SafetyTipStatus
 
     #: The URL the safety tip suggested ("Did you mean?"). Only filled in for lookalike matches.
-    safe_url: typing.Optional[str] = None
+    safe_url: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["safetyTipStatus"] = self.safety_tip_status.to_json()
+        json: T_JSON_DICT = {}
+        json['safetyTipStatus'] = self.safety_tip_status.to_json()
         if self.safe_url is not None:
-            json["safeUrl"] = self.safe_url
+            json['safeUrl'] = self.safe_url
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SafetyTipInfo:
         return cls(
-            safety_tip_status=SafetyTipStatus.from_json(json["safetyTipStatus"]),
-            safe_url=str(json["safeUrl"])
-            if json.get("safeUrl", None) is not None
-            else None,
+            safety_tip_status=SafetyTipStatus.from_json(json['safetyTipStatus']),
+            safe_url=None if json.get('safeUrl') is None else str(json['safeUrl']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SafetyTipInfo | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -229,38 +272,40 @@ class VisibleSecurityState:
     security_state: SecurityState
 
     #: Array of security state issues ids.
-    security_state_issue_ids: typing.List[str]
+    security_state_issue_ids: list[str]
 
     #: Security state details about the page certificate.
-    certificate_security_state: typing.Optional[CertificateSecurityState] = None
+    certificate_security_state: CertificateSecurityState | None = None
 
     #: The type of Safety Tip triggered on the page. Note that this field will be set even if the Safety Tip UI was not actually shown.
-    safety_tip_info: typing.Optional[SafetyTipInfo] = None
+    safety_tip_info: SafetyTipInfo | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["securityState"] = self.security_state.to_json()
-        json["securityStateIssueIds"] = [i for i in self.security_state_issue_ids]
+        json: T_JSON_DICT = {}
+        json['securityState'] = self.security_state.to_json()
+        json['securityStateIssueIds'] = self.security_state_issue_ids
         if self.certificate_security_state is not None:
-            json["certificateSecurityState"] = self.certificate_security_state.to_json()
+            json['certificateSecurityState'] = self.certificate_security_state.to_json()
         if self.safety_tip_info is not None:
-            json["safetyTipInfo"] = self.safety_tip_info.to_json()
+            json['safetyTipInfo'] = self.safety_tip_info.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> VisibleSecurityState:
         return cls(
-            security_state=SecurityState.from_json(json["securityState"]),
-            security_state_issue_ids=[str(i) for i in json["securityStateIssueIds"]],
-            certificate_security_state=CertificateSecurityState.from_json(
-                json["certificateSecurityState"]
-            )
-            if json.get("certificateSecurityState", None) is not None
-            else None,
-            safety_tip_info=SafetyTipInfo.from_json(json["safetyTipInfo"])
-            if json.get("safetyTipInfo", None) is not None
-            else None,
+            security_state=SecurityState.from_json(json['securityState']),
+            security_state_issue_ids=[str(i) for i in json.get('securityStateIssueIds', [])],
+            certificate_security_state=CertificateSecurityState.from_json_optional(
+                json.get('certificateSecurityState'),
+            ),
+            safety_tip_info=SafetyTipInfo.from_json_optional(json.get('safetyTipInfo')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> VisibleSecurityState | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -285,36 +330,40 @@ class SecurityStateExplanation:
     mixed_content_type: MixedContentType
 
     #: Page certificate.
-    certificate: typing.List[str]
+    certificate: list[str]
 
     #: Recommendations to fix any issues.
-    recommendations: typing.Optional[typing.List[str]] = None
+    recommendations: list[str] = field(default_factory=list)
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["securityState"] = self.security_state.to_json()
-        json["title"] = self.title
-        json["summary"] = self.summary
-        json["description"] = self.description
-        json["mixedContentType"] = self.mixed_content_type.to_json()
-        json["certificate"] = [i for i in self.certificate]
+        json: T_JSON_DICT = {}
+        json['securityState'] = self.security_state.to_json()
+        json['title'] = self.title
+        json['summary'] = self.summary
+        json['description'] = self.description
+        json['mixedContentType'] = self.mixed_content_type.to_json()
+        json['certificate'] = self.certificate
         if self.recommendations is not None:
-            json["recommendations"] = [i for i in self.recommendations]
+            json['recommendations'] = self.recommendations
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SecurityStateExplanation:
         return cls(
-            security_state=SecurityState.from_json(json["securityState"]),
-            title=str(json["title"]),
-            summary=str(json["summary"]),
-            description=str(json["description"]),
-            mixed_content_type=MixedContentType.from_json(json["mixedContentType"]),
-            certificate=[str(i) for i in json["certificate"]],
-            recommendations=[str(i) for i in json["recommendations"]]
-            if json.get("recommendations", None) is not None
-            else None,
+            security_state=SecurityState.from_json(json['securityState']),
+            title=str(json['title']),
+            summary=str(json['summary']),
+            description=str(json['description']),
+            mixed_content_type=MixedContentType.from_json(json['mixedContentType']),
+            certificate=[str(i) for i in json.get('certificate', [])],
+            recommendations=[str(i) for i in json.get('recommendations', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SecurityStateExplanation | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -345,35 +394,33 @@ class InsecureContentStatus:
     displayed_insecure_content_style: SecurityState
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["ranMixedContent"] = self.ran_mixed_content
-        json["displayedMixedContent"] = self.displayed_mixed_content
-        json["containedMixedForm"] = self.contained_mixed_form
-        json["ranContentWithCertErrors"] = self.ran_content_with_cert_errors
-        json["displayedContentWithCertErrors"] = self.displayed_content_with_cert_errors
-        json["ranInsecureContentStyle"] = self.ran_insecure_content_style.to_json()
-        json["displayedInsecureContentStyle"] = (
-            self.displayed_insecure_content_style.to_json()
-        )
+        json: T_JSON_DICT = {}
+        json['ranMixedContent'] = self.ran_mixed_content
+        json['displayedMixedContent'] = self.displayed_mixed_content
+        json['containedMixedForm'] = self.contained_mixed_form
+        json['ranContentWithCertErrors'] = self.ran_content_with_cert_errors
+        json['displayedContentWithCertErrors'] = self.displayed_content_with_cert_errors
+        json['ranInsecureContentStyle'] = self.ran_insecure_content_style.to_json()
+        json['displayedInsecureContentStyle'] = self.displayed_insecure_content_style.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> InsecureContentStatus:
         return cls(
-            ran_mixed_content=bool(json["ranMixedContent"]),
-            displayed_mixed_content=bool(json["displayedMixedContent"]),
-            contained_mixed_form=bool(json["containedMixedForm"]),
-            ran_content_with_cert_errors=bool(json["ranContentWithCertErrors"]),
-            displayed_content_with_cert_errors=bool(
-                json["displayedContentWithCertErrors"]
-            ),
-            ran_insecure_content_style=SecurityState.from_json(
-                json["ranInsecureContentStyle"]
-            ),
-            displayed_insecure_content_style=SecurityState.from_json(
-                json["displayedInsecureContentStyle"]
-            ),
+            ran_mixed_content=bool(json['ranMixedContent']),
+            displayed_mixed_content=bool(json['displayedMixedContent']),
+            contained_mixed_form=bool(json['containedMixedForm']),
+            ran_content_with_cert_errors=bool(json['ranContentWithCertErrors']),
+            displayed_content_with_cert_errors=bool(json['displayedContentWithCertErrors']),
+            ran_insecure_content_style=SecurityState.from_json(json['ranInsecureContentStyle']),
+            displayed_insecure_content_style=SecurityState.from_json(json['displayedInsecureContentStyle']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> InsecureContentStatus | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class CertificateErrorAction(enum.Enum):
@@ -382,8 +429,8 @@ class CertificateErrorAction(enum.Enum):
     request and cancel will cancel the request.
     """
 
-    CONTINUE = "continue"
-    CANCEL = "cancel"
+    CONTINUE = 'continue'
+    CANCEL = 'cancel'
 
     def to_json(self) -> str:
         return self.value
@@ -392,48 +439,65 @@ class CertificateErrorAction(enum.Enum):
     def from_json(cls, json: str) -> CertificateErrorAction:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> CertificateErrorAction | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disables tracking security state changes.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Security.disable",
+        'method': 'Security.disable',
     }
     json = yield cmd_dict
 
 
-def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def enable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables tracking security state changes.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Security.enable",
+        'method': 'Security.enable',
     }
     json = yield cmd_dict
 
 
 def set_ignore_certificate_errors(
+    *,
     ignore: bool,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enable/disable whether all certificate errors should be ignored.
 
     :param ignore: If true, all certificate errors will be ignored.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["ignore"] = ignore
+
+    params: T_JSON_DICT = {}
+    params['ignore'] = ignore
     cmd_dict: T_JSON_DICT = {
-        "method": "Security.setIgnoreCertificateErrors",
-        "params": params,
+        'method': 'Security.setIgnoreCertificateErrors',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@deprecated(version="1.3")
+@deprecated(version='1.3')
 def handle_certificate_error(
-    event_id: int, action: CertificateErrorAction
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    event_id: int,
+    action: CertificateErrorAction,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Handles a certificate error that fired a certificateError event.
 
@@ -441,21 +505,25 @@ def handle_certificate_error(
 
     :param event_id: The ID of the event.
     :param action: The action to take on the certificate error.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["eventId"] = event_id
-    params["action"] = action.to_json()
+
+    params: T_JSON_DICT = {}
+    params['eventId'] = event_id
+    params['action'] = action.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Security.handleCertificateError",
-        "params": params,
+        'method': 'Security.handleCertificateError',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@deprecated(version="1.3")
+@deprecated(version='1.3')
 def set_override_certificate_errors(
+    *,
     override: bool,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enable/disable overriding certificate errors. If enabled, all certificate error events need to
     be handled by the DevTools client and should be answered with ``handleCertificateError`` commands.
@@ -463,18 +531,21 @@ def set_override_certificate_errors(
     .. deprecated:: 1.3
 
     :param override: If true, certificate errors will be overridden.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["override"] = override
+
+    params: T_JSON_DICT = {}
+    params['override'] = override
     cmd_dict: T_JSON_DICT = {
-        "method": "Security.setOverrideCertificateErrors",
-        "params": params,
+        'method': 'Security.setOverrideCertificateErrors',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@deprecated(version="1.3")
-@event_class("Security.certificateError")
+@deprecated(version='1.3')
+@event_type('Security.certificateError')
 @dataclass
 class CertificateError:
     """
@@ -494,13 +565,19 @@ class CertificateError:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CertificateError:
         return cls(
-            event_id=int(json["eventId"]),
-            error_type=str(json["errorType"]),
-            request_url=str(json["requestURL"]),
+            event_id=int(json['eventId']),
+            error_type=str(json['errorType']),
+            request_url=str(json['requestURL']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CertificateError | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Security.visibleSecurityStateChanged")
+
+@event_type('Security.visibleSecurityStateChanged')
 @dataclass
 class VisibleSecurityStateChanged:
     """
@@ -515,14 +592,18 @@ class VisibleSecurityStateChanged:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> VisibleSecurityStateChanged:
         return cls(
-            visible_security_state=VisibleSecurityState.from_json(
-                json["visibleSecurityState"]
-            )
+            visible_security_state=VisibleSecurityState.from_json(json['visibleSecurityState']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> VisibleSecurityStateChanged | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@deprecated(version="1.3")
-@event_class("Security.securityStateChanged")
+
+@deprecated(version='1.3')
+@event_type('Security.securityStateChanged')
 @dataclass
 class SecurityStateChanged:
     """
@@ -535,24 +616,24 @@ class SecurityStateChanged:
     scheme_is_cryptographic: bool
     #: Previously a list of explanations for the security state. Now always
     #: empty.
-    explanations: typing.List[SecurityStateExplanation]
+    explanations: list[SecurityStateExplanation]
     #: Information about insecure content on the page.
     insecure_content_status: InsecureContentStatus
     #: Overrides user-visible description of the state. Always omitted.
-    summary: typing.Optional[str]
+    summary: str | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SecurityStateChanged:
         return cls(
-            security_state=SecurityState.from_json(json["securityState"]),
-            scheme_is_cryptographic=bool(json["schemeIsCryptographic"]),
-            explanations=[
-                SecurityStateExplanation.from_json(i) for i in json["explanations"]
-            ],
-            insecure_content_status=InsecureContentStatus.from_json(
-                json["insecureContentStatus"]
-            ),
-            summary=str(json["summary"])
-            if json.get("summary", None) is not None
-            else None,
+            security_state=SecurityState.from_json(json['securityState']),
+            scheme_is_cryptographic=bool(json['schemeIsCryptographic']),
+            explanations=[SecurityStateExplanation.from_json(i) for i in json.get('explanations', [])],
+            insecure_content_status=InsecureContentStatus.from_json(json['insecureContentStatus']),
+            summary=None if json.get('summary') is None else str(json['summary']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SecurityStateChanged | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

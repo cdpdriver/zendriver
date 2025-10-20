@@ -2,59 +2,61 @@
 #
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
+#
+# Specification verion: 1.3
+#
 
-from . import (
-    accessibility,
-    animation,
-    audits,
-    autofill,
-    background_service,
-    bluetooth_emulation,
-    browser,
-    css,
-    cache_storage,
-    cast,
-    console,
-    dom,
-    dom_debugger,
-    dom_snapshot,
-    dom_storage,
-    debugger,
-    device_access,
-    device_orientation,
-    emulation,
-    event_breakpoints,
-    extensions,
-    fed_cm,
-    fetch,
-    file_system,
-    headless_experimental,
-    heap_profiler,
-    io,
-    indexed_db,
-    input_,
-    inspector,
-    layer_tree,
-    log,
-    media,
-    memory,
-    network,
-    overlay,
-    pwa,
-    page,
-    performance,
-    performance_timeline,
-    preload,
-    profiler,
-    runtime,
-    schema,
-    security,
-    service_worker,
-    storage,
-    system_info,
-    target,
-    tethering,
-    tracing,
-    web_audio,
-    web_authn,
-)
+from . import accessibility as accessibility
+from . import animation as animation
+from . import audits as audits
+from . import autofill as autofill
+from . import background_service as background_service
+from . import bluetooth_emulation as bluetooth_emulation
+from . import browser as browser
+from . import cache_storage as cache_storage
+from . import cast as cast
+from . import console as console
+from . import css as css
+from . import debugger as debugger
+from . import device_access as device_access
+from . import device_orientation as device_orientation
+from . import dom as dom
+from . import dom_debugger as dom_debugger
+from . import dom_snapshot as dom_snapshot
+from . import dom_storage as dom_storage
+from . import emulation as emulation
+from . import event_breakpoints as event_breakpoints
+from . import extensions as extensions
+from . import fed_cm as fed_cm
+from . import fetch as fetch
+from . import file_system as file_system
+from . import headless_experimental as headless_experimental
+from . import heap_profiler as heap_profiler
+from . import indexed_db as indexed_db
+from . import input_ as input_
+from . import inspector as inspector
+from . import io as io
+from . import layer_tree as layer_tree
+from . import log as log
+from . import media as media
+from . import memory as memory
+from . import network as network
+from . import overlay as overlay
+from . import page as page
+from . import performance as performance
+from . import performance_timeline as performance_timeline
+from . import preload as preload
+from . import profiler as profiler
+from . import pwa as pwa
+from . import runtime as runtime
+from . import schema as schema
+from . import security as security
+from . import service_worker as service_worker
+from . import storage as storage
+from . import system_info as system_info
+from . import target as target
+from . import tethering as tethering
+from . import tracing as tracing
+from . import util as util
+from . import web_audio as web_audio
+from . import web_authn as web_authn

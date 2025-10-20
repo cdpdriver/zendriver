@@ -3,13 +3,22 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Memory (experimental)
 
 from __future__ import annotations
+
 import enum
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 class PressureLevel(enum.Enum):
@@ -17,8 +26,8 @@ class PressureLevel(enum.Enum):
     Memory pressure level.
     """
 
-    MODERATE = "moderate"
-    CRITICAL = "critical"
+    MODERATE = 'moderate'
+    CRITICAL = 'critical'
 
     def to_json(self) -> str:
         return self.value
@@ -26,6 +35,12 @@ class PressureLevel(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> PressureLevel:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> PressureLevel | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -41,22 +56,28 @@ class SamplingProfileNode:
     total: float
 
     #: Execution stack at the point of allocation.
-    stack: typing.List[str]
+    stack: list[str]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["size"] = self.size
-        json["total"] = self.total
-        json["stack"] = [i for i in self.stack]
+        json: T_JSON_DICT = {}
+        json['size'] = self.size
+        json['total'] = self.total
+        json['stack'] = self.stack
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SamplingProfileNode:
         return cls(
-            size=float(json["size"]),
-            total=float(json["total"]),
-            stack=[str(i) for i in json["stack"]],
+            size=float(json['size']),
+            total=float(json['total']),
+            stack=[str(i) for i in json.get('stack', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SamplingProfileNode | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -65,22 +86,28 @@ class SamplingProfile:
     Array of heap profile samples.
     """
 
-    samples: typing.List[SamplingProfileNode]
+    samples: list[SamplingProfileNode]
 
-    modules: typing.List[Module]
+    modules: list[Module]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["samples"] = [i.to_json() for i in self.samples]
-        json["modules"] = [i.to_json() for i in self.modules]
+        json: T_JSON_DICT = {}
+        json['samples'] = [i.to_json() for i in self.samples]
+        json['modules'] = [i.to_json() for i in self.modules]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SamplingProfile:
         return cls(
-            samples=[SamplingProfileNode.from_json(i) for i in json["samples"]],
-            modules=[Module.from_json(i) for i in json["modules"]],
+            samples=[SamplingProfileNode.from_json(i) for i in json.get('samples', [])],
+            modules=[Module.from_json(i) for i in json.get('modules', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SamplingProfile | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -103,21 +130,27 @@ class Module:
     size: float
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
-        json["uuid"] = self.uuid
-        json["baseAddress"] = self.base_address
-        json["size"] = self.size
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
+        json['uuid'] = self.uuid
+        json['baseAddress'] = self.base_address
+        json['size'] = self.size
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Module:
         return cls(
-            name=str(json["name"]),
-            uuid=str(json["uuid"]),
-            base_address=str(json["baseAddress"]),
-            size=float(json["size"]),
+            name=str(json['name']),
+            uuid=str(json['uuid']),
+            base_address=str(json['baseAddress']),
+            size=float(json['size']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Module | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -134,185 +167,205 @@ class DOMCounter:
     count: int
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
-        json["count"] = self.count
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
+        json['count'] = self.count
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DOMCounter:
         return cls(
-            name=str(json["name"]),
-            count=int(json["count"]),
+            name=str(json['name']),
+            count=int(json['count']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DOMCounter | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-def get_dom_counters() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.Tuple[int, int, int]]
-):
+
+def get_dom_counters() -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[int, int, int]]:
     """
     Retruns current DOM object counters.
 
-    :returns: A tuple with the following items:
-
-        0. **documents** -
-        1. **nodes** -
-        2. **jsEventListeners** -
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[int, int, int]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Memory.getDOMCounters",
+        'method': 'Memory.getDOMCounters',
     }
     json = yield cmd_dict
-    return (int(json["documents"]), int(json["nodes"]), int(json["jsEventListeners"]))
+    return (int(json['documents']), int(json['nodes']), int(json['jsEventListeners']))
 
 
-def get_dom_counters_for_leak_detection() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[DOMCounter]]
-):
+def get_dom_counters_for_leak_detection() -> Generator[T_JSON_DICT, T_JSON_DICT, list[DOMCounter]]:
     """
     Retruns DOM object counters after preparing renderer for leak detection.
 
-    :returns: DOM object counters.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[DOMCounter]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Memory.getDOMCountersForLeakDetection",
+        'method': 'Memory.getDOMCountersForLeakDetection',
     }
     json = yield cmd_dict
-    return [DOMCounter.from_json(i) for i in json["counters"]]
+    return [DOMCounter.from_json(i) for i in json.get('counters', [])]
 
 
-def prepare_for_leak_detection() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def prepare_for_leak_detection() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Prepares for leak detection by terminating workers, stopping spellcheckers,
     dropping non-essential internal caches, running garbage collections, etc.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Memory.prepareForLeakDetection",
+        'method': 'Memory.prepareForLeakDetection',
     }
     json = yield cmd_dict
 
 
-def forcibly_purge_java_script_memory() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, None]
-):
+def forcibly_purge_java_script_memory() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Simulate OomIntervention by purging V8 memory.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Memory.forciblyPurgeJavaScriptMemory",
+        'method': 'Memory.forciblyPurgeJavaScriptMemory',
     }
     json = yield cmd_dict
 
 
 def set_pressure_notifications_suppressed(
+    *,
     suppressed: bool,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enable/disable suppressing memory pressure notifications in all processes.
 
     :param suppressed: If true, memory pressure notifications will be suppressed.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["suppressed"] = suppressed
+
+    params: T_JSON_DICT = {}
+    params['suppressed'] = suppressed
     cmd_dict: T_JSON_DICT = {
-        "method": "Memory.setPressureNotificationsSuppressed",
-        "params": params,
+        'method': 'Memory.setPressureNotificationsSuppressed',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def simulate_pressure_notification(
     level: PressureLevel,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Simulate a memory pressure notification in all processes.
 
     :param level: Memory pressure level of the notification.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["level"] = level.to_json()
+
+    params: T_JSON_DICT = {}
+    params['level'] = level.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Memory.simulatePressureNotification",
-        "params": params,
+        'method': 'Memory.simulatePressureNotification',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def start_sampling(
-    sampling_interval: typing.Optional[int] = None,
-    suppress_randomness: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    sampling_interval: int | None = None,
+    suppress_randomness: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Start collecting native memory profile.
 
     :param sampling_interval: *(Optional)* Average number of bytes between samples.
     :param suppress_randomness: *(Optional)* Do not randomize intervals between samples.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if sampling_interval is not None:
-        params["samplingInterval"] = sampling_interval
+        params['samplingInterval'] = sampling_interval
     if suppress_randomness is not None:
-        params["suppressRandomness"] = suppress_randomness
+        params['suppressRandomness'] = suppress_randomness
     cmd_dict: T_JSON_DICT = {
-        "method": "Memory.startSampling",
-        "params": params,
+        'method': 'Memory.startSampling',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def stop_sampling() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def stop_sampling() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Stop collecting native memory profile.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Memory.stopSampling",
+        'method': 'Memory.stopSampling',
     }
     json = yield cmd_dict
 
 
-def get_all_time_sampling_profile() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, SamplingProfile]
-):
+def get_all_time_sampling_profile() -> Generator[T_JSON_DICT, T_JSON_DICT, SamplingProfile]:
     """
     Retrieve native memory allocations profile
     collected since renderer process startup.
 
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, SamplingProfile]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Memory.getAllTimeSamplingProfile",
+        'method': 'Memory.getAllTimeSamplingProfile',
     }
     json = yield cmd_dict
-    return SamplingProfile.from_json(json["profile"])
+    return SamplingProfile.from_json(json['profile'])
 
 
-def get_browser_sampling_profile() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, SamplingProfile]
-):
+def get_browser_sampling_profile() -> Generator[T_JSON_DICT, T_JSON_DICT, SamplingProfile]:
     """
     Retrieve native memory allocations profile
     collected since browser process startup.
 
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, SamplingProfile]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Memory.getBrowserSamplingProfile",
+        'method': 'Memory.getBrowserSamplingProfile',
     }
     json = yield cmd_dict
-    return SamplingProfile.from_json(json["profile"])
+    return SamplingProfile.from_json(json['profile'])
 
 
-def get_sampling_profile() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, SamplingProfile]
-):
+def get_sampling_profile() -> Generator[T_JSON_DICT, T_JSON_DICT, SamplingProfile]:
     """
     Retrieve native memory allocations profile collected since last
     ``startSampling`` call.
 
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, SamplingProfile]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Memory.getSamplingProfile",
+        'method': 'Memory.getSamplingProfile',
     }
     json = yield cmd_dict
-    return SamplingProfile.from_json(json["profile"])
+    return SamplingProfile.from_json(json['profile'])

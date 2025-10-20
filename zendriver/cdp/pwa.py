@@ -3,15 +3,24 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: PWA (experimental)
 
 from __future__ import annotations
+
 import enum
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
 
 from . import target
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 @dataclass
@@ -25,44 +34,56 @@ class FileHandlerAccept:
     #: https://www.iana.org/assignments/media-types/media-types.xhtml
     media_type: str
 
-    file_extensions: typing.List[str]
+    file_extensions: list[str]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["mediaType"] = self.media_type
-        json["fileExtensions"] = [i for i in self.file_extensions]
+        json: T_JSON_DICT = {}
+        json['mediaType'] = self.media_type
+        json['fileExtensions'] = self.file_extensions
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FileHandlerAccept:
         return cls(
-            media_type=str(json["mediaType"]),
-            file_extensions=[str(i) for i in json["fileExtensions"]],
+            media_type=str(json['mediaType']),
+            file_extensions=[str(i) for i in json.get('fileExtensions', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FileHandlerAccept | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
 class FileHandler:
     action: str
 
-    accepts: typing.List[FileHandlerAccept]
+    accepts: list[FileHandlerAccept]
 
     display_name: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["action"] = self.action
-        json["accepts"] = [i.to_json() for i in self.accepts]
-        json["displayName"] = self.display_name
+        json: T_JSON_DICT = {}
+        json['action'] = self.action
+        json['accepts'] = [i.to_json() for i in self.accepts]
+        json['displayName'] = self.display_name
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> FileHandler:
         return cls(
-            action=str(json["action"]),
-            accepts=[FileHandlerAccept.from_json(i) for i in json["accepts"]],
-            display_name=str(json["displayName"]),
+            action=str(json['action']),
+            accepts=[FileHandlerAccept.from_json(i) for i in json.get('accepts', [])],
+            display_name=str(json['displayName']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> FileHandler | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class DisplayMode(enum.Enum):
@@ -70,8 +91,8 @@ class DisplayMode(enum.Enum):
     If user prefers opening the app in browser or an app window.
     """
 
-    STANDALONE = "standalone"
-    BROWSER = "browser"
+    STANDALONE = 'standalone'
+    BROWSER = 'browser'
 
     def to_json(self) -> str:
         return self.value
@@ -80,37 +101,39 @@ class DisplayMode(enum.Enum):
     def from_json(cls, json: str) -> DisplayMode:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> DisplayMode | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 def get_os_app_state(
     manifest_id: str,
-) -> typing.Generator[
-    T_JSON_DICT, T_JSON_DICT, typing.Tuple[int, typing.List[FileHandler]]
-]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[int, list[FileHandler]]]:
     """
     Returns the following OS state for the given manifest id.
 
     :param manifest_id: The id from the webapp's manifest file, commonly it's the url of the site installing the webapp. See https://web.dev/learn/pwa/web-app-manifest.
-    :returns: A tuple with the following items:
-
-        0. **badgeCount** -
-        1. **fileHandlers** -
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[int, list[FileHandler]]]
     """
-    params: T_JSON_DICT = dict()
-    params["manifestId"] = manifest_id
+
+    params: T_JSON_DICT = {}
+    params['manifestId'] = manifest_id
     cmd_dict: T_JSON_DICT = {
-        "method": "PWA.getOsAppState",
-        "params": params,
+        'method': 'PWA.getOsAppState',
+        'params': params,
     }
     json = yield cmd_dict
-    return (
-        int(json["badgeCount"]),
-        [FileHandler.from_json(i) for i in json["fileHandlers"]],
-    )
+    return (int(json['badgeCount']), [FileHandler.from_json(i) for i in json.get('fileHandlers', [])])
 
 
 def install(
-    manifest_id: str, install_url_or_bundle_url: typing.Optional[str] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    manifest_id: str,
+    *,
+    install_url_or_bundle_url: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Installs the given manifest identity, optionally using the given installUrlOrBundleUrl
 
@@ -132,7 +155,8 @@ def install(
 
     To generate bundle id for proxy mode:
     1. Generate 32 random bytes.
-    2. Add a specific suffix 0x00 at the end.
+    2. Add a specific suffix at the end following the documentation
+       https://github.com/WICG/isolated-web-apps/blob/main/Scheme.md#suffix
     3. Encode the entire sequence using Base32 without padding.
 
     If Chrome is not in IWA dev
@@ -140,36 +164,46 @@ def install(
 
     :param manifest_id:
     :param install_url_or_bundle_url: *(Optional)* The location of the app or bundle overriding the one derived from the manifestId.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["manifestId"] = manifest_id
+
+    params: T_JSON_DICT = {}
+    params['manifestId'] = manifest_id
     if install_url_or_bundle_url is not None:
-        params["installUrlOrBundleUrl"] = install_url_or_bundle_url
+        params['installUrlOrBundleUrl'] = install_url_or_bundle_url
     cmd_dict: T_JSON_DICT = {
-        "method": "PWA.install",
-        "params": params,
+        'method': 'PWA.install',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def uninstall(manifest_id: str) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def uninstall(
+    manifest_id: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Uninstalls the given manifest_id and closes any opened app windows.
 
     :param manifest_id:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["manifestId"] = manifest_id
+
+    params: T_JSON_DICT = {}
+    params['manifestId'] = manifest_id
     cmd_dict: T_JSON_DICT = {
-        "method": "PWA.uninstall",
-        "params": params,
+        'method': 'PWA.uninstall',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def launch(
-    manifest_id: str, url: typing.Optional[str] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, target.TargetID]:
+    manifest_id: str,
+    *,
+    url: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, target.TargetID]:
     """
     Launches the installed web app, or an url in the same web app instead of the
     default start url if it is provided. Returns a page Target.TargetID which
@@ -177,23 +211,26 @@ def launch(
 
     :param manifest_id:
     :param url: *(Optional)*
-    :returns: ID of the tab target created as a result.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, target.TargetID]
     """
-    params: T_JSON_DICT = dict()
-    params["manifestId"] = manifest_id
+
+    params: T_JSON_DICT = {}
+    params['manifestId'] = manifest_id
     if url is not None:
-        params["url"] = url
+        params['url'] = url
     cmd_dict: T_JSON_DICT = {
-        "method": "PWA.launch",
-        "params": params,
+        'method': 'PWA.launch',
+        'params': params,
     }
     json = yield cmd_dict
-    return target.TargetID.from_json(json["targetId"])
+    return target.TargetID.from_json(json['targetId'])
 
 
 def launch_files_in_app(
-    manifest_id: str, files: typing.List[str]
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[target.TargetID]]:
+    manifest_id: str,
+    files: list[str],
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[target.TargetID]]:
     """
     Opens one or more local files from an installed web app identified by its
     manifestId. The web app needs to have file handlers registered to process
@@ -211,43 +248,49 @@ def launch_files_in_app(
 
     :param manifest_id:
     :param files:
-    :returns: IDs of the tab targets created as the result.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[target.TargetID]]
     """
-    params: T_JSON_DICT = dict()
-    params["manifestId"] = manifest_id
-    params["files"] = [i for i in files]
+
+    params: T_JSON_DICT = {}
+    params['manifestId'] = manifest_id
+    params['files'] = files
     cmd_dict: T_JSON_DICT = {
-        "method": "PWA.launchFilesInApp",
-        "params": params,
+        'method': 'PWA.launchFilesInApp',
+        'params': params,
     }
     json = yield cmd_dict
-    return [target.TargetID.from_json(i) for i in json["targetIds"]]
+    return [target.TargetID.from_json(i) for i in json.get('targetIds', [])]
 
 
 def open_current_page_in_app(
     manifest_id: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Opens the current page in its web app identified by the manifest id, needs
     to be called on a page target. This function returns immediately without
     waiting for the app to finish loading.
 
     :param manifest_id:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["manifestId"] = manifest_id
+
+    params: T_JSON_DICT = {}
+    params['manifestId'] = manifest_id
     cmd_dict: T_JSON_DICT = {
-        "method": "PWA.openCurrentPageInApp",
-        "params": params,
+        'method': 'PWA.openCurrentPageInApp',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def change_app_user_settings(
     manifest_id: str,
-    link_capturing: typing.Optional[bool] = None,
-    display_mode: typing.Optional[DisplayMode] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    link_capturing: bool | None = None,
+    display_mode: DisplayMode | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Changes user settings of the web app identified by its manifestId. If the
     app was not installed, this command returns an error. Unset parameters will
@@ -262,15 +305,18 @@ def change_app_user_settings(
     :param manifest_id:
     :param link_capturing: *(Optional)* If user allows the links clicked on by the user in the app's scope, or extended scope if the manifest has scope extensions and the flags ```DesktopPWAsLinkCapturingWithScopeExtensions```` and ````WebAppEnableScopeExtensions``` are enabled.  Note, the API does not support resetting the linkCapturing to the initial value, uninstalling and installing the web app again will reset it.  TODO(crbug.com/339453269): Setting this value on ChromeOS is not supported yet.
     :param display_mode: *(Optional)*
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["manifestId"] = manifest_id
+
+    params: T_JSON_DICT = {}
+    params['manifestId'] = manifest_id
     if link_capturing is not None:
-        params["linkCapturing"] = link_capturing
+        params['linkCapturing'] = link_capturing
     if display_mode is not None:
-        params["displayMode"] = display_mode.to_json()
+        params['displayMode'] = display_mode.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "PWA.changeAppUserSettings",
-        "params": params,
+        'method': 'PWA.changeAppUserSettings',
+        'params': params,
     }
     json = yield cmd_dict

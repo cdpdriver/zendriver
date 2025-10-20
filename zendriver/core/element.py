@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import builtins
+import contextlib
 import datetime
 import json
 import logging
@@ -9,23 +11,23 @@ import pathlib
 import secrets
 import typing
 import urllib.parse
+
 from deprecated import deprecated
 
 from .. import cdp
 from . import util
 from ._contradict import ContraDict
-from .config import PathLike
 from .keys import KeyEvents, KeyPressEvent, SpecialKeys
+
 
 logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
+    from .config import PathLike
     from .tab import Tab
 
 
-def create(
-    node: cdp.dom.Node, tab: Tab, tree: typing.Optional[cdp.dom.Node] = None
-) -> Element:
+def create(node: cdp.dom.Node, tab: Tab, tree: cdp.dom.Node | None = None) -> Element:
     """
     factory for Elements
     this is used with Tab.query_selector(_all), since we already have the tree,
@@ -40,13 +42,11 @@ def create(
     :type tree:
     """
 
-    elem = Element(node, tab, tree)
-
-    return elem
+    return Element(node, tab, tree)
 
 
 class Element:
-    def __init__(self, node: cdp.dom.Node, tab: Tab, tree: cdp.dom.Node | None = None):
+    def __init__(self, node: cdp.dom.Node, tab: Tab, tree: cdp.dom.Node | None = None) -> None:
         """
         Represents an (HTML) DOM Element
 
@@ -56,7 +56,8 @@ class Element:
         :type tab: Tab
         """
         if not node:
-            raise Exception("node cannot be None")
+            msg = 'node cannot be None'
+            raise Exception(msg)
         self._tab = tab
         # if node.node_name == 'IFRAME':
         #     self._node = node.content_document
@@ -195,7 +196,7 @@ class Element:
     def tab(self) -> Tab:
         return self._tab
 
-    @deprecated(reason="Use get() instead")
+    @deprecated(reason='Use get() instead')
     def __getattr__(self, item: str) -> str | None:
         # if attribute is not found on the element python object
         # check if it may be present in the element attributes (eg, href=, src=, alt=)
@@ -223,30 +224,25 @@ class Element:
         :rtype: str | None
         """
         try:
-            x = getattr(self.attrs, name, None)
-            if x:
-                return x  # type: ignore
-            return None
+            return getattr(self.attrs, name, None)
         except AttributeError:
             return None
 
     def __setattr__(self, key: str, value: typing.Any) -> None:
-        if key[0] != "_":
-            if key[1:] not in vars(self).keys():
-                # we probably deal with an attribute of
-                # the html element, so forward it
-                self.attrs.__setattr__(key, value)
-                return
+        if key[0] != '_' and key[1:] not in vars(self):
+            # we probably deal with an attribute of
+            # the html element, so forward it
+            self.attrs.__setattr__(key, value)
+            return
         # we probably deal with an attribute of
         # the python object
         super().__setattr__(key, value)
 
     def __setitem__(self, key: str, value: typing.Any) -> None:
-        if key[0] != "_":
-            if key[1:] not in vars(self).keys():
-                # we probably deal with an attribute of
-                # the html element, so forward it
-                self.attrs[key] = value
+        if key[0] != '_' and key[1:] not in vars(self):
+            # we probably deal with an attribute of
+            # the html element, so forward it
+            self.attrs[key] = value
 
     def __getitem__(self, item: str) -> typing.Any:
         # we probably deal with an attribute of
@@ -256,11 +252,9 @@ class Element:
     async def save_to_dom(self) -> None:
         """
         saves element to dom
-        :return:
-        :rtype:
         """
         self._remote_object = await self._tab.send(
-            cdp.dom.resolve_node(backend_node_id=self.backend_node_id)
+            cdp.dom.resolve_node(backend_node_id=self.backend_node_id),
         )
         await self._tab.send(cdp.dom.set_outer_html(self.node_id, outer_html=str(self)))
         await self.update()
@@ -269,11 +263,12 @@ class Element:
         """removes the element from dom"""
         await self.update()  # ensure we have latest node_id
         if not self.tree:
-            raise RuntimeError(
-                "could not remove from dom since the element has no tree set"
-            )
+            msg = 'could not remove from dom since the element has no tree set'
+            raise RuntimeError(msg)
+
         node = util.filter_recurse(
-            self.tree, lambda node: node.backend_node_id == self.backend_node_id
+            self.tree,
+            lambda node: node.backend_node_id == self.backend_node_id,
         )
         if node:
             await self.tab.send(cdp.dom.remove_node(node.node_id))
@@ -307,18 +302,19 @@ class Element:
             # self._node = _node
             # self._children.clear()
         else:
-            doc = await self._tab.send(cdp.dom.get_document(-1, True))
+            doc = await self._tab.send(cdp.dom.get_document(depth=-1, pierce=True))
         # if self.node_name != "IFRAME":
         updated_node = util.filter_recurse(
-            doc, lambda n: n.backend_node_id == self._node.backend_node_id
+            doc,
+            lambda n: n.backend_node_id == self._node.backend_node_id,
         )
         if updated_node:
-            logger.debug("node seems changed, and has now been updated.")
+            logger.debug('node seems changed, and has now been updated.')
             self._node = updated_node
         self._tree = doc
 
         self._remote_object = await self._tab.send(
-            cdp.dom.resolve_node(backend_node_id=self._node.backend_node_id)
+            cdp.dom.resolve_node(backend_node_id=self._node.backend_node_id),
         )
         self.attrs.clear()
         self._make_attrs()
@@ -346,21 +342,22 @@ class Element:
         return self._attrs
 
     @property
-    def parent(self) -> typing.Union[Element, None]:
+    def parent(self) -> Element | None:
         """
         get the parent element (node) of current element(node)
         :return:
         :rtype:
         """
         if not self.tree:
-            raise RuntimeError("could not get parent since the element has no tree set")
+            msg = 'could not get parent since the element has no tree set'
+            raise RuntimeError(msg)
         parent_node = util.filter_recurse(
-            self.tree, lambda n: n.node_id == self.parent_id
+            self.tree,
+            lambda n: n.node_id == self.parent_id,
         )
         if not parent_node:
             return None
-        parent_element = create(parent_node, tab=self._tab, tree=self.tree)
-        return parent_element
+        return create(parent_node, tab=self._tab, tree=self.tree)
 
     @property
     def children(self) -> list[Element]:
@@ -370,8 +367,8 @@ class Element:
         :return:
         :rtype:
         """
-        _children = []
-        if self._node.node_name == "IFRAME":
+        children_ = []
+        if self._node.node_name == 'IFRAME':
             # iframes are not exact the same as other nodes
             # the children of iframes are found under
             # the .content_document property, which is of more
@@ -382,17 +379,17 @@ class Element:
             for child in frame.children:
                 child_elem = create(child, self._tab, frame)
                 if child_elem:
-                    _children.append(child_elem)
+                    children_.append(child_elem)
             # self._node = frame
-            return _children
-        elif not self.node.child_node_count:
+            return children_
+        if not self.node.child_node_count:
             return []
         if self.node.children:
             for child in self.node.children:
                 child_elem = create(child, self._tab, self.tree)
                 if child_elem:
-                    _children.append(child_elem)
-        return _children
+                    children_.append(child_elem)
+        return children_
 
     @property
     def remote_object(self) -> cdp.runtime.RemoteObject | None:
@@ -412,22 +409,23 @@ class Element:
         :rtype:
         """
         self._remote_object = await self._tab.send(
-            cdp.dom.resolve_node(backend_node_id=self.backend_node_id)
+            cdp.dom.resolve_node(backend_node_id=self.backend_node_id),
         )
         if self._remote_object.object_id is None:
-            raise ValueError("could not resolve object id for %s" % self)
+            msg = f'could not resolve object id for {self}'
+            raise ValueError(msg)
 
         arguments = [cdp.runtime.CallArgument(object_id=self._remote_object.object_id)]
         await self.flash(0.25)
         await self._tab.send(
             cdp.runtime.call_function_on(
-                "(el) => el.click()",
+                '(el) => el.click()',
                 object_id=self._remote_object.object_id,
                 arguments=arguments,
                 await_promise=True,
                 user_gesture=True,
                 return_by_value=True,
-            )
+            ),
         )
 
     async def get_js_attributes(self) -> ContraDict:
@@ -442,9 +440,9 @@ class Element:
                 }
                 return JSON.stringify(o)
             }
-            """
-                )
-            )
+            """,
+                ),
+            ),
         )
 
     def __await__(self) -> typing.Any:
@@ -464,8 +462,8 @@ class Element:
     async def apply(
         self,
         js_function: str,
-        return_by_value: bool = True,
         *,
+        return_by_value: bool = True,
         await_promise: bool = False,
     ) -> typing.Any:
         """
@@ -486,63 +484,62 @@ class Element:
         :rtype:
         """
         self._remote_object = await self._tab.send(
-            cdp.dom.resolve_node(backend_node_id=self.backend_node_id)
+            cdp.dom.resolve_node(backend_node_id=self.backend_node_id),
         )
-        result: typing.Tuple[
-            cdp.runtime.RemoteObject, typing.Any
+        result: tuple[
+            cdp.runtime.RemoteObject,
+            typing.Any,
         ] = await self._tab.send(
             cdp.runtime.call_function_on(
                 js_function,
                 object_id=self._remote_object.object_id,
                 arguments=[
-                    cdp.runtime.CallArgument(object_id=self._remote_object.object_id)
+                    cdp.runtime.CallArgument(object_id=self._remote_object.object_id),
                 ],
                 return_by_value=True,
                 user_gesture=True,
                 await_promise=await_promise,
-            )
+            ),
         )
         if result and result[0]:
             if return_by_value:
                 return result[0].value
             return result[0]
-        elif result[1]:
-            return result[1]
+        return result[1] if result else None
 
     async def get_position(self, abs: bool = False) -> Position | None:
         if not self._remote_object or not self.parent or not self.object_id:
             self._remote_object = await self._tab.send(
-                cdp.dom.resolve_node(backend_node_id=self.backend_node_id)
+                cdp.dom.resolve_node(backend_node_id=self.backend_node_id),
             )
         try:
             quads = await self.tab.send(
-                cdp.dom.get_content_quads(object_id=self._remote_object.object_id)
+                cdp.dom.get_content_quads(object_id=self._remote_object.object_id),
             )
             if not quads:
-                raise Exception("could not find position for %s " % self)
+                msg = f'could not find position for {self}'
+                raise Exception(msg)
             pos = Position(quads[0])
             if abs:
-                scroll_y = (await self.tab.evaluate("window.scrollY")).value  # type: ignore
-                scroll_x = (await self.tab.evaluate("window.scrollX")).value  # type: ignore
+                scroll_y = (await self.tab.evaluate('window.scrollY')).value  # type: ignore
+                scroll_x = (await self.tab.evaluate('window.scrollX')).value  # type: ignore
                 abs_x = pos.left + scroll_x + (pos.width / 2)
                 abs_y = pos.top + scroll_y + (pos.height / 2)
                 pos.abs_x = abs_x
                 pos.abs_y = abs_y
-            return pos
         except IndexError:
-            logger.debug(
-                "no content quads for %s. mostly caused by element which is not 'in plain sight'"
-                % self
-            )
+            logger.debug("no content quads for %s. mostly caused by element which is not 'in plain sight'", self)
             return None
+        else:
+            return pos
 
     async def mouse_click(
         self,
-        button: str = "left",
-        buttons: typing.Optional[int] = 1,
-        modifiers: typing.Optional[int] = 0,
+        button: str = 'left',
+        buttons: int | None = 1,
+        modifiers: int | None = 0,
         hold: bool = False,
-        _until_event: typing.Optional[type] = None,
+        _until_event: type | None = None,
     ) -> None:
         """native click (on element) . note: this likely does not work atm, use click() instead
 
@@ -556,62 +553,58 @@ class Element:
         """
         position = await self.get_position()
         if not position:
-            logger.warning("could not find location for %s, not clicking", self)
+            logger.warning('could not find location for %s, not clicking', self)
             return
         center = position.center
-        logger.debug("clicking on location %.2f, %.2f" % center)
+        logger.debug('clicking on location %.2f, %.2f', *center)
 
         await asyncio.gather(
             self._tab.send(
                 cdp.input_.dispatch_mouse_event(
-                    "mousePressed",
+                    'mousePressed',
                     x=center[0],
                     y=center[1],
                     modifiers=modifiers,
                     button=cdp.input_.MouseButton(button),
                     buttons=buttons,
                     click_count=1,
-                )
+                ),
             ),
             self._tab.send(
                 cdp.input_.dispatch_mouse_event(
-                    "mouseReleased",
+                    'mouseReleased',
                     x=center[0],
                     y=center[1],
                     modifiers=modifiers,
                     button=cdp.input_.MouseButton(button),
                     buttons=buttons,
                     click_count=1,
-                )
+                ),
             ),
         )
-        try:
+        with contextlib.suppress(builtins.BaseException):
             await self.flash()
-        except:  # noqa
-            pass
 
     async def mouse_move(self) -> None:
         """moves mouse (not click), to element position. when an element has an
         hover/mouseover effect, this would trigger it"""
         position = await self.get_position()
         if not position:
-            logger.warning("could not find location for %s, not moving mouse", self)
+            logger.warning('could not find location for %s, not moving mouse', self)
             return
         center = position.center
-        logger.debug(
-            "mouse move to location %.2f, %.2f where %s is located", *center, self
-        )
+        logger.debug('mouse move to location %.2f, %.2f where %s is located', *center, self)
         await self._tab.send(
-            cdp.input_.dispatch_mouse_event("mouseMoved", x=center[0], y=center[1])
+            cdp.input_.dispatch_mouse_event('mouseMoved', x=center[0], y=center[1]),
         )
         await self._tab.sleep(0.05)
         await self._tab.send(
-            cdp.input_.dispatch_mouse_event("mouseReleased", x=center[0], y=center[1])
+            cdp.input_.dispatch_mouse_event('mouseReleased', x=center[0], y=center[1]),
         )
 
     async def mouse_drag(
         self,
-        destination: typing.Union[Element, typing.Tuple[int, int]],
+        destination: Element | tuple[int, int],
         relative: bool = False,
         steps: int = 1,
     ) -> None:
@@ -634,81 +627,80 @@ class Element:
         """
         start_position = await self.get_position()
         if not start_position:
-            logger.warning("could not find location for %s, not dragging", self)
+            logger.warning('could not find location for %s, not dragging', self)
             return
         start_point = start_position.center
         end_point = None
         if isinstance(destination, Element):
             end_position = await destination.get_position()
             if not end_position:
-                logger.warning(
-                    "could not calculate box model for %s, not dragging", destination
-                )
+                logger.warning('could not calculate box model for %s, not dragging', destination)
                 return
             end_point = end_position.center
         elif isinstance(destination, (tuple, list)):
-            if relative:
-                end_point = (
+            end_point = (
+                (
                     start_point[0] + destination[0],
                     start_point[1] + destination[1],
                 )
-            else:
-                end_point = destination
+                if relative
+                else destination
+            )
 
         await self._tab.send(
             cdp.input_.dispatch_mouse_event(
-                "mousePressed",
+                'mousePressed',
                 x=start_point[0],
                 y=start_point[1],
-                button=cdp.input_.MouseButton("left"),
-            )
+                button=cdp.input_.MouseButton('left'),
+            ),
         )
 
         steps = 1 if (not steps or steps < 1) else steps
         if steps == 1:
             await self._tab.send(
                 cdp.input_.dispatch_mouse_event(
-                    "mouseMoved",
+                    'mouseMoved',
                     x=end_point[0],
                     y=end_point[1],
-                )
+                ),
             )
         elif steps > 1:
             # probably the worst waay of calculating this. but couldn't think of a better solution today.
             step_size_x = (end_point[0] - start_point[0]) / steps
             step_size_y = (end_point[1] - start_point[1]) / steps
             pathway = [
-                (start_point[0] + step_size_x * i, start_point[1] + step_size_y * i)
+                (start_point[0] + step_size_x * i, start_point[1] + step_size_y * i)  # keep
                 for i in range(steps + 1)
             ]
 
             for point in pathway:
                 await self._tab.send(
                     cdp.input_.dispatch_mouse_event(
-                        "mouseMoved",
+                        'mouseMoved',
                         x=point[0],
                         y=point[1],
-                    )
+                    ),
                 )
                 await asyncio.sleep(0)
 
         await self._tab.send(
             cdp.input_.dispatch_mouse_event(
-                type_="mouseReleased",
+                type_='mouseReleased',
                 x=end_point[0],
                 y=end_point[1],
-                button=cdp.input_.MouseButton("left"),
-            )
+                button=cdp.input_.MouseButton('left'),
+            ),
         )
 
     async def scroll_into_view(self) -> None:
         """scrolls element into view"""
         try:
             await self.tab.send(
-                cdp.dom.scroll_into_view_if_needed(backend_node_id=self.backend_node_id)
+                cdp.dom.scroll_into_view_if_needed(backend_node_id=self.backend_node_id),
             )
         except Exception as e:
-            logger.debug("could not scroll into view: %s", e)
+            logger.debug('could not scroll into view: %s', e)
             return
 
         # await self.apply("""(el) => el.scrollIntoView(false)""")
@@ -751,7 +743,8 @@ class Element:
         )
 
     async def send_keys(
-        self, text: typing.Union[str, SpecialKeys, typing.List[KeyEvents.Payload]]
+        self,
+        text: str | SpecialKeys | list[KeyEvents.Payload],
     ) -> None:
         """
         send text to an input field, or any other html element.
@@ -767,8 +760,8 @@ class Element:
         :param special_characters: when True, uses grapheme clusters to send the text.
         :return: None
         """
-        await self.apply("(elem) => elem.focus()")
-        cluster_list: typing.List[KeyEvents.Payload]
+        await self.apply('(elem) => elem.focus()')
+        cluster_list: list[KeyEvents.Payload]
         if isinstance(text, str):
             cluster_list = KeyEvents.from_text(text, KeyPressEvent.CHAR)
         elif isinstance(text, SpecialKeys):
@@ -797,12 +790,12 @@ class Element:
                 files=[*file_paths_as_str],
                 backend_node_id=self.backend_node_id,
                 object_id=self.object_id,
-            )
+            ),
         )
 
     async def focus(self) -> None:
         """focus the current element. often useful in form (select) fields"""
-        await self.apply("(element) => element.focus()")
+        await self.apply('(element) => element.focus()')
 
     async def select_option(self) -> None:
         """
@@ -813,36 +806,37 @@ class Element:
         does not work in all cases.
 
         """
-        if self.node_name == "OPTION":
+        if self.node_name == 'OPTION':
             await self.apply(
                 """
                 (o) => {
                     o.selected = true ;
                     o.dispatchEvent(new Event('change', {view: window,bubbles: true}))
                 }
-                """
+                """,
             )
 
     async def set_value(self, value: str) -> None:
         await self._tab.send(cdp.dom.set_node_value(node_id=self.node_id, value=value))
 
     async def set_text(self, value: str) -> None:
-        if not self.node_type == 3:
+        if self.node_type != 3:
             if self.child_node_count == 1:
                 child_node = self.children[0]
                 if not isinstance(child_node, Element):
-                    raise RuntimeError("could only set value of text nodes")
+                    msg = 'could only set value of text nodes'
+                    raise RuntimeError(msg)
                 await child_node.set_text(value)
                 await self.update()
                 return
-            else:
-                raise RuntimeError("could only set value of text nodes")
+            msg = 'could only set value of text nodes'
+            raise RuntimeError(msg)
         await self.update()
         await self._tab.send(cdp.dom.set_node_value(node_id=self.node_id, value=value))
 
     async def get_html(self) -> str:
         return await self._tab.send(
-            cdp.dom.get_outer_html(backend_node_id=self.backend_node_id)
+            cdp.dom.get_outer_html(backend_node_id=self.backend_node_id),
         )
 
     @property
@@ -857,7 +851,7 @@ class Element:
         text_node = util.filter_recurse(self.node, lambda n: n.node_type == 3)
         if text_node:
             return text_node.node_value
-        return ""
+        return ''
 
     @property
     def text_all(self) -> str:
@@ -868,7 +862,7 @@ class Element:
         :rtype:
         """
         text_nodes = util.filter_recurse_all(self.node, lambda n: n.node_type == 3)
-        return " ".join([n.node_value for n in text_nodes])
+        return ' '.join([n.node_value for n in text_nodes])
 
     async def query_selector_all(self, selector: str) -> list[Element]:
         """
@@ -887,8 +881,8 @@ class Element:
 
     async def screenshot_b64(
         self,
-        format: str = "jpeg",
-        scale: typing.Optional[typing.Union[int, float]] = 1,
+        format_: str = 'jpeg',
+        scale: float | None = 1,
     ) -> str:
         """
         Takes a screenshot of this element (only) and return the result as a base64 encoded string.
@@ -904,32 +898,32 @@ class Element:
         """
         pos = await self.get_position()
         if not pos:
-            raise RuntimeError(
-                "could not determine position of element. probably because it's not in view, or hidden"
-            )
-        viewport = pos.to_viewport(float(scale if scale else 1))
+            msg = "Could not determine position of element. Probably because it's not in view, or hidden"
+            raise RuntimeError(msg)
+        viewport = pos.to_viewport(float(scale or 1))
         await self.tab.sleep()
 
         data = await self._tab.send(
             cdp.page.capture_screenshot(
-                format, clip=viewport, capture_beyond_viewport=True
-            )
+                format_=format_,
+                clip=viewport,
+                capture_beyond_viewport=True,
+            ),
         )
 
         if not data:
             from .connection import ProtocolException
 
-            raise ProtocolException(
-                "could not take screenshot. most possible cause is the page has not finished loading yet."
-            )
+            msg = 'Could not take screenshot. Most likely because the page has not finished loading yet.'
+            raise ProtocolException(msg)
 
         return data
 
     async def save_screenshot(
         self,
-        filename: typing.Optional[PathLike] = "auto",
-        format: str = "jpeg",
-        scale: typing.Optional[typing.Union[int, float]] = 1,
+        filename: PathLike | None = 'auto',
+        format_: str = 'jpeg',
+        scale: float | None = 1,
     ) -> str:
         """
         Saves a screenshot of this element (only)
@@ -947,33 +941,34 @@ class Element:
         """
         await self.tab.sleep()
 
-        if not filename or filename == "auto":
+        if not filename or filename == 'auto':
             parsed = urllib.parse.urlparse(self.tab.target.url)  # type: ignore
-            parts = parsed.path.split("/")
+            parts = parsed.path.split('/')
             last_part = parts[-1]
-            last_part = last_part.rsplit("?", 1)[0]
-            dt_str = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            candidate = f"{parsed.hostname}__{last_part}_{dt_str}"
-            ext = ""
-            if format.lower() in ["jpg", "jpeg"]:
-                ext = ".jpg"
-            elif format.lower() in ["png"]:
-                ext = ".png"
+            last_part = last_part.rsplit('?', 1)[0]
+            dt_str = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            candidate = f'{parsed.hostname}__{last_part}_{dt_str}'
+            ext = ''
+            if format_.lower() in {'jpg', 'jpeg'}:
+                ext = '.jpg'
+            elif format_.lower() == 'png':
+                ext = '.png'
             path = pathlib.Path(candidate + ext)
         else:
             path = pathlib.Path(filename)
 
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        data = await self.screenshot_b64(format, scale)
+        data = await self.screenshot_b64(format_, scale)
 
         data_bytes = base64.b64decode(data)
         if not path:
-            raise RuntimeError("invalid filename or path: '%s'" % filename)
+            msg = f"Invalid filename or path: '{filename}'"
+            raise RuntimeError(msg)
         path.write_bytes(data_bytes)
         return str(path)
 
-    async def flash(self, duration: typing.Union[float, int] = 0.5) -> None:
+    async def flash(self, duration: float = 0.5) -> None:
         """
         displays for a short time a red dot on the element (only if the element itself is visible)
 
@@ -989,23 +984,24 @@ class Element:
         if not self._remote_object:
             try:
                 self._remote_object = await self.tab.send(
-                    cdp.dom.resolve_node(backend_node_id=self.backend_node_id)
+                    cdp.dom.resolve_node(backend_node_id=self.backend_node_id),
                 )
             except ProtocolException:
                 return
         if not self._remote_object or not self._remote_object.object_id:
-            raise ValueError("could not resolve object id for %s" % self)
+            msg = f'could not resolve object id for {self}'
+            raise ValueError(msg)
         pos = await self.get_position()
         if pos is None:
-            logger.warning("flash() : could not determine position")
+            logger.warning('flash() : could not determine position')
             return
 
-        style = (
-            "position:absolute;z-index:99999999;padding:0;margin:0;"
-            "left:{:.1f}px; top: {:.1f}px;"
-            "opacity:1;"
-            "width:16px;height:16px;border-radius:50%;background:red;"
-            "animation:show-pointer-ani {:.2f}s ease 1;"
+        style = (  # noqa: UP032
+            'position:absolute;z-index:99999999;padding:0;margin:0;'
+            'left:{:.1f}px; top: {:.1f}px;'
+            'opacity:1;'
+            'width:16px;height:16px;border-radius:50%;background:red;'
+            'animation:show-pointer-ani {:.2f}s ease 1;'
         ).format(
             pos.center[0] - 8,  # -8 to account for drawn circle itself (w,h)
             pos.center[1] - 8,
@@ -1019,11 +1015,11 @@ class Element:
                     try {{
                         css.insertRule(`
                         @keyframes show-pointer-ani {{
-                              0% {{ opacity: 1; transform: scale(2, 2);}}
-                              25% {{ transform: scale(5,5) }}
-                              50% {{ transform: scale(3, 3);}}
-                              75%: {{ transform: scale(2,2) }}
-                              100% {{ transform: scale(1, 1); opacity: 0;}}
+                            0% {{ opacity: 1; transform: scale(2, 2);}}
+                            25% {{ transform: scale(5,5) }}
+                            50% {{ transform: scale(3, 3);}}
+                            75%: {{ transform: scale(2,2) }}
+                            100% {{ transform: scale(1, 1); opacity: 0;}}
                         }}`,css.cssRules.length);
                         break;
                     }} catch (e) {{
@@ -1042,8 +1038,8 @@ class Element:
                 secrets.token_hex(8),
                 int(duration * 1000),
             )
-            .replace("  ", "")
-            .replace("\n", "")
+            .replace('  ', '')
+            .replace('\n', '')
         )
 
         arguments = [cdp.runtime.CallArgument(object_id=self._remote_object.object_id)]
@@ -1054,7 +1050,7 @@ class Element:
                 arguments=arguments,
                 await_promise=True,
                 user_gesture=True,
-            )
+            ),
         )
 
     async def highlight_overlay(self) -> None:
@@ -1065,7 +1061,7 @@ class Element:
         :rtype:
         """
 
-        if getattr(self, "_is_highlighted", False):
+        if getattr(self, '_is_highlighted', False):
             del self._is_highlighted
             await self.tab.send(cdp.overlay.hide_highlight())
             await self.tab.send(cdp.dom.disable())
@@ -1074,20 +1070,23 @@ class Element:
         await self.tab.send(cdp.dom.enable())
         await self.tab.send(cdp.overlay.enable())
         conf = cdp.overlay.HighlightConfig(
-            show_info=True, show_extension_lines=True, show_styles=True
+            show_info=True,
+            show_extension_lines=True,
+            show_styles=True,
         )
         await self.tab.send(
             cdp.overlay.highlight_node(
-                highlight_config=conf, backend_node_id=self.backend_node_id
-            )
+                highlight_config=conf,
+                backend_node_id=self.backend_node_id,
+            ),
         )
-        setattr(self, "_is_highlighted", 1)
+        self._is_highlighted = 1
 
     async def record_video(
         self,
-        filename: typing.Optional[str] = None,
-        folder: typing.Optional[str] = None,
-        duration: typing.Optional[typing.Union[int, float]] = None,
+        filename: str | None = None,
+        folder: str | None = None,
+        duration: float | None = None,
     ) -> None:
         """
         experimental option.
@@ -1107,64 +1106,58 @@ class Element:
         the video recorded will be downloaded.
 
         """
-        if self.node_name != "VIDEO":
-            raise RuntimeError(
-                "record_video can only be called on html5 video elements"
-            )
-        if not folder:
-            directory_path = pathlib.Path.cwd() / "downloads"
-        else:
-            directory_path = pathlib.Path(folder)
+        if self.node_name != 'VIDEO':
+            msg = 'record_video can only be called on html5 video elements'
+            raise RuntimeError(msg)
+        directory_path = pathlib.Path.cwd() / 'downloads' if not folder else pathlib.Path(folder)
 
         directory_path.mkdir(exist_ok=True)
         await self._tab.send(
-            cdp.browser.set_download_behavior(
-                "allow", download_path=str(directory_path)
-            )
+            cdp.browser.set_download_behavior('allow', download_path=str(directory_path)),
         )
-        await self("pause")
+        await self('pause')
         await self.apply(
             """
             function extractVid(vid) {{
 
-                      var duration = {duration:.1f};
-                      var stream = vid.captureStream();
-                      var mr = new MediaRecorder(stream, {{audio:true, video:true}})
-                      mr.ondataavailable  = function(e) {{
-                          vid['_recording'] = false
-                          var blob = e.data;
-                          f = new File([blob], {{name: {filename}, type:'octet/stream'}});
-                          var objectUrl = URL.createObjectURL(f);
-                          var link = document.createElement('a');
-                          link.setAttribute('href', objectUrl)
-                          link.setAttribute('download', {filename})
-                          link.style.display = 'none'
+                var duration = {duration:.1f};
+                var stream = vid.captureStream();
+                var mr = new MediaRecorder(stream, {{audio:true, video:true}})
+                mr.ondataavailable  = function(e) {{
+                    vid['_recording'] = false
+                    var blob = e.data;
+                    f = new File([blob], {{name: {filename}, type:'octet/stream'}});
+                    var objectUrl = URL.createObjectURL(f);
+                    var link = document.createElement('a');
+                    link.setAttribute('href', objectUrl)
+                    link.setAttribute('download', {filename})
+                    link.style.display = 'none'
 
-                          document.body.appendChild(link)
+                    document.body.appendChild(link)
 
-                          link.click()
+                    link.click()
 
-                          document.body.removeChild(link)
-                       }}
+                    document.body.removeChild(link)
+                }}
 
-                       mr.start()
-                       vid.addEventListener('ended' , (e) => mr.stop())
-                       vid.addEventListener('pause' , (e) => mr.stop())
-                       vid.addEventListener('abort', (e) => mr.stop())
+                mr.start()
+                vid.addEventListener('ended' , (e) => mr.stop())
+                vid.addEventListener('pause' , (e) => mr.stop())
+                vid.addEventListener('abort', (e) => mr.stop())
 
 
-                       if ( duration ) {{
-                            setTimeout(() => {{ vid.pause(); vid.play() }}, duration);
-                       }}
-                       vid['_recording'] = true
-                  ;}}
+                if ( duration ) {{
+                    setTimeout(() => {{ vid.pause(); vid.play() }}, duration);
+                }}
+                vid['_recording'] = true
+            ;}}
 
             """.format(
                 filename=f'"{filename}"' if filename else 'document.title + ".mp4"',
                 duration=int(duration * 1000) if duration else 0,
-            )
+            ),
         )
-        await self("play")
+        await self('play')
         await self._tab
 
     async def is_recording(self) -> bool:
@@ -1175,12 +1168,11 @@ class Element:
         if self.node.attributes:
             for i, a in enumerate(self.node.attributes):
                 if i == 0 or i % 2 == 0:
-                    if a == "class":
-                        a = "class_"
+                    if a == 'class':
+                        a = 'class_'
                     sav = a
-                else:
-                    if sav:
-                        self.attrs[sav] = a
+                elif sav:
+                    self.attrs[sav] = a
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Element):
@@ -1191,9 +1183,12 @@ class Element:
 
         return False
 
+    def __hash__(self) -> int:
+        raise NotImplementedError
+
     def __repr__(self) -> str:
         tag_name = self.node.node_name.lower()
-        content = ""
+        content = ''
 
         # collect all text from this leaf
         if self.child_node_count:
@@ -1201,10 +1196,9 @@ class Element:
                 if self.children:
                     content += str(self.children[0])
 
-            elif self.child_node_count > 1:
-                if self.children:
-                    for child in self.children:
-                        content += str(child)
+            elif self.child_node_count > 1 and self.children:
+                for child in self.children:
+                    content += str(child)
 
         if self.node.node_type == 3:  # we could be a text node ourselves
             content += self.node_value
@@ -1214,17 +1208,16 @@ class Element:
 
             return content
 
-        attrs = " ".join(
-            [f'{k if k != "class_" else "class"}="{v}"' for k, v in self.attrs.items()]
+        attrs = ' '.join(
+            [f'{k if k != "class_" else "class"}="{v}"' for k, v in self.attrs.items()],
         )
-        s = f"<{tag_name} {attrs}>{content}</{tag_name}>"
-        return s
+        return f'<{tag_name} {attrs}>{content}</{tag_name}>'
 
 
 class Position(cdp.dom.Quad):
     """helper class for element positioning"""
 
-    def __init__(self, points: list[float]):
+    def __init__(self, points: list[float]) -> None:
         super().__init__(points)
         (
             self.left,
@@ -1248,20 +1241,25 @@ class Position(cdp.dom.Quad):
 
     def to_viewport(self, scale: float = 1) -> cdp.page.Viewport:
         return cdp.page.Viewport(
-            x=self.x, y=self.y, width=self.width, height=self.height, scale=scale
+            x=self.x,
+            y=self.y,
+            width=self.width,
+            height=self.height,
+            scale=scale,
         )
 
     def __repr__(self) -> str:
-        return f"<Position(x={self.left}, y={self.top}, width={self.width}, height={self.height})>"
+        return f'<Position(x={self.left}, y={self.top}, width={self.width}, height={self.height})>'
 
 
 async def resolve_node(tab: Tab, node_id: cdp.dom.NodeId) -> cdp.dom.Node:
     remote_obj: cdp.runtime.RemoteObject = await tab.send(
-        cdp.dom.resolve_node(node_id=node_id)
+        cdp.dom.resolve_node(node_id=node_id),
     )
     if remote_obj.object_id is None:
-        raise RuntimeError("could not resolve object")
+        msg = 'Could not resolve object'
+        raise RuntimeError(msg)
 
     node_id = await tab.send(cdp.dom.request_node(remote_obj.object_id))
-    node: cdp.dom.Node = await tab.send(cdp.dom.describe_node(node_id))
+    node: cdp.dom.Node = await tab.send(cdp.dom.describe_node(node_id=node_id))
     return node

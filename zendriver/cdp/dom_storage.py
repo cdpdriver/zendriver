@@ -3,16 +3,31 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: DOMStorage (experimental)
 
 from __future__ import annotations
-import enum
+
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
+
+
+# ruff: noqa: FURB189
 
 
 class SerializedStorageKey(str):
+    __slots__ = ()
+
     def to_json(self) -> str:
         return self
 
@@ -20,8 +35,14 @@ class SerializedStorageKey(str):
     def from_json(cls, json: str) -> SerializedStorageKey:
         return cls(json)
 
-    def __repr__(self):
-        return "SerializedStorageKey({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> SerializedStorageKey | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'SerializedStorageKey({super().__repr__()})'
 
 
 @dataclass
@@ -34,31 +55,33 @@ class StorageId:
     is_local_storage: bool
 
     #: Security origin for the storage.
-    security_origin: typing.Optional[str] = None
+    security_origin: str | None = None
 
     #: Represents a key by which DOM Storage keys its CachedStorageAreas
-    storage_key: typing.Optional[SerializedStorageKey] = None
+    storage_key: SerializedStorageKey | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["isLocalStorage"] = self.is_local_storage
+        json: T_JSON_DICT = {}
+        json['isLocalStorage'] = self.is_local_storage
         if self.security_origin is not None:
-            json["securityOrigin"] = self.security_origin
+            json['securityOrigin'] = self.security_origin
         if self.storage_key is not None:
-            json["storageKey"] = self.storage_key.to_json()
+            json['storageKey'] = self.storage_key.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> StorageId:
         return cls(
-            is_local_storage=bool(json["isLocalStorage"]),
-            security_origin=str(json["securityOrigin"])
-            if json.get("securityOrigin", None) is not None
-            else None,
-            storage_key=SerializedStorageKey.from_json(json["storageKey"])
-            if json.get("storageKey", None) is not None
-            else None,
+            is_local_storage=bool(json['isLocalStorage']),
+            security_origin=None if json.get('securityOrigin') is None else str(json['securityOrigin']),
+            storage_key=SerializedStorageKey.from_json_optional(json.get('storageKey')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> StorageId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class Item(list):
@@ -66,104 +89,132 @@ class Item(list):
     DOM Storage item.
     """
 
-    def to_json(self) -> typing.List[str]:
+    def to_json(self) -> list[str]:
         return self
 
     @classmethod
-    def from_json(cls, json: typing.List[str]) -> Item:
+    def from_json(cls, json: list[str]) -> Item:
         return cls(json)
 
-    def __repr__(self):
-        return "Item({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: list[str] | None) -> Item | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'Item({super().__repr__()})'
 
 
-def clear(storage_id: StorageId) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def clear(
+    storage_id: StorageId,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param storage_id:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["storageId"] = storage_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['storageId'] = storage_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "DOMStorage.clear",
-        "params": params,
+        'method': 'DOMStorage.clear',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disables storage tracking, prevents storage events from being sent to the client.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "DOMStorage.disable",
+        'method': 'DOMStorage.disable',
     }
     json = yield cmd_dict
 
 
-def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def enable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables storage tracking, storage events will now be delivered to the client.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "DOMStorage.enable",
+        'method': 'DOMStorage.enable',
     }
     json = yield cmd_dict
 
 
 def get_dom_storage_items(
     storage_id: StorageId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[Item]]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[Item]]:
     """
     :param storage_id:
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[Item]]
     """
-    params: T_JSON_DICT = dict()
-    params["storageId"] = storage_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['storageId'] = storage_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "DOMStorage.getDOMStorageItems",
-        "params": params,
+        'method': 'DOMStorage.getDOMStorageItems',
+        'params': params,
     }
     json = yield cmd_dict
-    return [Item.from_json(i) for i in json["entries"]]
+    return [Item.from_json(i) for i in json.get('entries', [])]
 
 
 def remove_dom_storage_item(
-    storage_id: StorageId, key: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    storage_id: StorageId,
+    key: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param storage_id:
     :param key:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["storageId"] = storage_id.to_json()
-    params["key"] = key
+
+    params: T_JSON_DICT = {}
+    params['storageId'] = storage_id.to_json()
+    params['key'] = key
     cmd_dict: T_JSON_DICT = {
-        "method": "DOMStorage.removeDOMStorageItem",
-        "params": params,
+        'method': 'DOMStorage.removeDOMStorageItem',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_dom_storage_item(
-    storage_id: StorageId, key: str, value: str
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    storage_id: StorageId,
+    key: str,
+    value: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param storage_id:
     :param key:
     :param value:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["storageId"] = storage_id.to_json()
-    params["key"] = key
-    params["value"] = value
+
+    params: T_JSON_DICT = {}
+    params['storageId'] = storage_id.to_json()
+    params['key'] = key
+    params['value'] = value
     cmd_dict: T_JSON_DICT = {
-        "method": "DOMStorage.setDOMStorageItem",
-        "params": params,
+        'method': 'DOMStorage.setDOMStorageItem',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@event_class("DOMStorage.domStorageItemAdded")
+@event_type('DOMStorage.domStorageItemAdded')
 @dataclass
 class DomStorageItemAdded:
     storage_id: StorageId
@@ -173,13 +224,19 @@ class DomStorageItemAdded:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DomStorageItemAdded:
         return cls(
-            storage_id=StorageId.from_json(json["storageId"]),
-            key=str(json["key"]),
-            new_value=str(json["newValue"]),
+            storage_id=StorageId.from_json(json['storageId']),
+            key=str(json['key']),
+            new_value=str(json['newValue']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DomStorageItemAdded | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("DOMStorage.domStorageItemRemoved")
+
+@event_type('DOMStorage.domStorageItemRemoved')
 @dataclass
 class DomStorageItemRemoved:
     storage_id: StorageId
@@ -188,11 +245,18 @@ class DomStorageItemRemoved:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DomStorageItemRemoved:
         return cls(
-            storage_id=StorageId.from_json(json["storageId"]), key=str(json["key"])
+            storage_id=StorageId.from_json(json['storageId']),
+            key=str(json['key']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DomStorageItemRemoved | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("DOMStorage.domStorageItemUpdated")
+
+@event_type('DOMStorage.domStorageItemUpdated')
 @dataclass
 class DomStorageItemUpdated:
     storage_id: StorageId
@@ -203,18 +267,30 @@ class DomStorageItemUpdated:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DomStorageItemUpdated:
         return cls(
-            storage_id=StorageId.from_json(json["storageId"]),
-            key=str(json["key"]),
-            old_value=str(json["oldValue"]),
-            new_value=str(json["newValue"]),
+            storage_id=StorageId.from_json(json['storageId']),
+            key=str(json['key']),
+            old_value=str(json['oldValue']),
+            new_value=str(json['newValue']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DomStorageItemUpdated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("DOMStorage.domStorageItemsCleared")
+
+@event_type('DOMStorage.domStorageItemsCleared')
 @dataclass
 class DomStorageItemsCleared:
     storage_id: StorageId
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DomStorageItemsCleared:
-        return cls(storage_id=StorageId.from_json(json["storageId"]))
+        return cls(storage_id=StorageId.from_json(json['storageId']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DomStorageItemsCleared | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

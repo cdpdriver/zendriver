@@ -3,13 +3,21 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Schema
 
 from __future__ import annotations
-import enum
+
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 @dataclass
@@ -25,27 +33,35 @@ class Domain:
     version: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
-        json["version"] = self.version
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
+        json['version'] = self.version
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Domain:
         return cls(
-            name=str(json["name"]),
-            version=str(json["version"]),
+            name=str(json['name']),
+            version=str(json['version']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Domain | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-def get_domains() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[Domain]]:
+
+def get_domains() -> Generator[T_JSON_DICT, T_JSON_DICT, list[Domain]]:
     """
     Returns supported domains.
 
-    :returns: List of supported domains.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[Domain]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Schema.getDomains",
+        'method': 'Schema.getDomains',
     }
     json = yield cmd_dict
-    return [Domain.from_json(i) for i in json["domains"]]
+    return [Domain.from_json(i) for i in json.get('domains', [])]

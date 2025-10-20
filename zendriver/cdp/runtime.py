@@ -3,19 +3,34 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Runtime
 
 from __future__ import annotations
-import enum
+
 import typing
-from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+from dataclasses import dataclass, field
+
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
+
+
+# ruff: noqa: FURB189
 
 
 class ScriptId(str):
     """
     Unique script identifier.
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -24,8 +39,14 @@ class ScriptId(str):
     def from_json(cls, json: str) -> ScriptId:
         return cls(json)
 
-    def __repr__(self):
-        return "ScriptId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> ScriptId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'ScriptId({super().__repr__()})'
 
 
 @dataclass
@@ -37,33 +58,37 @@ class SerializationOptions:
     serialization: str
 
     #: Deep serialization depth. Default is full depth. Respected only in ``deep`` serialization mode.
-    max_depth: typing.Optional[int] = None
+    max_depth: int | None = None
 
     #: Embedder-specific parameters. For example if connected to V8 in Chrome these control DOM
     #: serialization via ``maxNodeDepth: integer`` and ``includeShadowTree: "none" `` "open" `` "all"``.
     #: Values can be only of type string or integer.
-    additional_parameters: typing.Optional[dict] = None
+    additional_parameters: dict | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["serialization"] = self.serialization
+        json: T_JSON_DICT = {}
+        json['serialization'] = self.serialization
         if self.max_depth is not None:
-            json["maxDepth"] = self.max_depth
+            json['maxDepth'] = self.max_depth
         if self.additional_parameters is not None:
-            json["additionalParameters"] = self.additional_parameters
+            json['additionalParameters'] = self.additional_parameters
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> SerializationOptions:
         return cls(
-            serialization=str(json["serialization"]),
-            max_depth=int(json["maxDepth"])
-            if json.get("maxDepth", None) is not None
-            else None,
-            additional_parameters=dict(json["additionalParameters"])
-            if json.get("additionalParameters", None) is not None
-            else None,
+            serialization=str(json['serialization']),
+            max_depth=None if json.get('maxDepth') is None else int(json['maxDepth']),
+            additional_parameters=None
+            if json.get('additionalParameters') is None
+            else dict(json['additionalParameters']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> SerializationOptions | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -74,44 +99,50 @@ class DeepSerializedValue:
 
     type_: str
 
-    value: typing.Optional[typing.Any] = None
+    value: typing.Any | None = None
 
-    object_id: typing.Optional[str] = None
+    object_id: str | None = None
 
     #: Set if value reference met more then once during serialization. In such
     #: case, value is provided only to one of the serialized values. Unique
     #: per value in the scope of one CDP call.
-    weak_local_object_reference: typing.Optional[int] = None
+    weak_local_object_reference: int | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["type"] = self.type_
+        json: T_JSON_DICT = {}
+        json['type'] = self.type_
         if self.value is not None:
-            json["value"] = self.value
+            json['value'] = self.value
         if self.object_id is not None:
-            json["objectId"] = self.object_id
+            json['objectId'] = self.object_id
         if self.weak_local_object_reference is not None:
-            json["weakLocalObjectReference"] = self.weak_local_object_reference
+            json['weakLocalObjectReference'] = self.weak_local_object_reference
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DeepSerializedValue:
         return cls(
-            type_=str(json["type"]),
-            value=json["value"] if json.get("value", None) is not None else None,
-            object_id=str(json["objectId"])
-            if json.get("objectId", None) is not None
-            else None,
-            weak_local_object_reference=int(json["weakLocalObjectReference"])
-            if json.get("weakLocalObjectReference", None) is not None
-            else None,
+            type_=str(json['type']),
+            value=None if json.get('value') is None else json['value'],
+            object_id=None if json.get('objectId') is None else str(json['objectId']),
+            weak_local_object_reference=None
+            if json.get('weakLocalObjectReference') is None
+            else int(json['weakLocalObjectReference']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DeepSerializedValue | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class RemoteObjectId(str):
     """
     Unique object identifier.
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -120,8 +151,14 @@ class RemoteObjectId(str):
     def from_json(cls, json: str) -> RemoteObjectId:
         return cls(json)
 
-    def __repr__(self):
-        return "RemoteObjectId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> RemoteObjectId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'RemoteObjectId({super().__repr__()})'
 
 
 class UnserializableValue(str):
@@ -130,6 +167,8 @@ class UnserializableValue(str):
     ``-Infinity``, and bigint literals.
     """
 
+    __slots__ = ()
+
     def to_json(self) -> str:
         return self
 
@@ -137,8 +176,14 @@ class UnserializableValue(str):
     def from_json(cls, json: str) -> UnserializableValue:
         return cls(json)
 
-    def __repr__(self):
-        return "UnserializableValue({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> UnserializableValue | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'UnserializableValue({super().__repr__()})'
 
 
 @dataclass
@@ -153,89 +198,75 @@ class RemoteObject:
     #: Object subtype hint. Specified for ``object`` type values only.
     #: NOTE: If you change anything here, make sure to also update
     #: ``subtype`` in ``ObjectPreview`` and ``PropertyPreview`` below.
-    subtype: typing.Optional[str] = None
+    subtype: str | None = None
 
     #: Object class (constructor) name. Specified for ``object`` type values only.
-    class_name: typing.Optional[str] = None
+    class_name: str | None = None
 
     #: Remote object value in case of primitive values or JSON values (if it was requested).
-    value: typing.Optional[typing.Any] = None
+    value: typing.Any | None = None
 
     #: Primitive value which can not be JSON-stringified does not have ``value``, but gets this
     #: property.
-    unserializable_value: typing.Optional[UnserializableValue] = None
+    unserializable_value: UnserializableValue | None = None
 
     #: String representation of the object.
-    description: typing.Optional[str] = None
+    description: str | None = None
 
     #: Deep serialized value.
-    deep_serialized_value: typing.Optional[DeepSerializedValue] = None
+    deep_serialized_value: DeepSerializedValue | None = None
 
     #: Unique object identifier (for non-primitive values).
-    object_id: typing.Optional[RemoteObjectId] = None
+    object_id: RemoteObjectId | None = None
 
     #: Preview containing abbreviated property values. Specified for ``object`` type values only.
-    preview: typing.Optional[ObjectPreview] = None
+    preview: ObjectPreview | None = None
 
-    custom_preview: typing.Optional[CustomPreview] = None
+    custom_preview: CustomPreview | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["type"] = self.type_
+        json: T_JSON_DICT = {}
+        json['type'] = self.type_
         if self.subtype is not None:
-            json["subtype"] = self.subtype
+            json['subtype'] = self.subtype
         if self.class_name is not None:
-            json["className"] = self.class_name
+            json['className'] = self.class_name
         if self.value is not None:
-            json["value"] = self.value
+            json['value'] = self.value
         if self.unserializable_value is not None:
-            json["unserializableValue"] = self.unserializable_value.to_json()
+            json['unserializableValue'] = self.unserializable_value.to_json()
         if self.description is not None:
-            json["description"] = self.description
+            json['description'] = self.description
         if self.deep_serialized_value is not None:
-            json["deepSerializedValue"] = self.deep_serialized_value.to_json()
+            json['deepSerializedValue'] = self.deep_serialized_value.to_json()
         if self.object_id is not None:
-            json["objectId"] = self.object_id.to_json()
+            json['objectId'] = self.object_id.to_json()
         if self.preview is not None:
-            json["preview"] = self.preview.to_json()
+            json['preview'] = self.preview.to_json()
         if self.custom_preview is not None:
-            json["customPreview"] = self.custom_preview.to_json()
+            json['customPreview'] = self.custom_preview.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> RemoteObject:
         return cls(
-            type_=str(json["type"]),
-            subtype=str(json["subtype"])
-            if json.get("subtype", None) is not None
-            else None,
-            class_name=str(json["className"])
-            if json.get("className", None) is not None
-            else None,
-            value=json["value"] if json.get("value", None) is not None else None,
-            unserializable_value=UnserializableValue.from_json(
-                json["unserializableValue"]
-            )
-            if json.get("unserializableValue", None) is not None
-            else None,
-            description=str(json["description"])
-            if json.get("description", None) is not None
-            else None,
-            deep_serialized_value=DeepSerializedValue.from_json(
-                json["deepSerializedValue"]
-            )
-            if json.get("deepSerializedValue", None) is not None
-            else None,
-            object_id=RemoteObjectId.from_json(json["objectId"])
-            if json.get("objectId", None) is not None
-            else None,
-            preview=ObjectPreview.from_json(json["preview"])
-            if json.get("preview", None) is not None
-            else None,
-            custom_preview=CustomPreview.from_json(json["customPreview"])
-            if json.get("customPreview", None) is not None
-            else None,
+            type_=str(json['type']),
+            subtype=None if json.get('subtype') is None else str(json['subtype']),
+            class_name=None if json.get('className') is None else str(json['className']),
+            value=None if json.get('value') is None else json['value'],
+            unserializable_value=UnserializableValue.from_json_optional(json.get('unserializableValue')),
+            description=None if json.get('description') is None else str(json['description']),
+            deep_serialized_value=DeepSerializedValue.from_json_optional(json.get('deepSerializedValue')),
+            object_id=RemoteObjectId.from_json_optional(json.get('objectId')),
+            preview=ObjectPreview.from_json_optional(json.get('preview')),
+            custom_preview=CustomPreview.from_json_optional(json.get('customPreview')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> RemoteObject | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -247,23 +278,27 @@ class CustomPreview:
     #: If formatter returns true as a result of formatter.hasBody call then bodyGetterId will
     #: contain RemoteObjectId for the function that returns result of formatter.body(object, config) call.
     #: The result value is json ML array.
-    body_getter_id: typing.Optional[RemoteObjectId] = None
+    body_getter_id: RemoteObjectId | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["header"] = self.header
+        json: T_JSON_DICT = {}
+        json['header'] = self.header
         if self.body_getter_id is not None:
-            json["bodyGetterId"] = self.body_getter_id.to_json()
+            json['bodyGetterId'] = self.body_getter_id.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CustomPreview:
         return cls(
-            header=str(json["header"]),
-            body_getter_id=RemoteObjectId.from_json(json["bodyGetterId"])
-            if json.get("bodyGetterId", None) is not None
-            else None,
+            header=str(json['header']),
+            body_getter_id=RemoteObjectId.from_json_optional(json.get('bodyGetterId')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CustomPreview | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -279,46 +314,46 @@ class ObjectPreview:
     overflow: bool
 
     #: List of the properties.
-    properties: typing.List[PropertyPreview]
+    properties: list[PropertyPreview]
 
     #: Object subtype hint. Specified for ``object`` type values only.
-    subtype: typing.Optional[str] = None
+    subtype: str | None = None
 
     #: String representation of the object.
-    description: typing.Optional[str] = None
+    description: str | None = None
 
     #: List of the entries. Specified for ``map`` and ``set`` subtype values only.
-    entries: typing.Optional[typing.List[EntryPreview]] = None
+    entries: list[EntryPreview] = field(default_factory=list)
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["type"] = self.type_
-        json["overflow"] = self.overflow
-        json["properties"] = [i.to_json() for i in self.properties]
+        json: T_JSON_DICT = {}
+        json['type'] = self.type_
+        json['overflow'] = self.overflow
+        json['properties'] = [i.to_json() for i in self.properties]
         if self.subtype is not None:
-            json["subtype"] = self.subtype
+            json['subtype'] = self.subtype
         if self.description is not None:
-            json["description"] = self.description
+            json['description'] = self.description
         if self.entries is not None:
-            json["entries"] = [i.to_json() for i in self.entries]
+            json['entries'] = [i.to_json() for i in self.entries]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ObjectPreview:
         return cls(
-            type_=str(json["type"]),
-            overflow=bool(json["overflow"]),
-            properties=[PropertyPreview.from_json(i) for i in json["properties"]],
-            subtype=str(json["subtype"])
-            if json.get("subtype", None) is not None
-            else None,
-            description=str(json["description"])
-            if json.get("description", None) is not None
-            else None,
-            entries=[EntryPreview.from_json(i) for i in json["entries"]]
-            if json.get("entries", None) is not None
-            else None,
+            type_=str(json['type']),
+            overflow=bool(json['overflow']),
+            properties=[PropertyPreview.from_json(i) for i in json.get('properties', [])],
+            subtype=None if json.get('subtype') is None else str(json['subtype']),
+            description=None if json.get('description') is None else str(json['description']),
+            entries=[EntryPreview.from_json(i) for i in json.get('entries', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ObjectPreview | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -330,39 +365,41 @@ class PropertyPreview:
     type_: str
 
     #: User-friendly property value string.
-    value: typing.Optional[str] = None
+    value: str | None = None
 
     #: Nested value preview.
-    value_preview: typing.Optional[ObjectPreview] = None
+    value_preview: ObjectPreview | None = None
 
     #: Object subtype hint. Specified for ``object`` type values only.
-    subtype: typing.Optional[str] = None
+    subtype: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
-        json["type"] = self.type_
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
+        json['type'] = self.type_
         if self.value is not None:
-            json["value"] = self.value
+            json['value'] = self.value
         if self.value_preview is not None:
-            json["valuePreview"] = self.value_preview.to_json()
+            json['valuePreview'] = self.value_preview.to_json()
         if self.subtype is not None:
-            json["subtype"] = self.subtype
+            json['subtype'] = self.subtype
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> PropertyPreview:
         return cls(
-            name=str(json["name"]),
-            type_=str(json["type"]),
-            value=str(json["value"]) if json.get("value", None) is not None else None,
-            value_preview=ObjectPreview.from_json(json["valuePreview"])
-            if json.get("valuePreview", None) is not None
-            else None,
-            subtype=str(json["subtype"])
-            if json.get("subtype", None) is not None
-            else None,
+            name=str(json['name']),
+            type_=str(json['type']),
+            value=None if json.get('value') is None else str(json['value']),
+            value_preview=ObjectPreview.from_json_optional(json.get('valuePreview')),
+            subtype=None if json.get('subtype') is None else str(json['subtype']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> PropertyPreview | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -371,23 +408,27 @@ class EntryPreview:
     value: ObjectPreview
 
     #: Preview of the key. Specified for map-like collection entries.
-    key: typing.Optional[ObjectPreview] = None
+    key: ObjectPreview | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["value"] = self.value.to_json()
+        json: T_JSON_DICT = {}
+        json['value'] = self.value.to_json()
         if self.key is not None:
-            json["key"] = self.key.to_json()
+            json['key'] = self.key.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> EntryPreview:
         return cls(
-            value=ObjectPreview.from_json(json["value"]),
-            key=ObjectPreview.from_json(json["key"])
-            if json.get("key", None) is not None
-            else None,
+            value=ObjectPreview.from_json(json['value']),
+            key=ObjectPreview.from_json_optional(json.get('key')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> EntryPreview | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -408,75 +449,69 @@ class PropertyDescriptor:
     enumerable: bool
 
     #: The value associated with the property.
-    value: typing.Optional[RemoteObject] = None
+    value: RemoteObject | None = None
 
     #: True if the value associated with the property may be changed (data descriptors only).
-    writable: typing.Optional[bool] = None
+    writable: bool | None = None
 
     #: A function which serves as a getter for the property, or ``undefined`` if there is no getter
     #: (accessor descriptors only).
-    get: typing.Optional[RemoteObject] = None
+    get: RemoteObject | None = None
 
     #: A function which serves as a setter for the property, or ``undefined`` if there is no setter
     #: (accessor descriptors only).
-    set_: typing.Optional[RemoteObject] = None
+    set_: RemoteObject | None = None
 
     #: True if the result was thrown during the evaluation.
-    was_thrown: typing.Optional[bool] = None
+    was_thrown: bool | None = None
 
     #: True if the property is owned for the object.
-    is_own: typing.Optional[bool] = None
+    is_own: bool | None = None
 
     #: Property symbol object, if the property is of the ``symbol`` type.
-    symbol: typing.Optional[RemoteObject] = None
+    symbol: RemoteObject | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
-        json["configurable"] = self.configurable
-        json["enumerable"] = self.enumerable
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
+        json['configurable'] = self.configurable
+        json['enumerable'] = self.enumerable
         if self.value is not None:
-            json["value"] = self.value.to_json()
+            json['value'] = self.value.to_json()
         if self.writable is not None:
-            json["writable"] = self.writable
+            json['writable'] = self.writable
         if self.get is not None:
-            json["get"] = self.get.to_json()
+            json['get'] = self.get.to_json()
         if self.set_ is not None:
-            json["set"] = self.set_.to_json()
+            json['set'] = self.set_.to_json()
         if self.was_thrown is not None:
-            json["wasThrown"] = self.was_thrown
+            json['wasThrown'] = self.was_thrown
         if self.is_own is not None:
-            json["isOwn"] = self.is_own
+            json['isOwn'] = self.is_own
         if self.symbol is not None:
-            json["symbol"] = self.symbol.to_json()
+            json['symbol'] = self.symbol.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> PropertyDescriptor:
         return cls(
-            name=str(json["name"]),
-            configurable=bool(json["configurable"]),
-            enumerable=bool(json["enumerable"]),
-            value=RemoteObject.from_json(json["value"])
-            if json.get("value", None) is not None
-            else None,
-            writable=bool(json["writable"])
-            if json.get("writable", None) is not None
-            else None,
-            get=RemoteObject.from_json(json["get"])
-            if json.get("get", None) is not None
-            else None,
-            set_=RemoteObject.from_json(json["set"])
-            if json.get("set", None) is not None
-            else None,
-            was_thrown=bool(json["wasThrown"])
-            if json.get("wasThrown", None) is not None
-            else None,
-            is_own=bool(json["isOwn"]) if json.get("isOwn", None) is not None else None,
-            symbol=RemoteObject.from_json(json["symbol"])
-            if json.get("symbol", None) is not None
-            else None,
+            name=str(json['name']),
+            configurable=bool(json['configurable']),
+            enumerable=bool(json['enumerable']),
+            value=RemoteObject.from_json_optional(json.get('value')),
+            writable=None if json.get('writable') is None else bool(json['writable']),
+            get=RemoteObject.from_json_optional(json.get('get')),
+            set_=RemoteObject.from_json_optional(json.get('set')),
+            was_thrown=None if json.get('wasThrown') is None else bool(json['wasThrown']),
+            is_own=None if json.get('isOwn') is None else bool(json['isOwn']),
+            symbol=RemoteObject.from_json_optional(json.get('symbol')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> PropertyDescriptor | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -489,23 +524,27 @@ class InternalPropertyDescriptor:
     name: str
 
     #: The value associated with the property.
-    value: typing.Optional[RemoteObject] = None
+    value: RemoteObject | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
         if self.value is not None:
-            json["value"] = self.value.to_json()
+            json['value'] = self.value.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> InternalPropertyDescriptor:
         return cls(
-            name=str(json["name"]),
-            value=RemoteObject.from_json(json["value"])
-            if json.get("value", None) is not None
-            else None,
+            name=str(json['name']),
+            value=RemoteObject.from_json_optional(json.get('value')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> InternalPropertyDescriptor | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -518,41 +557,41 @@ class PrivatePropertyDescriptor:
     name: str
 
     #: The value associated with the private property.
-    value: typing.Optional[RemoteObject] = None
+    value: RemoteObject | None = None
 
     #: A function which serves as a getter for the private property,
     #: or ``undefined`` if there is no getter (accessor descriptors only).
-    get: typing.Optional[RemoteObject] = None
+    get: RemoteObject | None = None
 
     #: A function which serves as a setter for the private property,
     #: or ``undefined`` if there is no setter (accessor descriptors only).
-    set_: typing.Optional[RemoteObject] = None
+    set_: RemoteObject | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
         if self.value is not None:
-            json["value"] = self.value.to_json()
+            json['value'] = self.value.to_json()
         if self.get is not None:
-            json["get"] = self.get.to_json()
+            json['get'] = self.get.to_json()
         if self.set_ is not None:
-            json["set"] = self.set_.to_json()
+            json['set'] = self.set_.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> PrivatePropertyDescriptor:
         return cls(
-            name=str(json["name"]),
-            value=RemoteObject.from_json(json["value"])
-            if json.get("value", None) is not None
-            else None,
-            get=RemoteObject.from_json(json["get"])
-            if json.get("get", None) is not None
-            else None,
-            set_=RemoteObject.from_json(json["set"])
-            if json.get("set", None) is not None
-            else None,
+            name=str(json['name']),
+            value=RemoteObject.from_json_optional(json.get('value')),
+            get=RemoteObject.from_json_optional(json.get('get')),
+            set_=RemoteObject.from_json_optional(json.get('set')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> PrivatePropertyDescriptor | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -563,37 +602,37 @@ class CallArgument:
     """
 
     #: Primitive value or serializable javascript object.
-    value: typing.Optional[typing.Any] = None
+    value: typing.Any | None = None
 
     #: Primitive value which can not be JSON-stringified.
-    unserializable_value: typing.Optional[UnserializableValue] = None
+    unserializable_value: UnserializableValue | None = None
 
     #: Remote object handle.
-    object_id: typing.Optional[RemoteObjectId] = None
+    object_id: RemoteObjectId | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
+        json: T_JSON_DICT = {}
         if self.value is not None:
-            json["value"] = self.value
+            json['value'] = self.value
         if self.unserializable_value is not None:
-            json["unserializableValue"] = self.unserializable_value.to_json()
+            json['unserializableValue'] = self.unserializable_value.to_json()
         if self.object_id is not None:
-            json["objectId"] = self.object_id.to_json()
+            json['objectId'] = self.object_id.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CallArgument:
         return cls(
-            value=json["value"] if json.get("value", None) is not None else None,
-            unserializable_value=UnserializableValue.from_json(
-                json["unserializableValue"]
-            )
-            if json.get("unserializableValue", None) is not None
-            else None,
-            object_id=RemoteObjectId.from_json(json["objectId"])
-            if json.get("objectId", None) is not None
-            else None,
+            value=None if json.get('value') is None else json['value'],
+            unserializable_value=UnserializableValue.from_json_optional(json.get('unserializableValue')),
+            object_id=RemoteObjectId.from_json_optional(json.get('objectId')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CallArgument | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class ExecutionContextId(int):
@@ -608,8 +647,14 @@ class ExecutionContextId(int):
     def from_json(cls, json: int) -> ExecutionContextId:
         return cls(json)
 
-    def __repr__(self):
-        return "ExecutionContextId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: int | None) -> ExecutionContextId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'ExecutionContextId({super().__repr__()})'
 
 
 @dataclass
@@ -634,29 +679,33 @@ class ExecutionContextDescription:
     unique_id: str
 
     #: Embedder-specific auxiliary data likely matching {isDefault: boolean, type: 'default'``'isolated'``'worker', frameId: string}
-    aux_data: typing.Optional[dict] = None
+    aux_data: dict | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["id"] = self.id_.to_json()
-        json["origin"] = self.origin
-        json["name"] = self.name
-        json["uniqueId"] = self.unique_id
+        json: T_JSON_DICT = {}
+        json['id'] = self.id_.to_json()
+        json['origin'] = self.origin
+        json['name'] = self.name
+        json['uniqueId'] = self.unique_id
         if self.aux_data is not None:
-            json["auxData"] = self.aux_data
+            json['auxData'] = self.aux_data
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ExecutionContextDescription:
         return cls(
-            id_=ExecutionContextId.from_json(json["id"]),
-            origin=str(json["origin"]),
-            name=str(json["name"]),
-            unique_id=str(json["uniqueId"]),
-            aux_data=dict(json["auxData"])
-            if json.get("auxData", None) is not None
-            else None,
+            id_=ExecutionContextId.from_json(json['id']),
+            origin=str(json['origin']),
+            name=str(json['name']),
+            unique_id=str(json['uniqueId']),
+            aux_data=None if json.get('auxData') is None else dict(json['auxData']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ExecutionContextDescription | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -679,71 +728,65 @@ class ExceptionDetails:
     column_number: int
 
     #: Script ID of the exception location.
-    script_id: typing.Optional[ScriptId] = None
+    script_id: ScriptId | None = None
 
     #: URL of the exception location, to be used when the script was not reported.
-    url: typing.Optional[str] = None
+    url: str | None = None
 
     #: JavaScript stack trace if available.
-    stack_trace: typing.Optional[StackTrace] = None
+    stack_trace: StackTrace | None = None
 
     #: Exception object if available.
-    exception: typing.Optional[RemoteObject] = None
+    exception: RemoteObject | None = None
 
     #: Identifier of the context where exception happened.
-    execution_context_id: typing.Optional[ExecutionContextId] = None
+    execution_context_id: ExecutionContextId | None = None
 
     #: Dictionary with entries of meta data that the client associated
     #: with this exception, such as information about associated network
     #: requests, etc.
-    exception_meta_data: typing.Optional[dict] = None
+    exception_meta_data: dict | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["exceptionId"] = self.exception_id
-        json["text"] = self.text
-        json["lineNumber"] = self.line_number
-        json["columnNumber"] = self.column_number
+        json: T_JSON_DICT = {}
+        json['exceptionId'] = self.exception_id
+        json['text'] = self.text
+        json['lineNumber'] = self.line_number
+        json['columnNumber'] = self.column_number
         if self.script_id is not None:
-            json["scriptId"] = self.script_id.to_json()
+            json['scriptId'] = self.script_id.to_json()
         if self.url is not None:
-            json["url"] = self.url
+            json['url'] = self.url
         if self.stack_trace is not None:
-            json["stackTrace"] = self.stack_trace.to_json()
+            json['stackTrace'] = self.stack_trace.to_json()
         if self.exception is not None:
-            json["exception"] = self.exception.to_json()
+            json['exception'] = self.exception.to_json()
         if self.execution_context_id is not None:
-            json["executionContextId"] = self.execution_context_id.to_json()
+            json['executionContextId'] = self.execution_context_id.to_json()
         if self.exception_meta_data is not None:
-            json["exceptionMetaData"] = self.exception_meta_data
+            json['exceptionMetaData'] = self.exception_meta_data
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ExceptionDetails:
         return cls(
-            exception_id=int(json["exceptionId"]),
-            text=str(json["text"]),
-            line_number=int(json["lineNumber"]),
-            column_number=int(json["columnNumber"]),
-            script_id=ScriptId.from_json(json["scriptId"])
-            if json.get("scriptId", None) is not None
-            else None,
-            url=str(json["url"]) if json.get("url", None) is not None else None,
-            stack_trace=StackTrace.from_json(json["stackTrace"])
-            if json.get("stackTrace", None) is not None
-            else None,
-            exception=RemoteObject.from_json(json["exception"])
-            if json.get("exception", None) is not None
-            else None,
-            execution_context_id=ExecutionContextId.from_json(
-                json["executionContextId"]
-            )
-            if json.get("executionContextId", None) is not None
-            else None,
-            exception_meta_data=dict(json["exceptionMetaData"])
-            if json.get("exceptionMetaData", None) is not None
-            else None,
+            exception_id=int(json['exceptionId']),
+            text=str(json['text']),
+            line_number=int(json['lineNumber']),
+            column_number=int(json['columnNumber']),
+            script_id=ScriptId.from_json_optional(json.get('scriptId')),
+            url=None if json.get('url') is None else str(json['url']),
+            stack_trace=StackTrace.from_json_optional(json.get('stackTrace')),
+            exception=RemoteObject.from_json_optional(json.get('exception')),
+            execution_context_id=ExecutionContextId.from_json_optional(json.get('executionContextId')),
+            exception_meta_data=None if json.get('exceptionMetaData') is None else dict(json['exceptionMetaData']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ExceptionDetails | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class Timestamp(float):
@@ -758,8 +801,14 @@ class Timestamp(float):
     def from_json(cls, json: float) -> Timestamp:
         return cls(json)
 
-    def __repr__(self):
-        return "Timestamp({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: float | None) -> Timestamp | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'Timestamp({super().__repr__()})'
 
 
 class TimeDelta(float):
@@ -774,8 +823,14 @@ class TimeDelta(float):
     def from_json(cls, json: float) -> TimeDelta:
         return cls(json)
 
-    def __repr__(self):
-        return "TimeDelta({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: float | None) -> TimeDelta | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'TimeDelta({super().__repr__()})'
 
 
 @dataclass
@@ -800,23 +855,29 @@ class CallFrame:
     column_number: int
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["functionName"] = self.function_name
-        json["scriptId"] = self.script_id.to_json()
-        json["url"] = self.url
-        json["lineNumber"] = self.line_number
-        json["columnNumber"] = self.column_number
+        json: T_JSON_DICT = {}
+        json['functionName'] = self.function_name
+        json['scriptId'] = self.script_id.to_json()
+        json['url'] = self.url
+        json['lineNumber'] = self.line_number
+        json['columnNumber'] = self.column_number
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CallFrame:
         return cls(
-            function_name=str(json["functionName"]),
-            script_id=ScriptId.from_json(json["scriptId"]),
-            url=str(json["url"]),
-            line_number=int(json["lineNumber"]),
-            column_number=int(json["columnNumber"]),
+            function_name=str(json['functionName']),
+            script_id=ScriptId.from_json(json['scriptId']),
+            url=str(json['url']),
+            line_number=int(json['lineNumber']),
+            column_number=int(json['columnNumber']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> CallFrame | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -826,49 +887,51 @@ class StackTrace:
     """
 
     #: JavaScript function name.
-    call_frames: typing.List[CallFrame]
+    call_frames: list[CallFrame]
 
     #: String label of this stack trace. For async traces this may be a name of the function that
     #: initiated the async call.
-    description: typing.Optional[str] = None
+    description: str | None = None
 
     #: Asynchronous JavaScript stack trace that preceded this stack, if available.
-    parent: typing.Optional[StackTrace] = None
+    parent: StackTrace | None = None
 
     #: Asynchronous JavaScript stack trace that preceded this stack, if available.
-    parent_id: typing.Optional[StackTraceId] = None
+    parent_id: StackTraceId | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["callFrames"] = [i.to_json() for i in self.call_frames]
+        json: T_JSON_DICT = {}
+        json['callFrames'] = [i.to_json() for i in self.call_frames]
         if self.description is not None:
-            json["description"] = self.description
+            json['description'] = self.description
         if self.parent is not None:
-            json["parent"] = self.parent.to_json()
+            json['parent'] = self.parent.to_json()
         if self.parent_id is not None:
-            json["parentId"] = self.parent_id.to_json()
+            json['parentId'] = self.parent_id.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> StackTrace:
         return cls(
-            call_frames=[CallFrame.from_json(i) for i in json["callFrames"]],
-            description=str(json["description"])
-            if json.get("description", None) is not None
-            else None,
-            parent=StackTrace.from_json(json["parent"])
-            if json.get("parent", None) is not None
-            else None,
-            parent_id=StackTraceId.from_json(json["parentId"])
-            if json.get("parentId", None) is not None
-            else None,
+            call_frames=[CallFrame.from_json(i) for i in json.get('callFrames', [])],
+            description=None if json.get('description') is None else str(json['description']),
+            parent=StackTrace.from_json_optional(json.get('parent')),
+            parent_id=StackTraceId.from_json_optional(json.get('parentId')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> StackTrace | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class UniqueDebuggerId(str):
     """
     Unique identifier of current debugger.
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -877,8 +940,14 @@ class UniqueDebuggerId(str):
     def from_json(cls, json: str) -> UniqueDebuggerId:
         return cls(json)
 
-    def __repr__(self):
-        return "UniqueDebuggerId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> UniqueDebuggerId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'UniqueDebuggerId({super().__repr__()})'
 
 
 @dataclass
@@ -890,83 +959,75 @@ class StackTraceId:
 
     id_: str
 
-    debugger_id: typing.Optional[UniqueDebuggerId] = None
+    debugger_id: UniqueDebuggerId | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["id"] = self.id_
+        json: T_JSON_DICT = {}
+        json['id'] = self.id_
         if self.debugger_id is not None:
-            json["debuggerId"] = self.debugger_id.to_json()
+            json['debuggerId'] = self.debugger_id.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> StackTraceId:
         return cls(
-            id_=str(json["id"]),
-            debugger_id=UniqueDebuggerId.from_json(json["debuggerId"])
-            if json.get("debuggerId", None) is not None
-            else None,
+            id_=str(json['id']),
+            debugger_id=UniqueDebuggerId.from_json_optional(json.get('debuggerId')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> StackTraceId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 def await_promise(
     promise_object_id: RemoteObjectId,
-    return_by_value: typing.Optional[bool] = None,
-    generate_preview: typing.Optional[bool] = None,
-) -> typing.Generator[
-    T_JSON_DICT,
-    T_JSON_DICT,
-    typing.Tuple[RemoteObject, typing.Optional[ExceptionDetails]],
-]:
+    *,
+    return_by_value: bool | None = None,
+    generate_preview: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[RemoteObject, ExceptionDetails | None]]:
     """
     Add handler to promise with given promise object id.
 
     :param promise_object_id: Identifier of the promise.
     :param return_by_value: *(Optional)* Whether the result is expected to be a JSON object that should be sent by value.
     :param generate_preview: *(Optional)* Whether preview should be generated for the result.
-    :returns: A tuple with the following items:
-
-        0. **result** - Promise result. Will contain rejected value if promise was rejected.
-        1. **exceptionDetails** - *(Optional)* Exception details if stack strace is available.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[RemoteObject, ExceptionDetails ` None]]
     """
-    params: T_JSON_DICT = dict()
-    params["promiseObjectId"] = promise_object_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['promiseObjectId'] = promise_object_id.to_json()
     if return_by_value is not None:
-        params["returnByValue"] = return_by_value
+        params['returnByValue'] = return_by_value
     if generate_preview is not None:
-        params["generatePreview"] = generate_preview
+        params['generatePreview'] = generate_preview
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.awaitPromise",
-        "params": params,
+        'method': 'Runtime.awaitPromise',
+        'params': params,
     }
     json = yield cmd_dict
-    return (
-        RemoteObject.from_json(json["result"]),
-        ExceptionDetails.from_json(json["exceptionDetails"])
-        if json.get("exceptionDetails", None) is not None
-        else None,
-    )
+    return (RemoteObject.from_json(json['result']), ExceptionDetails.from_json_optional(json.get('exceptionDetails')))
 
 
 def call_function_on(
     function_declaration: str,
-    object_id: typing.Optional[RemoteObjectId] = None,
-    arguments: typing.Optional[typing.List[CallArgument]] = None,
-    silent: typing.Optional[bool] = None,
-    return_by_value: typing.Optional[bool] = None,
-    generate_preview: typing.Optional[bool] = None,
-    user_gesture: typing.Optional[bool] = None,
-    await_promise: typing.Optional[bool] = None,
-    execution_context_id: typing.Optional[ExecutionContextId] = None,
-    object_group: typing.Optional[str] = None,
-    throw_on_side_effect: typing.Optional[bool] = None,
-    unique_context_id: typing.Optional[str] = None,
-    serialization_options: typing.Optional[SerializationOptions] = None,
-) -> typing.Generator[
-    T_JSON_DICT,
-    T_JSON_DICT,
-    typing.Tuple[RemoteObject, typing.Optional[ExceptionDetails]],
-]:
+    *,
+    object_id: RemoteObjectId | None = None,
+    arguments: list[CallArgument] | None = None,
+    silent: bool | None = None,
+    return_by_value: bool | None = None,
+    generate_preview: bool | None = None,
+    user_gesture: bool | None = None,
+    await_promise: bool | None = None,
+    execution_context_id: ExecutionContextId | None = None,
+    object_group: str | None = None,
+    throw_on_side_effect: bool | None = None,
+    unique_context_id: str | None = None,
+    serialization_options: SerializationOptions | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[RemoteObject, ExceptionDetails | None]]:
     """
     Calls function with given declaration on the given object. Object group of the result is
     inherited from the target object.
@@ -983,61 +1044,52 @@ def call_function_on(
     :param object_group: *(Optional)* Symbolic group name that can be used to release multiple objects. If objectGroup is not specified and objectId is, objectGroup will be inherited from object.
     :param throw_on_side_effect: **(EXPERIMENTAL)** *(Optional)* Whether to throw an exception if side effect cannot be ruled out during evaluation.
     :param unique_context_id: **(EXPERIMENTAL)** *(Optional)* An alternative way to specify the execution context to call function on. Compared to contextId that may be reused across processes, this is guaranteed to be system-unique, so it can be used to prevent accidental function call in context different than intended (e.g. as a result of navigation across process boundaries). This is mutually exclusive with ````executionContextId````.
-    :param serialization_options: **(EXPERIMENTAL)** *(Optional)* Specifies the result serialization. If provided, overrides ````generatePreview```` and ````returnByValue```.
-    :returns: A tuple with the following items:
-
-        0. **result** - Call result.
-        1. **exceptionDetails** - *(Optional)* Exception details.
+    :param serialization_options: **(EXPERIMENTAL)** *(Optional)* Specifies the result serialization. If provided, overrides ````generatePreview```` and ````returnByValue````.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[RemoteObject, ExceptionDetails `` None]]
     """
-    params: T_JSON_DICT = dict()
-    params["functionDeclaration"] = function_declaration
+
+    params: T_JSON_DICT = {}
+    params['functionDeclaration'] = function_declaration
     if object_id is not None:
-        params["objectId"] = object_id.to_json()
+        params['objectId'] = object_id.to_json()
     if arguments is not None:
-        params["arguments"] = [i.to_json() for i in arguments]
+        params['arguments'] = [i.to_json() for i in arguments]
     if silent is not None:
-        params["silent"] = silent
+        params['silent'] = silent
     if return_by_value is not None:
-        params["returnByValue"] = return_by_value
+        params['returnByValue'] = return_by_value
     if generate_preview is not None:
-        params["generatePreview"] = generate_preview
+        params['generatePreview'] = generate_preview
     if user_gesture is not None:
-        params["userGesture"] = user_gesture
+        params['userGesture'] = user_gesture
     if await_promise is not None:
-        params["awaitPromise"] = await_promise
+        params['awaitPromise'] = await_promise
     if execution_context_id is not None:
-        params["executionContextId"] = execution_context_id.to_json()
+        params['executionContextId'] = execution_context_id.to_json()
     if object_group is not None:
-        params["objectGroup"] = object_group
+        params['objectGroup'] = object_group
     if throw_on_side_effect is not None:
-        params["throwOnSideEffect"] = throw_on_side_effect
+        params['throwOnSideEffect'] = throw_on_side_effect
     if unique_context_id is not None:
-        params["uniqueContextId"] = unique_context_id
+        params['uniqueContextId'] = unique_context_id
     if serialization_options is not None:
-        params["serializationOptions"] = serialization_options.to_json()
+        params['serializationOptions'] = serialization_options.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.callFunctionOn",
-        "params": params,
+        'method': 'Runtime.callFunctionOn',
+        'params': params,
     }
     json = yield cmd_dict
-    return (
-        RemoteObject.from_json(json["result"]),
-        ExceptionDetails.from_json(json["exceptionDetails"])
-        if json.get("exceptionDetails", None) is not None
-        else None,
-    )
+    return (RemoteObject.from_json(json['result']), ExceptionDetails.from_json_optional(json.get('exceptionDetails')))
 
 
 def compile_script(
     expression: str,
     source_url: str,
+    *,
     persist_script: bool,
-    execution_context_id: typing.Optional[ExecutionContextId] = None,
-) -> typing.Generator[
-    T_JSON_DICT,
-    T_JSON_DICT,
-    typing.Tuple[typing.Optional[ScriptId], typing.Optional[ExceptionDetails]],
-]:
+    execution_context_id: ExecutionContextId | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[ScriptId | None, ExceptionDetails | None]]:
     """
     Compiles expression.
 
@@ -1045,86 +1097,87 @@ def compile_script(
     :param source_url: Source url to be set for the script.
     :param persist_script: Specifies whether the compiled script should be persisted.
     :param execution_context_id: *(Optional)* Specifies in which execution context to perform script run. If the parameter is omitted the evaluation will be performed in the context of the inspected page.
-    :returns: A tuple with the following items:
-
-        0. **scriptId** - *(Optional)* Id of the script.
-        1. **exceptionDetails** - *(Optional)* Exception details.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[ScriptId `` None, ExceptionDetails `` None]]
     """
-    params: T_JSON_DICT = dict()
-    params["expression"] = expression
-    params["sourceURL"] = source_url
-    params["persistScript"] = persist_script
+
+    params: T_JSON_DICT = {}
+    params['expression'] = expression
+    params['sourceURL'] = source_url
+    params['persistScript'] = persist_script
     if execution_context_id is not None:
-        params["executionContextId"] = execution_context_id.to_json()
+        params['executionContextId'] = execution_context_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.compileScript",
-        "params": params,
+        'method': 'Runtime.compileScript',
+        'params': params,
     }
     json = yield cmd_dict
     return (
-        ScriptId.from_json(json["scriptId"])
-        if json.get("scriptId", None) is not None
-        else None,
-        ExceptionDetails.from_json(json["exceptionDetails"])
-        if json.get("exceptionDetails", None) is not None
-        else None,
+        ScriptId.from_json_optional(json.get('scriptId')),
+        ExceptionDetails.from_json_optional(json.get('exceptionDetails')),
     )
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disables reporting of execution contexts creation.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.disable",
+        'method': 'Runtime.disable',
     }
     json = yield cmd_dict
 
 
-def discard_console_entries() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def discard_console_entries() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Discards collected exceptions and console API calls.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.discardConsoleEntries",
+        'method': 'Runtime.discardConsoleEntries',
     }
     json = yield cmd_dict
 
 
-def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def enable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables reporting of execution contexts creation by means of ``executionContextCreated`` event.
     When the reporting gets enabled the event will be sent immediately for each existing execution
     context.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.enable",
+        'method': 'Runtime.enable',
     }
     json = yield cmd_dict
 
 
 def evaluate(
     expression: str,
-    object_group: typing.Optional[str] = None,
-    include_command_line_api: typing.Optional[bool] = None,
-    silent: typing.Optional[bool] = None,
-    context_id: typing.Optional[ExecutionContextId] = None,
-    return_by_value: typing.Optional[bool] = None,
-    generate_preview: typing.Optional[bool] = None,
-    user_gesture: typing.Optional[bool] = None,
-    await_promise: typing.Optional[bool] = None,
-    throw_on_side_effect: typing.Optional[bool] = None,
-    timeout: typing.Optional[TimeDelta] = None,
-    disable_breaks: typing.Optional[bool] = None,
-    repl_mode: typing.Optional[bool] = None,
-    allow_unsafe_eval_blocked_by_csp: typing.Optional[bool] = None,
-    unique_context_id: typing.Optional[str] = None,
-    serialization_options: typing.Optional[SerializationOptions] = None,
-) -> typing.Generator[
-    T_JSON_DICT,
-    T_JSON_DICT,
-    typing.Tuple[RemoteObject, typing.Optional[ExceptionDetails]],
-]:
+    *,
+    object_group: str | None = None,
+    include_command_line_api: bool | None = None,
+    silent: bool | None = None,
+    context_id: ExecutionContextId | None = None,
+    return_by_value: bool | None = None,
+    generate_preview: bool | None = None,
+    user_gesture: bool | None = None,
+    await_promise: bool | None = None,
+    throw_on_side_effect: bool | None = None,
+    timeout: TimeDelta | None = None,
+    disable_breaks: bool | None = None,
+    repl_mode: bool | None = None,
+    allow_unsafe_eval_blocked_by_csp: bool | None = None,
+    unique_context_id: str | None = None,
+    serialization_options: SerializationOptions | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[RemoteObject, ExceptionDetails | None]]:
     """
     Evaluates expression on global object.
 
@@ -1143,114 +1196,106 @@ def evaluate(
     :param repl_mode: **(EXPERIMENTAL)** *(Optional)* Setting this flag to true enables ````let```` re-declaration and top-level ````await````. Note that ````let```` variables can only be re-declared if they originate from ````replMode```` themselves.
     :param allow_unsafe_eval_blocked_by_csp: **(EXPERIMENTAL)** *(Optional)* The Content Security Policy (CSP) for the target might block 'unsafe-eval' which includes eval(), Function(), setTimeout() and setInterval() when called with non-callable arguments. This flag bypasses CSP for this evaluation and allows unsafe-eval. Defaults to true.
     :param unique_context_id: **(EXPERIMENTAL)** *(Optional)* An alternative way to specify the execution context to evaluate in. Compared to contextId that may be reused across processes, this is guaranteed to be system-unique, so it can be used to prevent accidental evaluation of the expression in context different than intended (e.g. as a result of navigation across process boundaries). This is mutually exclusive with ````contextId````.
-    :param serialization_options: **(EXPERIMENTAL)** *(Optional)* Specifies the result serialization. If provided, overrides ````generatePreview```` and ````returnByValue```.
-    :returns: A tuple with the following items:
-
-        0. **result** - Evaluation result.
-        1. **exceptionDetails** - *(Optional)* Exception details.
+    :param serialization_options: **(EXPERIMENTAL)** *(Optional)* Specifies the result serialization. If provided, overrides ````generatePreview```` and ````returnByValue````.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[RemoteObject, ExceptionDetails `` None]]
     """
-    params: T_JSON_DICT = dict()
-    params["expression"] = expression
+
+    params: T_JSON_DICT = {}
+    params['expression'] = expression
     if object_group is not None:
-        params["objectGroup"] = object_group
+        params['objectGroup'] = object_group
     if include_command_line_api is not None:
-        params["includeCommandLineAPI"] = include_command_line_api
+        params['includeCommandLineAPI'] = include_command_line_api
     if silent is not None:
-        params["silent"] = silent
+        params['silent'] = silent
     if context_id is not None:
-        params["contextId"] = context_id.to_json()
+        params['contextId'] = context_id.to_json()
     if return_by_value is not None:
-        params["returnByValue"] = return_by_value
+        params['returnByValue'] = return_by_value
     if generate_preview is not None:
-        params["generatePreview"] = generate_preview
+        params['generatePreview'] = generate_preview
     if user_gesture is not None:
-        params["userGesture"] = user_gesture
+        params['userGesture'] = user_gesture
     if await_promise is not None:
-        params["awaitPromise"] = await_promise
+        params['awaitPromise'] = await_promise
     if throw_on_side_effect is not None:
-        params["throwOnSideEffect"] = throw_on_side_effect
+        params['throwOnSideEffect'] = throw_on_side_effect
     if timeout is not None:
-        params["timeout"] = timeout.to_json()
+        params['timeout'] = timeout.to_json()
     if disable_breaks is not None:
-        params["disableBreaks"] = disable_breaks
+        params['disableBreaks'] = disable_breaks
     if repl_mode is not None:
-        params["replMode"] = repl_mode
+        params['replMode'] = repl_mode
     if allow_unsafe_eval_blocked_by_csp is not None:
-        params["allowUnsafeEvalBlockedByCSP"] = allow_unsafe_eval_blocked_by_csp
+        params['allowUnsafeEvalBlockedByCSP'] = allow_unsafe_eval_blocked_by_csp
     if unique_context_id is not None:
-        params["uniqueContextId"] = unique_context_id
+        params['uniqueContextId'] = unique_context_id
     if serialization_options is not None:
-        params["serializationOptions"] = serialization_options.to_json()
+        params['serializationOptions'] = serialization_options.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.evaluate",
-        "params": params,
+        'method': 'Runtime.evaluate',
+        'params': params,
     }
     json = yield cmd_dict
-    return (
-        RemoteObject.from_json(json["result"]),
-        ExceptionDetails.from_json(json["exceptionDetails"])
-        if json.get("exceptionDetails", None) is not None
-        else None,
-    )
+    return (RemoteObject.from_json(json['result']), ExceptionDetails.from_json_optional(json.get('exceptionDetails')))
 
 
-def get_isolate_id() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, str]:
+def get_isolate_id() -> Generator[T_JSON_DICT, T_JSON_DICT, str]:
     """
     Returns the isolate id.
 
     **EXPERIMENTAL**
 
-    :returns: The isolate id.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, str]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.getIsolateId",
+        'method': 'Runtime.getIsolateId',
     }
     json = yield cmd_dict
-    return str(json["id"])
+    return str(json['id'])
 
 
-def get_heap_usage() -> (
-    typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.Tuple[float, float, float, float]]
-):
+def get_heap_usage() -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[float, float, float, float]]:
     """
     Returns the JavaScript heap usage.
     It is the total usage of the corresponding isolate not scoped to a particular Runtime.
 
     **EXPERIMENTAL**
 
-    :returns: A tuple with the following items:
-
-        0. **usedSize** - Used JavaScript heap size in bytes.
-        1. **totalSize** - Allocated JavaScript heap size in bytes.
-        2. **embedderHeapUsedSize** - Used size in bytes in the embedder's garbage-collected heap.
-        3. **backingStorageSize** - Size in bytes of backing storage for array buffers and external strings.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[float, float, float, float]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.getHeapUsage",
+        'method': 'Runtime.getHeapUsage',
     }
     json = yield cmd_dict
     return (
-        float(json["usedSize"]),
-        float(json["totalSize"]),
-        float(json["embedderHeapUsedSize"]),
-        float(json["backingStorageSize"]),
+        float(json['usedSize']),
+        float(json['totalSize']),
+        float(json['embedderHeapUsedSize']),
+        float(json['backingStorageSize']),
     )
 
 
 def get_properties(
     object_id: RemoteObjectId,
-    own_properties: typing.Optional[bool] = None,
-    accessor_properties_only: typing.Optional[bool] = None,
-    generate_preview: typing.Optional[bool] = None,
-    non_indexed_properties_only: typing.Optional[bool] = None,
-) -> typing.Generator[
+    *,
+    own_properties: bool | None = None,
+    accessor_properties_only: bool | None = None,
+    generate_preview: bool | None = None,
+    non_indexed_properties_only: bool | None = None,
+) -> Generator[
     T_JSON_DICT,
     T_JSON_DICT,
-    typing.Tuple[
-        typing.List[PropertyDescriptor],
-        typing.Optional[typing.List[InternalPropertyDescriptor]],
-        typing.Optional[typing.List[PrivatePropertyDescriptor]],
-        typing.Optional[ExceptionDetails],
+    tuple[
+        list[PropertyDescriptor],
+        list[InternalPropertyDescriptor] | None,
+        list[PrivatePropertyDescriptor] | None,
+        ExceptionDetails | None,
     ],
 ]:
     """
@@ -1262,140 +1307,143 @@ def get_properties(
     :param accessor_properties_only: **(EXPERIMENTAL)** *(Optional)* If true, returns accessor properties (with getter/setter) only; internal properties are not returned either.
     :param generate_preview: **(EXPERIMENTAL)** *(Optional)* Whether preview should be generated for the results.
     :param non_indexed_properties_only: **(EXPERIMENTAL)** *(Optional)* If true, returns non-indexed properties only.
-    :returns: A tuple with the following items:
-
-        0. **result** - Object properties.
-        1. **internalProperties** - *(Optional)* Internal object properties (only of the element itself).
-        2. **privateProperties** - *(Optional)* Object private properties.
-        3. **exceptionDetails** - *(Optional)* Exception details.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[list[PropertyDescriptor], list[InternalPropertyDescriptor] `` None, list[PrivatePropertyDescriptor] `` None, ExceptionDetails ` None]]
     """
-    params: T_JSON_DICT = dict()
-    params["objectId"] = object_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['objectId'] = object_id.to_json()
     if own_properties is not None:
-        params["ownProperties"] = own_properties
+        params['ownProperties'] = own_properties
     if accessor_properties_only is not None:
-        params["accessorPropertiesOnly"] = accessor_properties_only
+        params['accessorPropertiesOnly'] = accessor_properties_only
     if generate_preview is not None:
-        params["generatePreview"] = generate_preview
+        params['generatePreview'] = generate_preview
     if non_indexed_properties_only is not None:
-        params["nonIndexedPropertiesOnly"] = non_indexed_properties_only
+        params['nonIndexedPropertiesOnly'] = non_indexed_properties_only
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.getProperties",
-        "params": params,
+        'method': 'Runtime.getProperties',
+        'params': params,
     }
     json = yield cmd_dict
     return (
-        [PropertyDescriptor.from_json(i) for i in json["result"]],
-        [InternalPropertyDescriptor.from_json(i) for i in json["internalProperties"]]
-        if json.get("internalProperties", None) is not None
-        else None,
-        [PrivatePropertyDescriptor.from_json(i) for i in json["privateProperties"]]
-        if json.get("privateProperties", None) is not None
-        else None,
-        ExceptionDetails.from_json(json["exceptionDetails"])
-        if json.get("exceptionDetails", None) is not None
-        else None,
+        [PropertyDescriptor.from_json(i) for i in json.get('result', [])],
+        [InternalPropertyDescriptor.from_json(i) for i in json.get('internalProperties', [])],
+        [PrivatePropertyDescriptor.from_json(i) for i in json.get('privateProperties', [])],
+        ExceptionDetails.from_json_optional(json.get('exceptionDetails')),
     )
 
 
 def global_lexical_scope_names(
-    execution_context_id: typing.Optional[ExecutionContextId] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[str]]:
+    execution_context_id: ExecutionContextId | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[str]]:
     """
     Returns all let, const and class variables from global scope.
 
     :param execution_context_id: *(Optional)* Specifies in which execution context to lookup global scope variables.
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[str]]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if execution_context_id is not None:
-        params["executionContextId"] = execution_context_id.to_json()
+        params['executionContextId'] = execution_context_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.globalLexicalScopeNames",
-        "params": params,
+        'method': 'Runtime.globalLexicalScopeNames',
+        'params': params,
     }
     json = yield cmd_dict
-    return [str(i) for i in json["names"]]
+    return [str(i) for i in json.get('names', [])]
 
 
 def query_objects(
-    prototype_object_id: RemoteObjectId, object_group: typing.Optional[str] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, RemoteObject]:
+    prototype_object_id: RemoteObjectId,
+    *,
+    object_group: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, RemoteObject]:
     """
     :param prototype_object_id: Identifier of the prototype to return objects for.
     :param object_group: *(Optional)* Symbolic group name that can be used to release the results.
-    :returns: Array with objects.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, RemoteObject]
     """
-    params: T_JSON_DICT = dict()
-    params["prototypeObjectId"] = prototype_object_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['prototypeObjectId'] = prototype_object_id.to_json()
     if object_group is not None:
-        params["objectGroup"] = object_group
+        params['objectGroup'] = object_group
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.queryObjects",
-        "params": params,
+        'method': 'Runtime.queryObjects',
+        'params': params,
     }
     json = yield cmd_dict
-    return RemoteObject.from_json(json["objects"])
+    return RemoteObject.from_json(json['objects'])
 
 
 def release_object(
     object_id: RemoteObjectId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Releases remote object with given id.
 
     :param object_id: Identifier of the object to release.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["objectId"] = object_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['objectId'] = object_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.releaseObject",
-        "params": params,
+        'method': 'Runtime.releaseObject',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def release_object_group(
     object_group: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Releases all remote objects that belong to a given group.
 
     :param object_group: Symbolic object group name.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["objectGroup"] = object_group
+
+    params: T_JSON_DICT = {}
+    params['objectGroup'] = object_group
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.releaseObjectGroup",
-        "params": params,
+        'method': 'Runtime.releaseObjectGroup',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def run_if_waiting_for_debugger() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def run_if_waiting_for_debugger() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Tells inspected instance to run if it was waiting for debugger to attach.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.runIfWaitingForDebugger",
+        'method': 'Runtime.runIfWaitingForDebugger',
     }
     json = yield cmd_dict
 
 
 def run_script(
     script_id: ScriptId,
-    execution_context_id: typing.Optional[ExecutionContextId] = None,
-    object_group: typing.Optional[str] = None,
-    silent: typing.Optional[bool] = None,
-    include_command_line_api: typing.Optional[bool] = None,
-    return_by_value: typing.Optional[bool] = None,
-    generate_preview: typing.Optional[bool] = None,
-    await_promise: typing.Optional[bool] = None,
-) -> typing.Generator[
-    T_JSON_DICT,
-    T_JSON_DICT,
-    typing.Tuple[RemoteObject, typing.Optional[ExceptionDetails]],
-]:
+    *,
+    execution_context_id: ExecutionContextId | None = None,
+    object_group: str | None = None,
+    silent: bool | None = None,
+    include_command_line_api: bool | None = None,
+    return_by_value: bool | None = None,
+    generate_preview: bool | None = None,
+    await_promise: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[RemoteObject, ExceptionDetails | None]]:
     """
     Runs script with given id in a given context.
 
@@ -1406,114 +1454,122 @@ def run_script(
     :param include_command_line_api: *(Optional)* Determines whether Command Line API should be available during the evaluation.
     :param return_by_value: *(Optional)* Whether the result is expected to be a JSON object which should be sent by value.
     :param generate_preview: *(Optional)* Whether preview should be generated for the result.
-    :param await_promise: *(Optional)* Whether execution should ````await``` for resulting value and return once awaited promise is resolved.
-    :returns: A tuple with the following items:
-
-        0. **result** - Run result.
-        1. **exceptionDetails** - *(Optional)* Exception details.
+    :param await_promise: *(Optional)* Whether execution should ````await```` for resulting value and return once awaited promise is resolved.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[RemoteObject, ExceptionDetails `` None]]
     """
-    params: T_JSON_DICT = dict()
-    params["scriptId"] = script_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['scriptId'] = script_id.to_json()
     if execution_context_id is not None:
-        params["executionContextId"] = execution_context_id.to_json()
+        params['executionContextId'] = execution_context_id.to_json()
     if object_group is not None:
-        params["objectGroup"] = object_group
+        params['objectGroup'] = object_group
     if silent is not None:
-        params["silent"] = silent
+        params['silent'] = silent
     if include_command_line_api is not None:
-        params["includeCommandLineAPI"] = include_command_line_api
+        params['includeCommandLineAPI'] = include_command_line_api
     if return_by_value is not None:
-        params["returnByValue"] = return_by_value
+        params['returnByValue'] = return_by_value
     if generate_preview is not None:
-        params["generatePreview"] = generate_preview
+        params['generatePreview'] = generate_preview
     if await_promise is not None:
-        params["awaitPromise"] = await_promise
+        params['awaitPromise'] = await_promise
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.runScript",
-        "params": params,
+        'method': 'Runtime.runScript',
+        'params': params,
     }
     json = yield cmd_dict
-    return (
-        RemoteObject.from_json(json["result"]),
-        ExceptionDetails.from_json(json["exceptionDetails"])
-        if json.get("exceptionDetails", None) is not None
-        else None,
-    )
+    return (RemoteObject.from_json(json['result']), ExceptionDetails.from_json_optional(json.get('exceptionDetails')))
 
 
 def set_async_call_stack_depth(
     max_depth: int,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables or disables async call stacks tracking.
 
     :param max_depth: Maximum depth of async call stacks. Setting to ```0``` will effectively disable collecting async call stacks (default).
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["maxDepth"] = max_depth
+
+    params: T_JSON_DICT = {}
+    params['maxDepth'] = max_depth
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.setAsyncCallStackDepth",
-        "params": params,
+        'method': 'Runtime.setAsyncCallStackDepth',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_custom_object_formatter_enabled(
+    *,
     enabled: bool,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
 
 
     **EXPERIMENTAL**
 
     :param enabled:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["enabled"] = enabled
+
+    params: T_JSON_DICT = {}
+    params['enabled'] = enabled
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.setCustomObjectFormatterEnabled",
-        "params": params,
+        'method': 'Runtime.setCustomObjectFormatterEnabled',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def set_max_call_stack_size_to_capture(
     size: int,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
 
 
     **EXPERIMENTAL**
 
     :param size:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["size"] = size
+
+    params: T_JSON_DICT = {}
+    params['size'] = size
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.setMaxCallStackSizeToCapture",
-        "params": params,
+        'method': 'Runtime.setMaxCallStackSizeToCapture',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def terminate_execution() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def terminate_execution() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Terminate current or next JavaScript execution.
     Will cancel the termination when the outer-most script execution ends.
 
     **EXPERIMENTAL**
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.terminateExecution",
+        'method': 'Runtime.terminateExecution',
     }
     json = yield cmd_dict
 
 
 def add_binding(
     name: str,
-    execution_context_id: typing.Optional[ExecutionContextId] = None,
-    execution_context_name: typing.Optional[str] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    execution_context_id: ExecutionContextId | None = None,
+    execution_context_name: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     If executionContextId is empty, adds binding with the given name on the
     global objects of all inspected contexts, including those created later,
@@ -1525,39 +1581,47 @@ def add_binding(
     :param name:
     :param execution_context_id: **(DEPRECATED)** **(EXPERIMENTAL)** *(Optional)* If specified, the binding would only be exposed to the specified execution context. If omitted and ```executionContextName```` is not set, the binding is exposed to all execution contexts of the target. This parameter is mutually exclusive with ````executionContextName````. Deprecated in favor of ````executionContextName```` due to an unclear use case and bugs in implementation (crbug.com/1169639). ````executionContextId```` will be removed in the future.
     :param execution_context_name: *(Optional)* If specified, the binding is exposed to the executionContext with matching name, even for contexts created after the binding is added. See also ````ExecutionContext.name```` and ````worldName```` parameter to ````Page.addScriptToEvaluateOnNewDocument````. This parameter is mutually exclusive with ````executionContextId```.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["name"] = name
+
+    params: T_JSON_DICT = {}
+    params['name'] = name
     if execution_context_id is not None:
-        params["executionContextId"] = execution_context_id.to_json()
+        params['executionContextId'] = execution_context_id.to_json()
     if execution_context_name is not None:
-        params["executionContextName"] = execution_context_name
+        params['executionContextName'] = execution_context_name
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.addBinding",
-        "params": params,
+        'method': 'Runtime.addBinding',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def remove_binding(name: str) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def remove_binding(
+    name: str,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     This method does not remove binding function from global object but
     unsubscribes current runtime agent from Runtime.bindingCalled notifications.
 
     :param name:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["name"] = name
+
+    params: T_JSON_DICT = {}
+    params['name'] = name
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.removeBinding",
-        "params": params,
+        'method': 'Runtime.removeBinding',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def get_exception_details(
     error_object_id: RemoteObjectId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.Optional[ExceptionDetails]]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, ExceptionDetails | None]:
     """
     This method tries to lookup and populate exception details for a
     JavaScript Error object.
@@ -1568,23 +1632,21 @@ def get_exception_details(
     **EXPERIMENTAL**
 
     :param error_object_id: The error object for which to resolve the exception details.
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, ExceptionDetails ` None]
     """
-    params: T_JSON_DICT = dict()
-    params["errorObjectId"] = error_object_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['errorObjectId'] = error_object_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Runtime.getExceptionDetails",
-        "params": params,
+        'method': 'Runtime.getExceptionDetails',
+        'params': params,
     }
     json = yield cmd_dict
-    return (
-        ExceptionDetails.from_json(json["exceptionDetails"])
-        if json.get("exceptionDetails", None) is not None
-        else None
-    )
+    return ExceptionDetails.from_json_optional(json.get('exceptionDetails'))
 
 
-@event_class("Runtime.bindingCalled")
+@event_type('Runtime.bindingCalled')
 @dataclass
 class BindingCalled:
     """
@@ -1601,15 +1663,19 @@ class BindingCalled:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> BindingCalled:
         return cls(
-            name=str(json["name"]),
-            payload=str(json["payload"]),
-            execution_context_id=ExecutionContextId.from_json(
-                json["executionContextId"]
-            ),
+            name=str(json['name']),
+            payload=str(json['payload']),
+            execution_context_id=ExecutionContextId.from_json(json['executionContextId']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> BindingCalled | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Runtime.consoleAPICalled")
+
+@event_type('Runtime.consoleAPICalled')
 @dataclass
 class ConsoleAPICalled:
     """
@@ -1619,7 +1685,7 @@ class ConsoleAPICalled:
     #: Type of the call.
     type_: str
     #: Call arguments.
-    args: typing.List[RemoteObject]
+    args: list[RemoteObject]
     #: Identifier of the context where the call was made.
     execution_context_id: ExecutionContextId
     #: Call timestamp.
@@ -1627,31 +1693,31 @@ class ConsoleAPICalled:
     #: Stack trace captured when the call was made. The async stack chain is automatically reported for
     #: the following call types: ``assert``, ``error``, ``trace``, ``warning``. For other types the async call
     #: chain can be retrieved using ``Debugger.getStackTrace`` and ``stackTrace.parentId`` field.
-    stack_trace: typing.Optional[StackTrace]
+    stack_trace: StackTrace | None
     #: Console context descriptor for calls on non-default console context (not console.*):
     #: 'anonymous#unique-logger-id' for call on unnamed context, 'name#unique-logger-id' for call
     #: on named context.
-    context: typing.Optional[str]
+    context: str | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ConsoleAPICalled:
         return cls(
-            type_=str(json["type"]),
-            args=[RemoteObject.from_json(i) for i in json["args"]],
-            execution_context_id=ExecutionContextId.from_json(
-                json["executionContextId"]
-            ),
-            timestamp=Timestamp.from_json(json["timestamp"]),
-            stack_trace=StackTrace.from_json(json["stackTrace"])
-            if json.get("stackTrace", None) is not None
-            else None,
-            context=str(json["context"])
-            if json.get("context", None) is not None
-            else None,
+            type_=str(json['type']),
+            args=[RemoteObject.from_json(i) for i in json.get('args', [])],
+            execution_context_id=ExecutionContextId.from_json(json['executionContextId']),
+            timestamp=Timestamp.from_json(json['timestamp']),
+            stack_trace=StackTrace.from_json_optional(json.get('stackTrace')),
+            context=None if json.get('context') is None else str(json['context']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ConsoleAPICalled | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Runtime.exceptionRevoked")
+
+@event_type('Runtime.exceptionRevoked')
 @dataclass
 class ExceptionRevoked:
     """
@@ -1665,10 +1731,19 @@ class ExceptionRevoked:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ExceptionRevoked:
-        return cls(reason=str(json["reason"]), exception_id=int(json["exceptionId"]))
+        return cls(
+            reason=str(json['reason']),
+            exception_id=int(json['exceptionId']),
+        )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ExceptionRevoked | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Runtime.exceptionThrown")
+@event_type('Runtime.exceptionThrown')
 @dataclass
 class ExceptionThrown:
     """
@@ -1682,12 +1757,18 @@ class ExceptionThrown:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ExceptionThrown:
         return cls(
-            timestamp=Timestamp.from_json(json["timestamp"]),
-            exception_details=ExceptionDetails.from_json(json["exceptionDetails"]),
+            timestamp=Timestamp.from_json(json['timestamp']),
+            exception_details=ExceptionDetails.from_json(json['exceptionDetails']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ExceptionThrown | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Runtime.executionContextCreated")
+
+@event_type('Runtime.executionContextCreated')
 @dataclass
 class ExecutionContextCreated:
     """
@@ -1699,10 +1780,18 @@ class ExecutionContextCreated:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ExecutionContextCreated:
-        return cls(context=ExecutionContextDescription.from_json(json["context"]))
+        return cls(
+            context=ExecutionContextDescription.from_json(json['context']),
+        )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ExecutionContextCreated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("Runtime.executionContextDestroyed")
+@event_type('Runtime.executionContextDestroyed')
 @dataclass
 class ExecutionContextDestroyed:
     """
@@ -1717,14 +1806,18 @@ class ExecutionContextDestroyed:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ExecutionContextDestroyed:
         return cls(
-            execution_context_id=ExecutionContextId.from_json(
-                json["executionContextId"]
-            ),
-            execution_context_unique_id=str(json["executionContextUniqueId"]),
+            execution_context_id=ExecutionContextId.from_json(json['executionContextId']),
+            execution_context_unique_id=str(json['executionContextUniqueId']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ExecutionContextDestroyed | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Runtime.executionContextsCleared")
+
+@event_type('Runtime.executionContextsCleared')
 @dataclass
 class ExecutionContextsCleared:
     """
@@ -1735,8 +1828,14 @@ class ExecutionContextsCleared:
     def from_json(cls, json: T_JSON_DICT) -> ExecutionContextsCleared:
         return cls()
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ExecutionContextsCleared | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Runtime.inspectRequested")
+
+@event_type('Runtime.inspectRequested')
 @dataclass
 class InspectRequested:
     """
@@ -1747,16 +1846,18 @@ class InspectRequested:
     object_: RemoteObject
     hints: dict
     #: Identifier of the context where the call was made.
-    execution_context_id: typing.Optional[ExecutionContextId]
+    execution_context_id: ExecutionContextId | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> InspectRequested:
         return cls(
-            object_=RemoteObject.from_json(json["object"]),
-            hints=dict(json["hints"]),
-            execution_context_id=ExecutionContextId.from_json(
-                json["executionContextId"]
-            )
-            if json.get("executionContextId", None) is not None
-            else None,
+            object_=RemoteObject.from_json(json['object']),
+            hints=dict(json['hints']),
+            execution_context_id=ExecutionContextId.from_json_optional(json.get('executionContextId')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> InspectRequested | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

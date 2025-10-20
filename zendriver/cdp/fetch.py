@@ -3,17 +3,28 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Fetch
 
 from __future__ import annotations
+
 import enum
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
 
-from . import io
-from . import network
-from . import page
+from . import io, network, page
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
+
+
+# ruff: noqa: FURB189
 
 
 class RequestId(str):
@@ -23,6 +34,8 @@ class RequestId(str):
     a network request.
     """
 
+    __slots__ = ()
+
     def to_json(self) -> str:
         return self
 
@@ -30,8 +43,14 @@ class RequestId(str):
     def from_json(cls, json: str) -> RequestId:
         return cls(json)
 
-    def __repr__(self):
-        return "RequestId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> RequestId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'RequestId({super().__repr__()})'
 
 
 class RequestStage(enum.Enum):
@@ -41,8 +60,8 @@ class RequestStage(enum.Enum):
     body is received).
     """
 
-    REQUEST = "Request"
-    RESPONSE = "Response"
+    REQUEST = 'Request'
+    RESPONSE = 'Response'
 
     def to_json(self) -> str:
         return self.value
@@ -51,42 +70,48 @@ class RequestStage(enum.Enum):
     def from_json(cls, json: str) -> RequestStage:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> RequestStage | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 @dataclass
 class RequestPattern:
     #: Wildcards (``'*'`` -> zero or more, ``'?'`` -> exactly one) are allowed. Escape character is
     #: backslash. Omitting is equivalent to ``"*"``.
-    url_pattern: typing.Optional[str] = None
+    url_pattern: str | None = None
 
     #: If set, only requests for matching resource types will be intercepted.
-    resource_type: typing.Optional[network.ResourceType] = None
+    resource_type: network.ResourceType | None = None
 
     #: Stage at which to begin intercepting requests. Default is Request.
-    request_stage: typing.Optional[RequestStage] = None
+    request_stage: RequestStage | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
+        json: T_JSON_DICT = {}
         if self.url_pattern is not None:
-            json["urlPattern"] = self.url_pattern
+            json['urlPattern'] = self.url_pattern
         if self.resource_type is not None:
-            json["resourceType"] = self.resource_type.to_json()
+            json['resourceType'] = self.resource_type.to_json()
         if self.request_stage is not None:
-            json["requestStage"] = self.request_stage.to_json()
+            json['requestStage'] = self.request_stage.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> RequestPattern:
         return cls(
-            url_pattern=str(json["urlPattern"])
-            if json.get("urlPattern", None) is not None
-            else None,
-            resource_type=network.ResourceType.from_json(json["resourceType"])
-            if json.get("resourceType", None) is not None
-            else None,
-            request_stage=RequestStage.from_json(json["requestStage"])
-            if json.get("requestStage", None) is not None
-            else None,
+            url_pattern=None if json.get('urlPattern') is None else str(json['urlPattern']),
+            resource_type=network.ResourceType.from_json_optional(json.get('resourceType')),
+            request_stage=RequestStage.from_json_optional(json.get('requestStage')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> RequestPattern | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -100,17 +125,23 @@ class HeaderEntry:
     value: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
-        json["value"] = self.value
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
+        json['value'] = self.value
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> HeaderEntry:
         return cls(
-            name=str(json["name"]),
-            value=str(json["value"]),
+            name=str(json['name']),
+            value=str(json['value']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> HeaderEntry | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -129,27 +160,31 @@ class AuthChallenge:
     realm: str
 
     #: Source of the authentication challenge.
-    source: typing.Optional[str] = None
+    source: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["origin"] = self.origin
-        json["scheme"] = self.scheme
-        json["realm"] = self.realm
+        json: T_JSON_DICT = {}
+        json['origin'] = self.origin
+        json['scheme'] = self.scheme
+        json['realm'] = self.realm
         if self.source is not None:
-            json["source"] = self.source
+            json['source'] = self.source
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AuthChallenge:
         return cls(
-            origin=str(json["origin"]),
-            scheme=str(json["scheme"]),
-            realm=str(json["realm"]),
-            source=str(json["source"])
-            if json.get("source", None) is not None
-            else None,
+            origin=str(json['origin']),
+            scheme=str(json['scheme']),
+            realm=str(json['realm']),
+            source=None if json.get('source') is None else str(json['source']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AuthChallenge | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -165,82 +200,95 @@ class AuthChallengeResponse:
 
     #: The username to provide, possibly empty. Should only be set if response is
     #: ProvideCredentials.
-    username: typing.Optional[str] = None
+    username: str | None = None
 
     #: The password to provide, possibly empty. Should only be set if response is
     #: ProvideCredentials.
-    password: typing.Optional[str] = None
+    password: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["response"] = self.response
+        json: T_JSON_DICT = {}
+        json['response'] = self.response
         if self.username is not None:
-            json["username"] = self.username
+            json['username'] = self.username
         if self.password is not None:
-            json["password"] = self.password
+            json['password'] = self.password
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AuthChallengeResponse:
         return cls(
-            response=str(json["response"]),
-            username=str(json["username"])
-            if json.get("username", None) is not None
-            else None,
-            password=str(json["password"])
-            if json.get("password", None) is not None
-            else None,
+            response=str(json['response']),
+            username=None if json.get('username') is None else str(json['username']),
+            password=None if json.get('password') is None else str(json['password']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AuthChallengeResponse | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disables the fetch domain.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Fetch.disable",
+        'method': 'Fetch.disable',
     }
     json = yield cmd_dict
 
 
 def enable(
-    patterns: typing.Optional[typing.List[RequestPattern]] = None,
-    handle_auth_requests: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    patterns: list[RequestPattern] | None = None,
+    handle_auth_requests: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables issuing of requestPaused events. A request will be paused until client
     calls one of failRequest, fulfillRequest or continueRequest/continueWithAuth.
 
     :param patterns: *(Optional)* If specified, only requests matching any of these patterns will produce fetchRequested event and will be paused until clients response. If not set, all requests will be affected.
     :param handle_auth_requests: *(Optional)* If true, authRequired events will be issued and requests will be paused expecting a call to continueWithAuth.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if patterns is not None:
-        params["patterns"] = [i.to_json() for i in patterns]
+        params['patterns'] = [i.to_json() for i in patterns]
     if handle_auth_requests is not None:
-        params["handleAuthRequests"] = handle_auth_requests
+        params['handleAuthRequests'] = handle_auth_requests
     cmd_dict: T_JSON_DICT = {
-        "method": "Fetch.enable",
-        "params": params,
+        'method': 'Fetch.enable',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def fail_request(
-    request_id: RequestId, error_reason: network.ErrorReason
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    request_id: RequestId,
+    error_reason: network.ErrorReason,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Causes the request to fail with specified reason.
 
     :param request_id: An id the client received in requestPaused event.
     :param error_reason: Causes the request to fail with the given reason.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["requestId"] = request_id.to_json()
-    params["errorReason"] = error_reason.to_json()
+
+    params: T_JSON_DICT = {}
+    params['requestId'] = request_id.to_json()
+    params['errorReason'] = error_reason.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Fetch.failRequest",
-        "params": params,
+        'method': 'Fetch.failRequest',
+        'params': params,
     }
     json = yield cmd_dict
 
@@ -248,12 +296,13 @@ def fail_request(
 def fulfill_request(
     request_id: RequestId,
     response_code: int,
-    response_headers: typing.Optional[typing.List[HeaderEntry]] = None,
-    binary_response_headers: typing.Optional[str] = None,
-    body: typing.Optional[str] = None,
-    response_phrase: typing.Optional[str] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
-    r"""
+    *,
+    response_headers: list[HeaderEntry] | None = None,
+    binary_response_headers: str | None = None,
+    body: str | None = None,
+    response_phrase: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
+    R"""
     Provides response to the request.
 
     :param request_id: An id the client received in requestPaused event.
@@ -262,33 +311,37 @@ def fulfill_request(
     :param binary_response_headers: *(Optional)* Alternative way of specifying response headers as a \0-separated series of name: value pairs. Prefer the above method unless you need to represent some non-UTF8 values that can't be transmitted over the protocol as text. (Encoded as a base64 string when passed over JSON)
     :param body: *(Optional)* A response body. If absent, original response body will be used if the request is intercepted at the response stage and empty body will be used if the request is intercepted at the request stage. (Encoded as a base64 string when passed over JSON)
     :param response_phrase: *(Optional)* A textual representation of responseCode. If absent, a standard phrase matching responseCode is used.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["requestId"] = request_id.to_json()
-    params["responseCode"] = response_code
+
+    params: T_JSON_DICT = {}
+    params['requestId'] = request_id.to_json()
+    params['responseCode'] = response_code
     if response_headers is not None:
-        params["responseHeaders"] = [i.to_json() for i in response_headers]
+        params['responseHeaders'] = [i.to_json() for i in response_headers]
     if binary_response_headers is not None:
-        params["binaryResponseHeaders"] = binary_response_headers
+        params['binaryResponseHeaders'] = binary_response_headers
     if body is not None:
-        params["body"] = body
+        params['body'] = body
     if response_phrase is not None:
-        params["responsePhrase"] = response_phrase
+        params['responsePhrase'] = response_phrase
     cmd_dict: T_JSON_DICT = {
-        "method": "Fetch.fulfillRequest",
-        "params": params,
+        'method': 'Fetch.fulfillRequest',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def continue_request(
     request_id: RequestId,
-    url: typing.Optional[str] = None,
-    method: typing.Optional[str] = None,
-    post_data: typing.Optional[str] = None,
-    headers: typing.Optional[typing.List[HeaderEntry]] = None,
-    intercept_response: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    url: str | None = None,
+    method: str | None = None,
+    post_data: str | None = None,
+    headers: list[HeaderEntry] | None = None,
+    intercept_response: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Continues the request, optionally modifying some of its parameters.
 
@@ -298,53 +351,61 @@ def continue_request(
     :param post_data: *(Optional)* If set, overrides the post data in the request. (Encoded as a base64 string when passed over JSON)
     :param headers: *(Optional)* If set, overrides the request headers. Note that the overrides do not extend to subsequent redirect hops, if a redirect happens. Another override may be applied to a different request produced by a redirect.
     :param intercept_response: **(EXPERIMENTAL)** *(Optional)* If set, overrides response interception behavior for this request.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["requestId"] = request_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['requestId'] = request_id.to_json()
     if url is not None:
-        params["url"] = url
+        params['url'] = url
     if method is not None:
-        params["method"] = method
+        params['method'] = method
     if post_data is not None:
-        params["postData"] = post_data
+        params['postData'] = post_data
     if headers is not None:
-        params["headers"] = [i.to_json() for i in headers]
+        params['headers'] = [i.to_json() for i in headers]
     if intercept_response is not None:
-        params["interceptResponse"] = intercept_response
+        params['interceptResponse'] = intercept_response
     cmd_dict: T_JSON_DICT = {
-        "method": "Fetch.continueRequest",
-        "params": params,
+        'method': 'Fetch.continueRequest',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def continue_with_auth(
-    request_id: RequestId, auth_challenge_response: AuthChallengeResponse
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    request_id: RequestId,
+    auth_challenge_response: AuthChallengeResponse,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Continues a request supplying authChallengeResponse following authRequired event.
 
     :param request_id: An id the client received in authRequired event.
     :param auth_challenge_response: Response to  with an authChallenge.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["requestId"] = request_id.to_json()
-    params["authChallengeResponse"] = auth_challenge_response.to_json()
+
+    params: T_JSON_DICT = {}
+    params['requestId'] = request_id.to_json()
+    params['authChallengeResponse'] = auth_challenge_response.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Fetch.continueWithAuth",
-        "params": params,
+        'method': 'Fetch.continueWithAuth',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def continue_response(
     request_id: RequestId,
-    response_code: typing.Optional[int] = None,
-    response_phrase: typing.Optional[str] = None,
-    response_headers: typing.Optional[typing.List[HeaderEntry]] = None,
-    binary_response_headers: typing.Optional[str] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
-    r"""
+    *,
+    response_code: int | None = None,
+    response_phrase: str | None = None,
+    response_headers: list[HeaderEntry] | None = None,
+    binary_response_headers: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
+    R"""
     Continues loading of the paused response, optionally modifying the
     response headers. If either responseCode or headers are modified, all of them
     must be present.
@@ -356,27 +417,30 @@ def continue_response(
     :param response_phrase: *(Optional)* A textual representation of responseCode. If absent, a standard phrase matching responseCode is used.
     :param response_headers: *(Optional)* Response headers. If absent, original response headers will be used.
     :param binary_response_headers: *(Optional)* Alternative way of specifying response headers as a \0-separated series of name: value pairs. Prefer the above method unless you need to represent some non-UTF8 values that can't be transmitted over the protocol as text. (Encoded as a base64 string when passed over JSON)
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["requestId"] = request_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['requestId'] = request_id.to_json()
     if response_code is not None:
-        params["responseCode"] = response_code
+        params['responseCode'] = response_code
     if response_phrase is not None:
-        params["responsePhrase"] = response_phrase
+        params['responsePhrase'] = response_phrase
     if response_headers is not None:
-        params["responseHeaders"] = [i.to_json() for i in response_headers]
+        params['responseHeaders'] = [i.to_json() for i in response_headers]
     if binary_response_headers is not None:
-        params["binaryResponseHeaders"] = binary_response_headers
+        params['binaryResponseHeaders'] = binary_response_headers
     cmd_dict: T_JSON_DICT = {
-        "method": "Fetch.continueResponse",
-        "params": params,
+        'method': 'Fetch.continueResponse',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def get_response_body(
     request_id: RequestId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.Tuple[str, bool]]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[str, bool]]:
     """
     Causes the body of the response to be received from the server and
     returned as a single string. May only be issued for a request that
@@ -390,24 +454,23 @@ def get_response_body(
     comments to ``requestPaused`` for details.
 
     :param request_id: Identifier for the intercepted request to get body for.
-    :returns: A tuple with the following items:
-
-        0. **body** - Response body.
-        1. **base64Encoded** - True, if content was sent as base64.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[str, bool]]
     """
-    params: T_JSON_DICT = dict()
-    params["requestId"] = request_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['requestId'] = request_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Fetch.getResponseBody",
-        "params": params,
+        'method': 'Fetch.getResponseBody',
+        'params': params,
     }
     json = yield cmd_dict
-    return (str(json["body"]), bool(json["base64Encoded"]))
+    return (str(json['body']), bool(json['base64Encoded']))
 
 
 def take_response_body_as_stream(
     request_id: RequestId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, io.StreamHandle]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, io.StreamHandle]:
     """
     Returns a handle to the stream representing the response body.
     The request must be paused in the HeadersReceived stage.
@@ -421,19 +484,21 @@ def take_response_body_as_stream(
     domain before body is received results in an undefined behavior.
 
     :param request_id:
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, io.StreamHandle]
     """
-    params: T_JSON_DICT = dict()
-    params["requestId"] = request_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['requestId'] = request_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "Fetch.takeResponseBodyAsStream",
-        "params": params,
+        'method': 'Fetch.takeResponseBodyAsStream',
+        'params': params,
     }
     json = yield cmd_dict
-    return io.StreamHandle.from_json(json["stream"])
+    return io.StreamHandle.from_json(json['stream'])
 
 
-@event_class("Fetch.requestPaused")
+@event_type('Fetch.requestPaused')
 @dataclass
 class RequestPaused:
     """
@@ -459,51 +524,43 @@ class RequestPaused:
     #: How the requested resource will be used.
     resource_type: network.ResourceType
     #: Response error if intercepted at response stage.
-    response_error_reason: typing.Optional[network.ErrorReason]
+    response_error_reason: network.ErrorReason | None
     #: Response code if intercepted at response stage.
-    response_status_code: typing.Optional[int]
+    response_status_code: int | None
     #: Response status text if intercepted at response stage.
-    response_status_text: typing.Optional[str]
+    response_status_text: str | None
     #: Response headers if intercepted at the response stage.
-    response_headers: typing.Optional[typing.List[HeaderEntry]]
+    response_headers: list[HeaderEntry]
     #: If the intercepted request had a corresponding Network.requestWillBeSent event fired for it,
     #: then this networkId will be the same as the requestId present in the requestWillBeSent event.
-    network_id: typing.Optional[network.RequestId]
+    network_id: network.RequestId | None
     #: If the request is due to a redirect response from the server, the id of the request that
     #: has caused the redirect.
-    redirected_request_id: typing.Optional[RequestId]
+    redirected_request_id: RequestId | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> RequestPaused:
         return cls(
-            request_id=RequestId.from_json(json["requestId"]),
-            request=network.Request.from_json(json["request"]),
-            frame_id=page.FrameId.from_json(json["frameId"]),
-            resource_type=network.ResourceType.from_json(json["resourceType"]),
-            response_error_reason=network.ErrorReason.from_json(
-                json["responseErrorReason"]
-            )
-            if json.get("responseErrorReason", None) is not None
-            else None,
-            response_status_code=int(json["responseStatusCode"])
-            if json.get("responseStatusCode", None) is not None
-            else None,
-            response_status_text=str(json["responseStatusText"])
-            if json.get("responseStatusText", None) is not None
-            else None,
-            response_headers=[HeaderEntry.from_json(i) for i in json["responseHeaders"]]
-            if json.get("responseHeaders", None) is not None
-            else None,
-            network_id=network.RequestId.from_json(json["networkId"])
-            if json.get("networkId", None) is not None
-            else None,
-            redirected_request_id=RequestId.from_json(json["redirectedRequestId"])
-            if json.get("redirectedRequestId", None) is not None
-            else None,
+            request_id=RequestId.from_json(json['requestId']),
+            request=network.Request.from_json(json['request']),
+            frame_id=page.FrameId.from_json(json['frameId']),
+            resource_type=network.ResourceType.from_json(json['resourceType']),
+            response_error_reason=network.ErrorReason.from_json_optional(json.get('responseErrorReason')),
+            response_status_code=None if json.get('responseStatusCode') is None else int(json['responseStatusCode']),
+            response_status_text=None if json.get('responseStatusText') is None else str(json['responseStatusText']),
+            response_headers=[HeaderEntry.from_json(i) for i in json.get('responseHeaders', [])],
+            network_id=network.RequestId.from_json_optional(json.get('networkId')),
+            redirected_request_id=RequestId.from_json_optional(json.get('redirectedRequestId')),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> RequestPaused | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("Fetch.authRequired")
+
+@event_type('Fetch.authRequired')
 @dataclass
 class AuthRequired:
     """
@@ -527,9 +584,15 @@ class AuthRequired:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AuthRequired:
         return cls(
-            request_id=RequestId.from_json(json["requestId"]),
-            request=network.Request.from_json(json["request"]),
-            frame_id=page.FrameId.from_json(json["frameId"]),
-            resource_type=network.ResourceType.from_json(json["resourceType"]),
-            auth_challenge=AuthChallenge.from_json(json["authChallenge"]),
+            request_id=RequestId.from_json(json['requestId']),
+            request=network.Request.from_json(json['request']),
+            frame_id=page.FrameId.from_json(json['frameId']),
+            resource_type=network.ResourceType.from_json(json['resourceType']),
+            auth_challenge=AuthChallenge.from_json(json['authChallenge']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AuthRequired | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

@@ -3,16 +3,25 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: Performance
 
 from __future__ import annotations
-import enum
+
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+
+from deprecated.sphinx import deprecated
+
+from .util import event_type
 
 
-from deprecated.sphinx import deprecated  # type: ignore
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 @dataclass
@@ -28,51 +37,63 @@ class Metric:
     value: float
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
-        json["value"] = self.value
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
+        json['value'] = self.value
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Metric:
         return cls(
-            name=str(json["name"]),
-            value=float(json["value"]),
+            name=str(json['name']),
+            value=float(json['value']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Metric | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disable collecting and reporting metrics.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Performance.disable",
+        'method': 'Performance.disable',
     }
     json = yield cmd_dict
 
 
 def enable(
-    time_domain: typing.Optional[str] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    time_domain: str | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enable collecting and reporting metrics.
 
     :param time_domain: *(Optional)* Time domain to use for collecting and reporting duration metrics.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if time_domain is not None:
-        params["timeDomain"] = time_domain
+        params['timeDomain'] = time_domain
     cmd_dict: T_JSON_DICT = {
-        "method": "Performance.enable",
-        "params": params,
+        'method': 'Performance.enable',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-@deprecated(version="1.3")
+@deprecated(version='1.3')
 def set_time_domain(
     time_domain: str,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Sets time domain to use for collecting and reporting duration metrics.
     Note that this must be called before enabling metrics collection. Calling
@@ -83,30 +104,35 @@ def set_time_domain(
     **EXPERIMENTAL**
 
     :param time_domain: Time domain
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["timeDomain"] = time_domain
+
+    params: T_JSON_DICT = {}
+    params['timeDomain'] = time_domain
     cmd_dict: T_JSON_DICT = {
-        "method": "Performance.setTimeDomain",
-        "params": params,
+        'method': 'Performance.setTimeDomain',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def get_metrics() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[Metric]]:
+def get_metrics() -> Generator[T_JSON_DICT, T_JSON_DICT, list[Metric]]:
     """
     Retrieve current values of run-time metrics.
 
-    :returns: Current values for run-time metrics.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[Metric]]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "Performance.getMetrics",
+        'method': 'Performance.getMetrics',
     }
     json = yield cmd_dict
-    return [Metric.from_json(i) for i in json["metrics"]]
+    return [Metric.from_json(i) for i in json.get('metrics', [])]
 
 
-@event_class("Performance.metrics")
+@event_type('Performance.metrics')
 @dataclass
 class Metrics:
     """
@@ -114,13 +140,19 @@ class Metrics:
     """
 
     #: Current values of the metrics.
-    metrics: typing.List[Metric]
+    metrics: list[Metric]
     #: Timestamp title.
     title: str
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Metrics:
         return cls(
-            metrics=[Metric.from_json(i) for i in json["metrics"]],
-            title=str(json["title"]),
+            metrics=[Metric.from_json(i) for i in json.get('metrics', [])],
+            title=str(json['title']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Metrics | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

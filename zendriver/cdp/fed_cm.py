@@ -3,13 +3,24 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: FedCm (experimental)
 
 from __future__ import annotations
+
 import enum
 import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
 
 
 class LoginState(enum.Enum):
@@ -18,8 +29,8 @@ class LoginState(enum.Enum):
     whether this account has ever been used to sign in to this RP before.
     """
 
-    SIGN_IN = "SignIn"
-    SIGN_UP = "SignUp"
+    SIGN_IN = 'SignIn'
+    SIGN_UP = 'SignUp'
 
     def to_json(self) -> str:
         return self.value
@@ -28,16 +39,22 @@ class LoginState(enum.Enum):
     def from_json(cls, json: str) -> LoginState:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> LoginState | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class DialogType(enum.Enum):
     """
     The types of FedCM dialogs.
     """
 
-    ACCOUNT_CHOOSER = "AccountChooser"
-    AUTO_REAUTHN = "AutoReauthn"
-    CONFIRM_IDP_LOGIN = "ConfirmIdpLogin"
-    ERROR = "Error"
+    ACCOUNT_CHOOSER = 'AccountChooser'
+    AUTO_REAUTHN = 'AutoReauthn'
+    CONFIRM_IDP_LOGIN = 'ConfirmIdpLogin'
+    ERROR = 'Error'
 
     def to_json(self) -> str:
         return self.value
@@ -46,15 +63,21 @@ class DialogType(enum.Enum):
     def from_json(cls, json: str) -> DialogType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> DialogType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class DialogButton(enum.Enum):
     """
     The buttons on the FedCM dialog.
     """
 
-    CONFIRM_IDP_LOGIN_CONTINUE = "ConfirmIdpLoginContinue"
-    ERROR_GOT_IT = "ErrorGotIt"
-    ERROR_MORE_DETAILS = "ErrorMoreDetails"
+    CONFIRM_IDP_LOGIN_CONTINUE = 'ConfirmIdpLoginContinue'
+    ERROR_GOT_IT = 'ErrorGotIt'
+    ERROR_MORE_DETAILS = 'ErrorMoreDetails'
 
     def to_json(self) -> str:
         return self.value
@@ -63,14 +86,20 @@ class DialogButton(enum.Enum):
     def from_json(cls, json: str) -> DialogButton:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> DialogButton | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class AccountUrlType(enum.Enum):
     """
     The URLs that each account has
     """
 
-    TERMS_OF_SERVICE = "TermsOfService"
-    PRIVACY_POLICY = "PrivacyPolicy"
+    TERMS_OF_SERVICE = 'TermsOfService'
+    PRIVACY_POLICY = 'PrivacyPolicy'
 
     def to_json(self) -> str:
         return self.value
@@ -78,6 +107,12 @@ class AccountUrlType(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> AccountUrlType:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AccountUrlType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -103,176 +138,213 @@ class Account:
     login_state: LoginState
 
     #: These two are only set if the loginState is signUp
-    terms_of_service_url: typing.Optional[str] = None
+    terms_of_service_url: str | None = None
 
-    privacy_policy_url: typing.Optional[str] = None
+    privacy_policy_url: str | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["accountId"] = self.account_id
-        json["email"] = self.email
-        json["name"] = self.name
-        json["givenName"] = self.given_name
-        json["pictureUrl"] = self.picture_url
-        json["idpConfigUrl"] = self.idp_config_url
-        json["idpLoginUrl"] = self.idp_login_url
-        json["loginState"] = self.login_state.to_json()
+        json: T_JSON_DICT = {}
+        json['accountId'] = self.account_id
+        json['email'] = self.email
+        json['name'] = self.name
+        json['givenName'] = self.given_name
+        json['pictureUrl'] = self.picture_url
+        json['idpConfigUrl'] = self.idp_config_url
+        json['idpLoginUrl'] = self.idp_login_url
+        json['loginState'] = self.login_state.to_json()
         if self.terms_of_service_url is not None:
-            json["termsOfServiceUrl"] = self.terms_of_service_url
+            json['termsOfServiceUrl'] = self.terms_of_service_url
         if self.privacy_policy_url is not None:
-            json["privacyPolicyUrl"] = self.privacy_policy_url
+            json['privacyPolicyUrl'] = self.privacy_policy_url
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Account:
         return cls(
-            account_id=str(json["accountId"]),
-            email=str(json["email"]),
-            name=str(json["name"]),
-            given_name=str(json["givenName"]),
-            picture_url=str(json["pictureUrl"]),
-            idp_config_url=str(json["idpConfigUrl"]),
-            idp_login_url=str(json["idpLoginUrl"]),
-            login_state=LoginState.from_json(json["loginState"]),
-            terms_of_service_url=str(json["termsOfServiceUrl"])
-            if json.get("termsOfServiceUrl", None) is not None
-            else None,
-            privacy_policy_url=str(json["privacyPolicyUrl"])
-            if json.get("privacyPolicyUrl", None) is not None
-            else None,
+            account_id=str(json['accountId']),
+            email=str(json['email']),
+            name=str(json['name']),
+            given_name=str(json['givenName']),
+            picture_url=str(json['pictureUrl']),
+            idp_config_url=str(json['idpConfigUrl']),
+            idp_login_url=str(json['idpLoginUrl']),
+            login_state=LoginState.from_json(json['loginState']),
+            terms_of_service_url=None if json.get('termsOfServiceUrl') is None else str(json['termsOfServiceUrl']),
+            privacy_policy_url=None if json.get('privacyPolicyUrl') is None else str(json['privacyPolicyUrl']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Account | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 def enable(
-    disable_rejection_delay: typing.Optional[bool] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    disable_rejection_delay: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param disable_rejection_delay: *(Optional)* Allows callers to disable the promise rejection delay that would normally happen, if this is unimportant to what's being tested. (step 4 of https://fedidcg.github.io/FedCM/#browser-api-rp-sign-in)
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if disable_rejection_delay is not None:
-        params["disableRejectionDelay"] = disable_rejection_delay
+        params['disableRejectionDelay'] = disable_rejection_delay
     cmd_dict: T_JSON_DICT = {
-        "method": "FedCm.enable",
-        "params": params,
+        'method': 'FedCm.enable',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
+    """
+
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
+    """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "FedCm.disable",
+        'method': 'FedCm.disable',
     }
     json = yield cmd_dict
 
 
 def select_account(
-    dialog_id: str, account_index: int
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    dialog_id: str,
+    account_index: int,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param dialog_id:
     :param account_index:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["dialogId"] = dialog_id
-    params["accountIndex"] = account_index
+
+    params: T_JSON_DICT = {}
+    params['dialogId'] = dialog_id
+    params['accountIndex'] = account_index
     cmd_dict: T_JSON_DICT = {
-        "method": "FedCm.selectAccount",
-        "params": params,
+        'method': 'FedCm.selectAccount',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def click_dialog_button(
-    dialog_id: str, dialog_button: DialogButton
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    dialog_id: str,
+    dialog_button: DialogButton,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param dialog_id:
     :param dialog_button:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["dialogId"] = dialog_id
-    params["dialogButton"] = dialog_button.to_json()
+
+    params: T_JSON_DICT = {}
+    params['dialogId'] = dialog_id
+    params['dialogButton'] = dialog_button.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "FedCm.clickDialogButton",
-        "params": params,
+        'method': 'FedCm.clickDialogButton',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def open_url(
-    dialog_id: str, account_index: int, account_url_type: AccountUrlType
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    dialog_id: str,
+    account_index: int,
+    account_url_type: AccountUrlType,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param dialog_id:
     :param account_index:
     :param account_url_type:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["dialogId"] = dialog_id
-    params["accountIndex"] = account_index
-    params["accountUrlType"] = account_url_type.to_json()
+
+    params: T_JSON_DICT = {}
+    params['dialogId'] = dialog_id
+    params['accountIndex'] = account_index
+    params['accountUrlType'] = account_url_type.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "FedCm.openUrl",
-        "params": params,
+        'method': 'FedCm.openUrl',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def dismiss_dialog(
-    dialog_id: str, trigger_cooldown: typing.Optional[bool] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    dialog_id: str,
+    *,
+    trigger_cooldown: bool | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     :param dialog_id:
     :param trigger_cooldown: *(Optional)*
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["dialogId"] = dialog_id
+
+    params: T_JSON_DICT = {}
+    params['dialogId'] = dialog_id
     if trigger_cooldown is not None:
-        params["triggerCooldown"] = trigger_cooldown
+        params['triggerCooldown'] = trigger_cooldown
     cmd_dict: T_JSON_DICT = {
-        "method": "FedCm.dismissDialog",
-        "params": params,
+        'method': 'FedCm.dismissDialog',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def reset_cooldown() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def reset_cooldown() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Resets the cooldown time, if any, to allow the next FedCM call to show
     a dialog even if one was recently dismissed by the user.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "FedCm.resetCooldown",
+        'method': 'FedCm.resetCooldown',
     }
     json = yield cmd_dict
 
 
-@event_class("FedCm.dialogShown")
+@event_type('FedCm.dialogShown')
 @dataclass
 class DialogShown:
     dialog_id: str
     dialog_type: DialogType
-    accounts: typing.List[Account]
+    accounts: list[Account]
     #: These exist primarily so that the caller can verify the
     #: RP context was used appropriately.
     title: str
-    subtitle: typing.Optional[str]
+    subtitle: str | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DialogShown:
         return cls(
-            dialog_id=str(json["dialogId"]),
-            dialog_type=DialogType.from_json(json["dialogType"]),
-            accounts=[Account.from_json(i) for i in json["accounts"]],
-            title=str(json["title"]),
-            subtitle=str(json["subtitle"])
-            if json.get("subtitle", None) is not None
-            else None,
+            dialog_id=str(json['dialogId']),
+            dialog_type=DialogType.from_json(json['dialogType']),
+            accounts=[Account.from_json(i) for i in json.get('accounts', [])],
+            title=str(json['title']),
+            subtitle=None if json.get('subtitle') is None else str(json['subtitle']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DialogShown | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("FedCm.dialogClosed")
+
+@event_type('FedCm.dialogClosed')
 @dataclass
 class DialogClosed:
     """
@@ -284,4 +356,10 @@ class DialogClosed:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DialogClosed:
-        return cls(dialog_id=str(json["dialogId"]))
+        return cls(dialog_id=str(json['dialogId']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DialogClosed | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

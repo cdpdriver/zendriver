@@ -3,15 +3,24 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: IO
 
 from __future__ import annotations
-import enum
-import typing
-from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
 
-from . import runtime
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from . import runtime
+    from .util import T_JSON_DICT
+
+
+# ruff: noqa: FURB189
 
 
 class StreamHandle(str):
@@ -20,6 +29,8 @@ class StreamHandle(str):
     ``<uuid>`` is an UUID of a Blob.
     """
 
+    __slots__ = ()
+
     def to_json(self) -> str:
         return self
 
@@ -27,78 +38,86 @@ class StreamHandle(str):
     def from_json(cls, json: str) -> StreamHandle:
         return cls(json)
 
-    def __repr__(self):
-        return "StreamHandle({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> StreamHandle | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'StreamHandle({super().__repr__()})'
 
 
-def close(handle: StreamHandle) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def close(
+    handle: StreamHandle,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Close the stream, discard any temporary backing storage.
 
     :param handle: Handle of the stream to close.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["handle"] = handle.to_json()
+
+    params: T_JSON_DICT = {}
+    params['handle'] = handle.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "IO.close",
-        "params": params,
+        'method': 'IO.close',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def read(
     handle: StreamHandle,
-    offset: typing.Optional[int] = None,
-    size: typing.Optional[int] = None,
-) -> typing.Generator[
-    T_JSON_DICT, T_JSON_DICT, typing.Tuple[typing.Optional[bool], str, bool]
-]:
+    *,
+    offset: int | None = None,
+    size: int | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[bool | None, str, bool]]:
     """
     Read a chunk of the stream
 
     :param handle: Handle of the stream to read.
     :param offset: *(Optional)* Seek to the specified offset before reading (if not specified, proceed with offset following the last read). Some types of streams may only support sequential reads.
     :param size: *(Optional)* Maximum number of bytes to read (left upon the agent discretion if not specified).
-    :returns: A tuple with the following items:
-
-        0. **base64Encoded** - *(Optional)* Set if the data is base64-encoded
-        1. **data** - Data that were read.
-        2. **eof** - Set if the end-of-file condition occurred while reading.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[bool ` None, str, bool]]
     """
-    params: T_JSON_DICT = dict()
-    params["handle"] = handle.to_json()
+
+    params: T_JSON_DICT = {}
+    params['handle'] = handle.to_json()
     if offset is not None:
-        params["offset"] = offset
+        params['offset'] = offset
     if size is not None:
-        params["size"] = size
+        params['size'] = size
     cmd_dict: T_JSON_DICT = {
-        "method": "IO.read",
-        "params": params,
+        'method': 'IO.read',
+        'params': params,
     }
     json = yield cmd_dict
     return (
-        bool(json["base64Encoded"])
-        if json.get("base64Encoded", None) is not None
-        else None,
-        str(json["data"]),
-        bool(json["eof"]),
+        None if json.get('base64Encoded') is None else bool(json['base64Encoded']),
+        str(json['data']),
+        bool(json['eof']),
     )
 
 
 def resolve_blob(
     object_id: runtime.RemoteObjectId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, str]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, str]:
     """
     Return UUID of Blob object specified by a remote object id.
 
     :param object_id: Object id of a Blob object wrapper.
-    :returns: UUID of the specified Blob.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, str]
     """
-    params: T_JSON_DICT = dict()
-    params["objectId"] = object_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['objectId'] = object_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "IO.resolveBlob",
-        "params": params,
+        'method': 'IO.resolveBlob',
+        'params': params,
     }
     json = yield cmd_dict
-    return str(json["uuid"])
+    return str(json['uuid'])

@@ -1,0 +1,210 @@
+# #:schema https://json.schemastore.org/ruff.json
+
+force-exclude = true
+# Same as Black.
+indent-width = 4
+line-length  = 120
+
+target-version = "py313"
+
+# Enumerate all fixed violations.
+show-fixes = true
+
+src = ["scripts", "zendriver"]
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+  "!local",
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".git-rewrite",
+  ".hg",
+  ".ipynb_checkpoints",
+  ".local",
+  ".mypy_cache",
+  ".nox",
+  ".pants.d",
+  ".pycache",
+  ".pyenv",
+  ".pytest_cache",
+  ".pytype",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  ".vscode",
+  "__pypackages__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "node_modules",
+  "site-packages",
+  "venv",
+  # "zendriver/cdp",
+]
+
+
+[lint]
+  # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+  # Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+  # McCabe complexity (`C901`) by default.
+  select = [
+    "A",
+    "ANN",
+    "ASYNC",
+    "B",
+    "BLE",
+    "C4",
+    "C90",
+    "COM",
+    # "DTZ",
+    "E4",
+    "E7",
+    "E9",
+    "EM",
+    "F",
+    "FA",
+    "FAST",
+    "FBT",
+    "FURB",
+    "G",
+    "I",
+    "ICN",
+    "INP",
+    "ISC",
+    "LOG",
+    "N",
+    "PERF",
+    "PIE",
+    "PL",
+    "PTH",
+    "PYI",
+    "Q",
+    "RET",
+    "RSE",
+    "RUF",
+    "S",
+    "SIM",
+    "SLOT",
+    "TC",
+    "TID",
+    "TRY",
+    "UP",
+    "W505",
+  ]
+
+  ignore = [
+    "A001",
+    "ANN401",
+    "B024",
+    "BLE001",
+    "C901",
+    "EM102",
+    "F841",
+    "INP001",
+    "N999",
+    "PIE790",
+    "PLC0415",
+    "PLR0904",
+    "PLR0912",
+    "PLR0913",
+    "PLR0914",
+    "PLR0915",
+    "PLR2004",
+    "PLW2901",
+    "Q000",
+    "Q003",
+    "S101",
+    "S404",
+    "SIM905",
+    "TC006",
+    "TID252",
+    "TRY00",
+    "TRY301",
+    "W505",
+  ]
+
+  # Allow fix for all enabled rules (when `--fix`) is provided.
+  exclude = [
+    "examples/demo.py",
+    "examples/fetch_domain.py",
+    "examples/imgur_upload_image.py",
+    "examples/mouse_drag_boxes.py",
+  ]
+
+  fixable   = ["ALL", "TC001"]
+  unfixable = []
+
+  # logger-objects = ["logging_setup.logger"]
+
+  preview = true
+
+  # Allow unused variables when underscore-prefixed.
+  dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+  [lint.flake8-quotes]
+    inline-quotes    = "single"
+    multiline-quotes = "double"
+
+  [lint.flake8-tidy-imports]
+    # Ban certain modules from being imported at module level, instead requiring
+    # that they're imported lazily (e.g., within a function definition).
+    banned-module-level-imports = []
+
+  [lint.pyupgrade]
+    # Preserve types, even if a file imports `from __future__ import annotations`.
+    keep-runtime-typing = false
+
+  [lint.flake8-type-checking]
+    runtime-evaluated-base-classes = []
+    runtime-evaluated-decorators   = []
+    strict                         = true
+
+    # Add quotes around type annotations, if doing so would allow
+    # an import to be moved into a type-checking block.
+    quote-annotations = false
+
+  [lint.flake8-boolean-trap]
+    extend-allowed-calls = []
+
+  [lint.isort]
+    detect-same-package     = true
+    lines-after-imports     = 2
+    lines-between-types     = 0
+    split-on-trailing-comma = true
+
+  [lint.pep8-naming]
+    classmethod-decorators = [
+      # Allow Pydantic's `@validator` decorator to trigger class method treatment.
+      "pydantic.validator",
+      # Allow SQLAlchemy's dynamic decorators, like `@field.expression`, to trigger class method treatment.
+      "classproperty",
+      "comparator",
+      "declared_attr",
+      "expression",
+    ]
+
+  [lint.pycodestyle]
+    max-doc-length = 120
+
+[format]
+  indent-style              = "space"
+  line-ending               = "lf"
+  preview                   = true
+  quote-style               = "single"
+  skip-magic-trailing-comma = false
+
+  # Enable auto-formatting of code examples in docstrings. Markdown,
+  # reStructuredText code/literal blocks and doctests are all supported.
+  #
+  docstring-code-format = true
+
+  # Set the line length limit used when formatting code snippets in
+  # docstrings.
+  #
+  # This only has an effect when the `docstring-code-format` setting is
+  # enabled.
+  docstring-code-line-length = "dynamic"

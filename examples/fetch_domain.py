@@ -1,27 +1,24 @@
-try:
-    from zendriver import *
-except (ModuleNotFoundError, ImportError):
-    import sys
-    import os
-
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-    from zendriver import *
-
+import asyncio
 import logging
+
+import zendriver as zd
+from zendriver import cdp
+from zendriver.core.tab import Tab
+from zendriver.core.util import loop
 
 logging.basicConfig(level=logging.INFO)
 
 
 async def request_handler(ev: cdp.fetch.RequestPaused, tab: Tab):
-    print("\nRequestPaused handler\n", ev, type(ev))
-    print("TAB = ", tab)
+    print('\nRequestPaused handler\n', ev, type(ev))
+    print('TAB = ', tab)
     tab.feed_cdp(cdp.fetch.continue_request(request_id=ev.request_id))
 
 
-async def main():
-    browser = await start()
+async def main() -> None:
+    browser = await zd.start()
 
-    [await browser.get("https://www.google.com", new_window=True) for _ in range(10)]
+    [await browser.get('https://www.google.com', new_window=True) for _ in range(10)]
 
     for tab in browser:
         print(tab)
@@ -41,4 +38,4 @@ async def main():
     await browser.stop()
 
 
-browser = loop().run_until_complete(main())
+browser = asyncio.run(main())

@@ -3,21 +3,35 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: LayerTree (experimental)
 
 from __future__ import annotations
-import enum
+
 import typing
-from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+from dataclasses import dataclass, field
 
 from . import dom
+from .util import event_type
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
+
+
+# ruff: noqa: FURB189
 
 
 class LayerId(str):
     """
     Unique Layer identifier.
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -26,14 +40,22 @@ class LayerId(str):
     def from_json(cls, json: str) -> LayerId:
         return cls(json)
 
-    def __repr__(self):
-        return "LayerId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> LayerId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'LayerId({super().__repr__()})'
 
 
 class SnapshotId(str):
     """
     Unique snapshot identifier.
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -42,8 +64,14 @@ class SnapshotId(str):
     def from_json(cls, json: str) -> SnapshotId:
         return cls(json)
 
-    def __repr__(self):
-        return "SnapshotId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> SnapshotId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'SnapshotId({super().__repr__()})'
 
 
 @dataclass
@@ -59,17 +87,23 @@ class ScrollRect:
     type_: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["rect"] = self.rect.to_json()
-        json["type"] = self.type_
+        json: T_JSON_DICT = {}
+        json['rect'] = self.rect.to_json()
+        json['type'] = self.type_
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ScrollRect:
         return cls(
-            rect=dom.Rect.from_json(json["rect"]),
-            type_=str(json["type"]),
+            rect=dom.Rect.from_json(json['rect']),
+            type_=str(json['type']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ScrollRect | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -85,41 +119,37 @@ class StickyPositionConstraint:
     containing_block_rect: dom.Rect
 
     #: The nearest sticky layer that shifts the sticky box
-    nearest_layer_shifting_sticky_box: typing.Optional[LayerId] = None
+    nearest_layer_shifting_sticky_box: LayerId | None = None
 
     #: The nearest sticky layer that shifts the containing block
-    nearest_layer_shifting_containing_block: typing.Optional[LayerId] = None
+    nearest_layer_shifting_containing_block: LayerId | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["stickyBoxRect"] = self.sticky_box_rect.to_json()
-        json["containingBlockRect"] = self.containing_block_rect.to_json()
+        json: T_JSON_DICT = {}
+        json['stickyBoxRect'] = self.sticky_box_rect.to_json()
+        json['containingBlockRect'] = self.containing_block_rect.to_json()
         if self.nearest_layer_shifting_sticky_box is not None:
-            json["nearestLayerShiftingStickyBox"] = (
-                self.nearest_layer_shifting_sticky_box.to_json()
-            )
+            json['nearestLayerShiftingStickyBox'] = self.nearest_layer_shifting_sticky_box.to_json()
         if self.nearest_layer_shifting_containing_block is not None:
-            json["nearestLayerShiftingContainingBlock"] = (
-                self.nearest_layer_shifting_containing_block.to_json()
-            )
+            json['nearestLayerShiftingContainingBlock'] = self.nearest_layer_shifting_containing_block.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> StickyPositionConstraint:
         return cls(
-            sticky_box_rect=dom.Rect.from_json(json["stickyBoxRect"]),
-            containing_block_rect=dom.Rect.from_json(json["containingBlockRect"]),
-            nearest_layer_shifting_sticky_box=LayerId.from_json(
-                json["nearestLayerShiftingStickyBox"]
-            )
-            if json.get("nearestLayerShiftingStickyBox", None) is not None
-            else None,
-            nearest_layer_shifting_containing_block=LayerId.from_json(
-                json["nearestLayerShiftingContainingBlock"]
-            )
-            if json.get("nearestLayerShiftingContainingBlock", None) is not None
-            else None,
+            sticky_box_rect=dom.Rect.from_json(json['stickyBoxRect']),
+            containing_block_rect=dom.Rect.from_json(json['containingBlockRect']),
+            nearest_layer_shifting_sticky_box=LayerId.from_json_optional(json.get('nearestLayerShiftingStickyBox')),
+            nearest_layer_shifting_containing_block=LayerId.from_json_optional(
+                json.get('nearestLayerShiftingContainingBlock'),
+            ),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> StickyPositionConstraint | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -138,19 +168,25 @@ class PictureTile:
     picture: str
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["x"] = self.x
-        json["y"] = self.y
-        json["picture"] = self.picture
+        json: T_JSON_DICT = {}
+        json['x'] = self.x
+        json['y'] = self.y
+        json['picture'] = self.picture
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> PictureTile:
         return cls(
-            x=float(json["x"]),
-            y=float(json["y"]),
-            picture=str(json["picture"]),
+            x=float(json['x']),
+            y=float(json['y']),
+            picture=str(json['picture']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> PictureTile | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -182,101 +218,89 @@ class Layer:
     draws_content: bool
 
     #: The id of parent (not present for root).
-    parent_layer_id: typing.Optional[LayerId] = None
+    parent_layer_id: LayerId | None = None
 
     #: The backend id for the node associated with this layer.
-    backend_node_id: typing.Optional[dom.BackendNodeId] = None
+    backend_node_id: dom.BackendNodeId | None = None
 
     #: Transformation matrix for layer, default is identity matrix
-    transform: typing.Optional[typing.List[float]] = None
+    transform: list[float] = field(default_factory=list)
 
     #: Transform anchor point X, absent if no transform specified
-    anchor_x: typing.Optional[float] = None
+    anchor_x: float | None = None
 
     #: Transform anchor point Y, absent if no transform specified
-    anchor_y: typing.Optional[float] = None
+    anchor_y: float | None = None
 
     #: Transform anchor point Z, absent if no transform specified
-    anchor_z: typing.Optional[float] = None
+    anchor_z: float | None = None
 
     #: Set if layer is not visible.
-    invisible: typing.Optional[bool] = None
+    invisible: bool | None = None
 
     #: Rectangles scrolling on main thread only.
-    scroll_rects: typing.Optional[typing.List[ScrollRect]] = None
+    scroll_rects: list[ScrollRect] = field(default_factory=list)
 
     #: Sticky position constraint information
-    sticky_position_constraint: typing.Optional[StickyPositionConstraint] = None
+    sticky_position_constraint: StickyPositionConstraint | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["layerId"] = self.layer_id.to_json()
-        json["offsetX"] = self.offset_x
-        json["offsetY"] = self.offset_y
-        json["width"] = self.width
-        json["height"] = self.height
-        json["paintCount"] = self.paint_count
-        json["drawsContent"] = self.draws_content
+        json: T_JSON_DICT = {}
+        json['layerId'] = self.layer_id.to_json()
+        json['offsetX'] = self.offset_x
+        json['offsetY'] = self.offset_y
+        json['width'] = self.width
+        json['height'] = self.height
+        json['paintCount'] = self.paint_count
+        json['drawsContent'] = self.draws_content
         if self.parent_layer_id is not None:
-            json["parentLayerId"] = self.parent_layer_id.to_json()
+            json['parentLayerId'] = self.parent_layer_id.to_json()
         if self.backend_node_id is not None:
-            json["backendNodeId"] = self.backend_node_id.to_json()
+            json['backendNodeId'] = self.backend_node_id.to_json()
         if self.transform is not None:
-            json["transform"] = [i for i in self.transform]
+            json['transform'] = self.transform
         if self.anchor_x is not None:
-            json["anchorX"] = self.anchor_x
+            json['anchorX'] = self.anchor_x
         if self.anchor_y is not None:
-            json["anchorY"] = self.anchor_y
+            json['anchorY'] = self.anchor_y
         if self.anchor_z is not None:
-            json["anchorZ"] = self.anchor_z
+            json['anchorZ'] = self.anchor_z
         if self.invisible is not None:
-            json["invisible"] = self.invisible
+            json['invisible'] = self.invisible
         if self.scroll_rects is not None:
-            json["scrollRects"] = [i.to_json() for i in self.scroll_rects]
+            json['scrollRects'] = [i.to_json() for i in self.scroll_rects]
         if self.sticky_position_constraint is not None:
-            json["stickyPositionConstraint"] = self.sticky_position_constraint.to_json()
+            json['stickyPositionConstraint'] = self.sticky_position_constraint.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Layer:
         return cls(
-            layer_id=LayerId.from_json(json["layerId"]),
-            offset_x=float(json["offsetX"]),
-            offset_y=float(json["offsetY"]),
-            width=float(json["width"]),
-            height=float(json["height"]),
-            paint_count=int(json["paintCount"]),
-            draws_content=bool(json["drawsContent"]),
-            parent_layer_id=LayerId.from_json(json["parentLayerId"])
-            if json.get("parentLayerId", None) is not None
-            else None,
-            backend_node_id=dom.BackendNodeId.from_json(json["backendNodeId"])
-            if json.get("backendNodeId", None) is not None
-            else None,
-            transform=[float(i) for i in json["transform"]]
-            if json.get("transform", None) is not None
-            else None,
-            anchor_x=float(json["anchorX"])
-            if json.get("anchorX", None) is not None
-            else None,
-            anchor_y=float(json["anchorY"])
-            if json.get("anchorY", None) is not None
-            else None,
-            anchor_z=float(json["anchorZ"])
-            if json.get("anchorZ", None) is not None
-            else None,
-            invisible=bool(json["invisible"])
-            if json.get("invisible", None) is not None
-            else None,
-            scroll_rects=[ScrollRect.from_json(i) for i in json["scrollRects"]]
-            if json.get("scrollRects", None) is not None
-            else None,
-            sticky_position_constraint=StickyPositionConstraint.from_json(
-                json["stickyPositionConstraint"]
-            )
-            if json.get("stickyPositionConstraint", None) is not None
-            else None,
+            layer_id=LayerId.from_json(json['layerId']),
+            offset_x=float(json['offsetX']),
+            offset_y=float(json['offsetY']),
+            width=float(json['width']),
+            height=float(json['height']),
+            paint_count=int(json['paintCount']),
+            draws_content=bool(json['drawsContent']),
+            parent_layer_id=LayerId.from_json_optional(json.get('parentLayerId')),
+            backend_node_id=dom.BackendNodeId.from_json_optional(json.get('backendNodeId')),
+            transform=[float(i) for i in json.get('transform', [])],
+            anchor_x=None if json.get('anchorX') is None else float(json['anchorX']),
+            anchor_y=None if json.get('anchorY') is None else float(json['anchorY']),
+            anchor_z=None if json.get('anchorZ') is None else float(json['anchorZ']),
+            invisible=None if json.get('invisible') is None else bool(json['invisible']),
+            scroll_rects=[ScrollRect.from_json(i) for i in json.get('scrollRects', [])],
+            sticky_position_constraint=StickyPositionConstraint.from_json_optional(
+                json.get('stickyPositionConstraint'),
+            ),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Layer | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 class PaintProfile(list):
@@ -284,154 +308,174 @@ class PaintProfile(list):
     Array of timings, one per paint step.
     """
 
-    def to_json(self) -> typing.List[float]:
+    def to_json(self) -> list[float]:
         return self
 
     @classmethod
-    def from_json(cls, json: typing.List[float]) -> PaintProfile:
+    def from_json(cls, json: list[float]) -> PaintProfile:
         return cls(json)
 
-    def __repr__(self):
-        return "PaintProfile({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: list[float] | None) -> PaintProfile | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'PaintProfile({super().__repr__()})'
 
 
 def compositing_reasons(
     layer_id: LayerId,
-) -> typing.Generator[
-    T_JSON_DICT, T_JSON_DICT, typing.Tuple[typing.List[str], typing.List[str]]
-]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[list[str], list[str]]]:
     """
     Provides the reasons why the given layer was composited.
 
     :param layer_id: The id of the layer for which we want to get the reasons it was composited.
-    :returns: A tuple with the following items:
-
-        0. **compositingReasons** - A list of strings specifying reasons for the given layer to become composited.
-        1. **compositingReasonIds** - A list of strings specifying reason IDs for the given layer to become composited.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[list[str], list[str]]]
     """
-    params: T_JSON_DICT = dict()
-    params["layerId"] = layer_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['layerId'] = layer_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "LayerTree.compositingReasons",
-        "params": params,
+        'method': 'LayerTree.compositingReasons',
+        'params': params,
     }
     json = yield cmd_dict
     return (
-        [str(i) for i in json["compositingReasons"]],
-        [str(i) for i in json["compositingReasonIds"]],
+        [str(i) for i in json.get('compositingReasons', [])],
+        [str(i) for i in json.get('compositingReasonIds', [])],
     )
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disables compositing tree inspection.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "LayerTree.disable",
+        'method': 'LayerTree.disable',
     }
     json = yield cmd_dict
 
 
-def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def enable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables compositing tree inspection.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "LayerTree.enable",
+        'method': 'LayerTree.enable',
     }
     json = yield cmd_dict
 
 
 def load_snapshot(
-    tiles: typing.List[PictureTile],
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, SnapshotId]:
+    tiles: list[PictureTile],
+) -> Generator[T_JSON_DICT, T_JSON_DICT, SnapshotId]:
     """
     Returns the snapshot identifier.
 
     :param tiles: An array of tiles composing the snapshot.
-    :returns: The id of the snapshot.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, SnapshotId]
     """
-    params: T_JSON_DICT = dict()
-    params["tiles"] = [i.to_json() for i in tiles]
+
+    params: T_JSON_DICT = {}
+    params['tiles'] = [i.to_json() for i in tiles]
     cmd_dict: T_JSON_DICT = {
-        "method": "LayerTree.loadSnapshot",
-        "params": params,
+        'method': 'LayerTree.loadSnapshot',
+        'params': params,
     }
     json = yield cmd_dict
-    return SnapshotId.from_json(json["snapshotId"])
+    return SnapshotId.from_json(json['snapshotId'])
 
 
 def make_snapshot(
     layer_id: LayerId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, SnapshotId]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, SnapshotId]:
     """
     Returns the layer snapshot identifier.
 
     :param layer_id: The id of the layer.
-    :returns: The id of the layer snapshot.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, SnapshotId]
     """
-    params: T_JSON_DICT = dict()
-    params["layerId"] = layer_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['layerId'] = layer_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "LayerTree.makeSnapshot",
-        "params": params,
+        'method': 'LayerTree.makeSnapshot',
+        'params': params,
     }
     json = yield cmd_dict
-    return SnapshotId.from_json(json["snapshotId"])
+    return SnapshotId.from_json(json['snapshotId'])
 
 
 def profile_snapshot(
     snapshot_id: SnapshotId,
-    min_repeat_count: typing.Optional[int] = None,
-    min_duration: typing.Optional[float] = None,
-    clip_rect: typing.Optional[dom.Rect] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[PaintProfile]]:
+    *,
+    min_repeat_count: int | None = None,
+    min_duration: float | None = None,
+    clip_rect: dom.Rect | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[PaintProfile]]:
     """
     :param snapshot_id: The id of the layer snapshot.
     :param min_repeat_count: *(Optional)* The maximum number of times to replay the snapshot (1, if not specified).
     :param min_duration: *(Optional)* The minimum duration (in seconds) to replay the snapshot.
     :param clip_rect: *(Optional)* The clip rectangle to apply when replaying the snapshot.
-    :returns: The array of paint profiles, one per run.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[PaintProfile]]
     """
-    params: T_JSON_DICT = dict()
-    params["snapshotId"] = snapshot_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['snapshotId'] = snapshot_id.to_json()
     if min_repeat_count is not None:
-        params["minRepeatCount"] = min_repeat_count
+        params['minRepeatCount'] = min_repeat_count
     if min_duration is not None:
-        params["minDuration"] = min_duration
+        params['minDuration'] = min_duration
     if clip_rect is not None:
-        params["clipRect"] = clip_rect.to_json()
+        params['clipRect'] = clip_rect.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "LayerTree.profileSnapshot",
-        "params": params,
+        'method': 'LayerTree.profileSnapshot',
+        'params': params,
     }
     json = yield cmd_dict
-    return [PaintProfile.from_json(i) for i in json["timings"]]
+    return [PaintProfile.from_json(i) for i in json.get('timings', [])]
 
 
 def release_snapshot(
     snapshot_id: SnapshotId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Releases layer snapshot captured by the back-end.
 
     :param snapshot_id: The id of the layer snapshot.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
-    params["snapshotId"] = snapshot_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['snapshotId'] = snapshot_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "LayerTree.releaseSnapshot",
-        "params": params,
+        'method': 'LayerTree.releaseSnapshot',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def replay_snapshot(
     snapshot_id: SnapshotId,
-    from_step: typing.Optional[int] = None,
-    to_step: typing.Optional[int] = None,
-    scale: typing.Optional[float] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, str]:
+    *,
+    from_step: int | None = None,
+    to_step: int | None = None,
+    scale: float | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, str]:
     """
     Replays the layer snapshot and returns the resulting bitmap.
 
@@ -439,44 +483,48 @@ def replay_snapshot(
     :param from_step: *(Optional)* The first step to replay from (replay from the very start if not specified).
     :param to_step: *(Optional)* The last step to replay to (replay till the end if not specified).
     :param scale: *(Optional)* The scale to apply while replaying (defaults to 1).
-    :returns: A data: URL for resulting image.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, str]
     """
-    params: T_JSON_DICT = dict()
-    params["snapshotId"] = snapshot_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['snapshotId'] = snapshot_id.to_json()
     if from_step is not None:
-        params["fromStep"] = from_step
+        params['fromStep'] = from_step
     if to_step is not None:
-        params["toStep"] = to_step
+        params['toStep'] = to_step
     if scale is not None:
-        params["scale"] = scale
+        params['scale'] = scale
     cmd_dict: T_JSON_DICT = {
-        "method": "LayerTree.replaySnapshot",
-        "params": params,
+        'method': 'LayerTree.replaySnapshot',
+        'params': params,
     }
     json = yield cmd_dict
-    return str(json["dataURL"])
+    return str(json['dataURL'])
 
 
 def snapshot_command_log(
     snapshot_id: SnapshotId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[dict]]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[dict]]:
     """
     Replays the layer snapshot and returns canvas log.
 
     :param snapshot_id: The id of the layer snapshot.
-    :returns: The array of canvas function calls.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[dict]]
     """
-    params: T_JSON_DICT = dict()
-    params["snapshotId"] = snapshot_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['snapshotId'] = snapshot_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "LayerTree.snapshotCommandLog",
-        "params": params,
+        'method': 'LayerTree.snapshotCommandLog',
+        'params': params,
     }
     json = yield cmd_dict
-    return [dict(i) for i in json["commandLog"]]
+    return [dict(i) for i in json.get('commandLog', [])]
 
 
-@event_class("LayerTree.layerPainted")
+@event_type('LayerTree.layerPainted')
 @dataclass
 class LayerPainted:
     #: The id of the painted layer.
@@ -487,21 +535,31 @@ class LayerPainted:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> LayerPainted:
         return cls(
-            layer_id=LayerId.from_json(json["layerId"]),
-            clip=dom.Rect.from_json(json["clip"]),
+            layer_id=LayerId.from_json(json['layerId']),
+            clip=dom.Rect.from_json(json['clip']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> LayerPainted | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("LayerTree.layerTreeDidChange")
+
+@event_type('LayerTree.layerTreeDidChange')
 @dataclass
 class LayerTreeDidChange:
     #: Layer tree, absent if not in the compositing mode.
-    layers: typing.Optional[typing.List[Layer]]
+    layers: list[Layer]
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> LayerTreeDidChange:
         return cls(
-            layers=[Layer.from_json(i) for i in json["layers"]]
-            if json.get("layers", None) is not None
-            else None
+            layers=[Layer.from_json(i) for i in json.get('layers', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> LayerTreeDidChange | None:
+        if json is None:
+            return None
+        return cls.from_json(json)

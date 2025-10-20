@@ -3,16 +3,24 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: IndexedDB (experimental)
 
 from __future__ import annotations
-import enum
+
 import typing
-from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+from dataclasses import dataclass, field
 
 from . import runtime
-from . import storage
+
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from . import storage
+    from .util import T_JSON_DICT
 
 
 @dataclass
@@ -29,22 +37,28 @@ class DatabaseWithObjectStores:
     version: float
 
     #: Object stores in this database.
-    object_stores: typing.List[ObjectStore]
+    object_stores: list[ObjectStore]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
-        json["version"] = self.version
-        json["objectStores"] = [i.to_json() for i in self.object_stores]
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
+        json['version'] = self.version
+        json['objectStores'] = [i.to_json() for i in self.object_stores]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DatabaseWithObjectStores:
         return cls(
-            name=str(json["name"]),
-            version=float(json["version"]),
-            object_stores=[ObjectStore.from_json(i) for i in json["objectStores"]],
+            name=str(json['name']),
+            version=float(json['version']),
+            object_stores=[ObjectStore.from_json(i) for i in json.get('objectStores', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DatabaseWithObjectStores | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -63,24 +77,30 @@ class ObjectStore:
     auto_increment: bool
 
     #: Indexes in this object store.
-    indexes: typing.List[ObjectStoreIndex]
+    indexes: list[ObjectStoreIndex]
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
-        json["keyPath"] = self.key_path.to_json()
-        json["autoIncrement"] = self.auto_increment
-        json["indexes"] = [i.to_json() for i in self.indexes]
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
+        json['keyPath'] = self.key_path.to_json()
+        json['autoIncrement'] = self.auto_increment
+        json['indexes'] = [i.to_json() for i in self.indexes]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ObjectStore:
         return cls(
-            name=str(json["name"]),
-            key_path=KeyPath.from_json(json["keyPath"]),
-            auto_increment=bool(json["autoIncrement"]),
-            indexes=[ObjectStoreIndex.from_json(i) for i in json["indexes"]],
+            name=str(json['name']),
+            key_path=KeyPath.from_json(json['keyPath']),
+            auto_increment=bool(json['autoIncrement']),
+            indexes=[ObjectStoreIndex.from_json(i) for i in json.get('indexes', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ObjectStore | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -102,21 +122,27 @@ class ObjectStoreIndex:
     multi_entry: bool
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["name"] = self.name
-        json["keyPath"] = self.key_path.to_json()
-        json["unique"] = self.unique
-        json["multiEntry"] = self.multi_entry
+        json: T_JSON_DICT = {}
+        json['name'] = self.name
+        json['keyPath'] = self.key_path.to_json()
+        json['unique'] = self.unique
+        json['multiEntry'] = self.multi_entry
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ObjectStoreIndex:
         return cls(
-            name=str(json["name"]),
-            key_path=KeyPath.from_json(json["keyPath"]),
-            unique=bool(json["unique"]),
-            multi_entry=bool(json["multiEntry"]),
+            name=str(json['name']),
+            key_path=KeyPath.from_json(json['keyPath']),
+            unique=bool(json['unique']),
+            multi_entry=bool(json['multiEntry']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ObjectStoreIndex | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -129,45 +155,45 @@ class Key:
     type_: str
 
     #: Number value.
-    number: typing.Optional[float] = None
+    number: float | None = None
 
     #: String value.
-    string: typing.Optional[str] = None
+    string: str | None = None
 
     #: Date value.
-    date: typing.Optional[float] = None
+    date: float | None = None
 
     #: Array value.
-    array: typing.Optional[typing.List[Key]] = None
+    array: list[Key] = field(default_factory=list)
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["type"] = self.type_
+        json: T_JSON_DICT = {}
+        json['type'] = self.type_
         if self.number is not None:
-            json["number"] = self.number
+            json['number'] = self.number
         if self.string is not None:
-            json["string"] = self.string
+            json['string'] = self.string
         if self.date is not None:
-            json["date"] = self.date
+            json['date'] = self.date
         if self.array is not None:
-            json["array"] = [i.to_json() for i in self.array]
+            json['array'] = [i.to_json() for i in self.array]
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> Key:
         return cls(
-            type_=str(json["type"]),
-            number=float(json["number"])
-            if json.get("number", None) is not None
-            else None,
-            string=str(json["string"])
-            if json.get("string", None) is not None
-            else None,
-            date=float(json["date"]) if json.get("date", None) is not None else None,
-            array=[Key.from_json(i) for i in json["array"]]
-            if json.get("array", None) is not None
-            else None,
+            type_=str(json['type']),
+            number=None if json.get('number') is None else float(json['number']),
+            string=None if json.get('string') is None else str(json['string']),
+            date=None if json.get('date') is None else float(json['date']),
+            array=[Key.from_json(i) for i in json.get('array', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> Key | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -183,33 +209,35 @@ class KeyRange:
     upper_open: bool
 
     #: Lower bound.
-    lower: typing.Optional[Key] = None
+    lower: Key | None = None
 
     #: Upper bound.
-    upper: typing.Optional[Key] = None
+    upper: Key | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["lowerOpen"] = self.lower_open
-        json["upperOpen"] = self.upper_open
+        json: T_JSON_DICT = {}
+        json['lowerOpen'] = self.lower_open
+        json['upperOpen'] = self.upper_open
         if self.lower is not None:
-            json["lower"] = self.lower.to_json()
+            json['lower'] = self.lower.to_json()
         if self.upper is not None:
-            json["upper"] = self.upper.to_json()
+            json['upper'] = self.upper.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> KeyRange:
         return cls(
-            lower_open=bool(json["lowerOpen"]),
-            upper_open=bool(json["upperOpen"]),
-            lower=Key.from_json(json["lower"])
-            if json.get("lower", None) is not None
-            else None,
-            upper=Key.from_json(json["upper"])
-            if json.get("upper", None) is not None
-            else None,
+            lower_open=bool(json['lowerOpen']),
+            upper_open=bool(json['upperOpen']),
+            lower=Key.from_json_optional(json.get('lower')),
+            upper=Key.from_json_optional(json.get('upper')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> KeyRange | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -228,19 +256,25 @@ class DataEntry:
     value: runtime.RemoteObject
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["key"] = self.key.to_json()
-        json["primaryKey"] = self.primary_key.to_json()
-        json["value"] = self.value.to_json()
+        json: T_JSON_DICT = {}
+        json['key'] = self.key.to_json()
+        json['primaryKey'] = self.primary_key.to_json()
+        json['value'] = self.value.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> DataEntry:
         return cls(
-            key=runtime.RemoteObject.from_json(json["key"]),
-            primary_key=runtime.RemoteObject.from_json(json["primaryKey"]),
-            value=runtime.RemoteObject.from_json(json["value"]),
+            key=runtime.RemoteObject.from_json(json['key']),
+            primary_key=runtime.RemoteObject.from_json(json['primaryKey']),
+            value=runtime.RemoteObject.from_json(json['value']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> DataEntry | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -253,40 +287,43 @@ class KeyPath:
     type_: str
 
     #: String value.
-    string: typing.Optional[str] = None
+    string: str | None = None
 
     #: Array value.
-    array: typing.Optional[typing.List[str]] = None
+    array: list[str] = field(default_factory=list)
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["type"] = self.type_
+        json: T_JSON_DICT = {}
+        json['type'] = self.type_
         if self.string is not None:
-            json["string"] = self.string
+            json['string'] = self.string
         if self.array is not None:
-            json["array"] = [i for i in self.array]
+            json['array'] = self.array
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> KeyPath:
         return cls(
-            type_=str(json["type"]),
-            string=str(json["string"])
-            if json.get("string", None) is not None
-            else None,
-            array=[str(i) for i in json["array"]]
-            if json.get("array", None) is not None
-            else None,
+            type_=str(json['type']),
+            string=None if json.get('string') is None else str(json['string']),
+            array=[str(i) for i in json.get('array', [])],
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> KeyPath | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 def clear_object_store(
     database_name: str,
     object_store_name: str,
-    security_origin: typing.Optional[str] = None,
-    storage_key: typing.Optional[str] = None,
-    storage_bucket: typing.Optional[storage.StorageBucket] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    security_origin: str | None = None,
+    storage_key: str | None = None,
+    storage_bucket: storage.StorageBucket | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Clears all entries from an object store.
 
@@ -295,29 +332,33 @@ def clear_object_store(
     :param storage_bucket: *(Optional)* Storage bucket. If not specified, it uses the default bucket.
     :param database_name: Database name.
     :param object_store_name: Object store name.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if security_origin is not None:
-        params["securityOrigin"] = security_origin
+        params['securityOrigin'] = security_origin
     if storage_key is not None:
-        params["storageKey"] = storage_key
+        params['storageKey'] = storage_key
     if storage_bucket is not None:
-        params["storageBucket"] = storage_bucket.to_json()
-    params["databaseName"] = database_name
-    params["objectStoreName"] = object_store_name
+        params['storageBucket'] = storage_bucket.to_json()
+    params['databaseName'] = database_name
+    params['objectStoreName'] = object_store_name
     cmd_dict: T_JSON_DICT = {
-        "method": "IndexedDB.clearObjectStore",
-        "params": params,
+        'method': 'IndexedDB.clearObjectStore',
+        'params': params,
     }
     json = yield cmd_dict
 
 
 def delete_database(
     database_name: str,
-    security_origin: typing.Optional[str] = None,
-    storage_key: typing.Optional[str] = None,
-    storage_bucket: typing.Optional[storage.StorageBucket] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    security_origin: str | None = None,
+    storage_key: str | None = None,
+    storage_bucket: storage.StorageBucket | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Deletes a database.
 
@@ -325,18 +366,21 @@ def delete_database(
     :param storage_key: *(Optional)* Storage key.
     :param storage_bucket: *(Optional)* Storage bucket. If not specified, it uses the default bucket.
     :param database_name: Database name.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if security_origin is not None:
-        params["securityOrigin"] = security_origin
+        params['securityOrigin'] = security_origin
     if storage_key is not None:
-        params["storageKey"] = storage_key
+        params['storageKey'] = storage_key
     if storage_bucket is not None:
-        params["storageBucket"] = storage_bucket.to_json()
-    params["databaseName"] = database_name
+        params['storageBucket'] = storage_bucket.to_json()
+    params['databaseName'] = database_name
     cmd_dict: T_JSON_DICT = {
-        "method": "IndexedDB.deleteDatabase",
-        "params": params,
+        'method': 'IndexedDB.deleteDatabase',
+        'params': params,
     }
     json = yield cmd_dict
 
@@ -345,10 +389,11 @@ def delete_object_store_entries(
     database_name: str,
     object_store_name: str,
     key_range: KeyRange,
-    security_origin: typing.Optional[str] = None,
-    storage_key: typing.Optional[str] = None,
-    storage_bucket: typing.Optional[storage.StorageBucket] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    *,
+    security_origin: str | None = None,
+    storage_key: str | None = None,
+    storage_bucket: storage.StorageBucket | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Delete a range of entries from an object store
 
@@ -358,40 +403,49 @@ def delete_object_store_entries(
     :param database_name:
     :param object_store_name:
     :param key_range: Range of entry keys to delete
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if security_origin is not None:
-        params["securityOrigin"] = security_origin
+        params['securityOrigin'] = security_origin
     if storage_key is not None:
-        params["storageKey"] = storage_key
+        params['storageKey'] = storage_key
     if storage_bucket is not None:
-        params["storageBucket"] = storage_bucket.to_json()
-    params["databaseName"] = database_name
-    params["objectStoreName"] = object_store_name
-    params["keyRange"] = key_range.to_json()
+        params['storageBucket'] = storage_bucket.to_json()
+    params['databaseName'] = database_name
+    params['objectStoreName'] = object_store_name
+    params['keyRange'] = key_range.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "IndexedDB.deleteObjectStoreEntries",
-        "params": params,
+        'method': 'IndexedDB.deleteObjectStoreEntries',
+        'params': params,
     }
     json = yield cmd_dict
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disables events from backend.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "IndexedDB.disable",
+        'method': 'IndexedDB.disable',
     }
     json = yield cmd_dict
 
 
-def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def enable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables events from backend.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "IndexedDB.enable",
+        'method': 'IndexedDB.enable',
     }
     json = yield cmd_dict
 
@@ -399,16 +453,15 @@ def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
 def request_data(
     database_name: str,
     object_store_name: str,
-    index_name: str,
     skip_count: int,
     page_size: int,
-    security_origin: typing.Optional[str] = None,
-    storage_key: typing.Optional[str] = None,
-    storage_bucket: typing.Optional[storage.StorageBucket] = None,
-    key_range: typing.Optional[KeyRange] = None,
-) -> typing.Generator[
-    T_JSON_DICT, T_JSON_DICT, typing.Tuple[typing.List[DataEntry], bool]
-]:
+    *,
+    security_origin: str | None = None,
+    storage_key: str | None = None,
+    storage_bucket: storage.StorageBucket | None = None,
+    index_name: str | None = None,
+    key_range: KeyRange | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[list[DataEntry], bool]]:
     """
     Requests data from object store or index.
 
@@ -417,47 +470,45 @@ def request_data(
     :param storage_bucket: *(Optional)* Storage bucket. If not specified, it uses the default bucket.
     :param database_name: Database name.
     :param object_store_name: Object store name.
-    :param index_name: Index name, empty string for object store data requests.
+    :param index_name: *(Optional)* Index name. If not specified, it performs an object store data request.
     :param skip_count: Number of records to skip.
     :param page_size: Number of records to fetch.
     :param key_range: *(Optional)* Key range.
-    :returns: A tuple with the following items:
-
-        0. **objectStoreDataEntries** - Array of object store data entries.
-        1. **hasMore** - If true, there are more entries to fetch in the given range.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[list[DataEntry], bool]]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if security_origin is not None:
-        params["securityOrigin"] = security_origin
+        params['securityOrigin'] = security_origin
     if storage_key is not None:
-        params["storageKey"] = storage_key
+        params['storageKey'] = storage_key
     if storage_bucket is not None:
-        params["storageBucket"] = storage_bucket.to_json()
-    params["databaseName"] = database_name
-    params["objectStoreName"] = object_store_name
-    params["indexName"] = index_name
-    params["skipCount"] = skip_count
-    params["pageSize"] = page_size
+        params['storageBucket'] = storage_bucket.to_json()
+    params['databaseName'] = database_name
+    params['objectStoreName'] = object_store_name
+    if index_name is not None:
+        params['indexName'] = index_name
+    params['skipCount'] = skip_count
+    params['pageSize'] = page_size
     if key_range is not None:
-        params["keyRange"] = key_range.to_json()
+        params['keyRange'] = key_range.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "IndexedDB.requestData",
-        "params": params,
+        'method': 'IndexedDB.requestData',
+        'params': params,
     }
     json = yield cmd_dict
-    return (
-        [DataEntry.from_json(i) for i in json["objectStoreDataEntries"]],
-        bool(json["hasMore"]),
-    )
+    return ([DataEntry.from_json(i) for i in json.get('objectStoreDataEntries', [])], bool(json['hasMore']))
 
 
 def get_metadata(
     database_name: str,
     object_store_name: str,
-    security_origin: typing.Optional[str] = None,
-    storage_key: typing.Optional[str] = None,
-    storage_bucket: typing.Optional[storage.StorageBucket] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.Tuple[float, float]]:
+    *,
+    security_origin: str | None = None,
+    storage_key: str | None = None,
+    storage_bucket: storage.StorageBucket | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, tuple[float, float]]:
     """
     Gets metadata of an object store.
 
@@ -466,34 +517,34 @@ def get_metadata(
     :param storage_bucket: *(Optional)* Storage bucket. If not specified, it uses the default bucket.
     :param database_name: Database name.
     :param object_store_name: Object store name.
-    :returns: A tuple with the following items:
-
-        0. **entriesCount** - the entries count
-        1. **keyGeneratorValue** - the current value of key generator, to become the next inserted key into the object store. Valid if objectStore.autoIncrement is true.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, tuple[float, float]]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if security_origin is not None:
-        params["securityOrigin"] = security_origin
+        params['securityOrigin'] = security_origin
     if storage_key is not None:
-        params["storageKey"] = storage_key
+        params['storageKey'] = storage_key
     if storage_bucket is not None:
-        params["storageBucket"] = storage_bucket.to_json()
-    params["databaseName"] = database_name
-    params["objectStoreName"] = object_store_name
+        params['storageBucket'] = storage_bucket.to_json()
+    params['databaseName'] = database_name
+    params['objectStoreName'] = object_store_name
     cmd_dict: T_JSON_DICT = {
-        "method": "IndexedDB.getMetadata",
-        "params": params,
+        'method': 'IndexedDB.getMetadata',
+        'params': params,
     }
     json = yield cmd_dict
-    return (float(json["entriesCount"]), float(json["keyGeneratorValue"]))
+    return (float(json['entriesCount']), float(json['keyGeneratorValue']))
 
 
 def request_database(
     database_name: str,
-    security_origin: typing.Optional[str] = None,
-    storage_key: typing.Optional[str] = None,
-    storage_bucket: typing.Optional[storage.StorageBucket] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, DatabaseWithObjectStores]:
+    *,
+    security_origin: str | None = None,
+    storage_key: str | None = None,
+    storage_bucket: storage.StorageBucket | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, DatabaseWithObjectStores]:
     """
     Requests database with given name in given frame.
 
@@ -501,47 +552,52 @@ def request_database(
     :param storage_key: *(Optional)* Storage key.
     :param storage_bucket: *(Optional)* Storage bucket. If not specified, it uses the default bucket.
     :param database_name: Database name.
-    :returns: Database with an array of object stores.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, DatabaseWithObjectStores]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if security_origin is not None:
-        params["securityOrigin"] = security_origin
+        params['securityOrigin'] = security_origin
     if storage_key is not None:
-        params["storageKey"] = storage_key
+        params['storageKey'] = storage_key
     if storage_bucket is not None:
-        params["storageBucket"] = storage_bucket.to_json()
-    params["databaseName"] = database_name
+        params['storageBucket'] = storage_bucket.to_json()
+    params['databaseName'] = database_name
     cmd_dict: T_JSON_DICT = {
-        "method": "IndexedDB.requestDatabase",
-        "params": params,
+        'method': 'IndexedDB.requestDatabase',
+        'params': params,
     }
     json = yield cmd_dict
-    return DatabaseWithObjectStores.from_json(json["databaseWithObjectStores"])
+    return DatabaseWithObjectStores.from_json(json['databaseWithObjectStores'])
 
 
 def request_database_names(
-    security_origin: typing.Optional[str] = None,
-    storage_key: typing.Optional[str] = None,
-    storage_bucket: typing.Optional[storage.StorageBucket] = None,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[str]]:
+    *,
+    security_origin: str | None = None,
+    storage_key: str | None = None,
+    storage_bucket: storage.StorageBucket | None = None,
+) -> Generator[T_JSON_DICT, T_JSON_DICT, list[str]]:
     """
     Requests database names for given security origin.
 
     :param security_origin: *(Optional)* At least and at most one of securityOrigin, storageKey, or storageBucket must be specified. Security origin.
     :param storage_key: *(Optional)* Storage key.
     :param storage_bucket: *(Optional)* Storage bucket. If not specified, it uses the default bucket.
-    :returns: Database names for origin.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, list[str]]
     """
-    params: T_JSON_DICT = dict()
+
+    params: T_JSON_DICT = {}
     if security_origin is not None:
-        params["securityOrigin"] = security_origin
+        params['securityOrigin'] = security_origin
     if storage_key is not None:
-        params["storageKey"] = storage_key
+        params['storageKey'] = storage_key
     if storage_bucket is not None:
-        params["storageBucket"] = storage_bucket.to_json()
+        params['storageBucket'] = storage_bucket.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "IndexedDB.requestDatabaseNames",
-        "params": params,
+        'method': 'IndexedDB.requestDatabaseNames',
+        'params': params,
     }
     json = yield cmd_dict
-    return [str(i) for i in json["databaseNames"]]
+    return [str(i) for i in json.get('databaseNames', [])]

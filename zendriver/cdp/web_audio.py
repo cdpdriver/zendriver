@@ -3,19 +3,35 @@
 # This file is generated from the CDP specification. If you need to make
 # changes, edit the generator and regenerate all of the modules.
 #
+# Specification verion: 1.3
+#
+#
 # CDP domain: WebAudio (experimental)
 
 from __future__ import annotations
+
 import enum
-import typing
 from dataclasses import dataclass
-from .util import event_class, T_JSON_DICT
+from typing import TYPE_CHECKING
+
+from .util import event_type
+
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from .util import T_JSON_DICT
+
+
+# ruff: noqa: FURB189
 
 
 class GraphObjectId(str):
     """
     An unique ID for a graph object (AudioContext, AudioNode, AudioParam) in Web Audio API
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -24,8 +40,14 @@ class GraphObjectId(str):
     def from_json(cls, json: str) -> GraphObjectId:
         return cls(json)
 
-    def __repr__(self):
-        return "GraphObjectId({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> GraphObjectId | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'GraphObjectId({super().__repr__()})'
 
 
 class ContextType(enum.Enum):
@@ -33,8 +55,8 @@ class ContextType(enum.Enum):
     Enum of BaseAudioContext types
     """
 
-    REALTIME = "realtime"
-    OFFLINE = "offline"
+    REALTIME = 'realtime'
+    OFFLINE = 'offline'
 
     def to_json(self) -> str:
         return self.value
@@ -43,16 +65,22 @@ class ContextType(enum.Enum):
     def from_json(cls, json: str) -> ContextType:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> ContextType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class ContextState(enum.Enum):
     """
     Enum of AudioContextState from the spec
     """
 
-    SUSPENDED = "suspended"
-    RUNNING = "running"
-    CLOSED = "closed"
-    INTERRUPTED = "interrupted"
+    SUSPENDED = 'suspended'
+    RUNNING = 'running'
+    CLOSED = 'closed'
+    INTERRUPTED = 'interrupted'
 
     def to_json(self) -> str:
         return self.value
@@ -61,11 +89,19 @@ class ContextState(enum.Enum):
     def from_json(cls, json: str) -> ContextState:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> ContextState | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class NodeType(str):
     """
     Enum of AudioNode types
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -74,8 +110,14 @@ class NodeType(str):
     def from_json(cls, json: str) -> NodeType:
         return cls(json)
 
-    def __repr__(self):
-        return "NodeType({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> NodeType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'NodeType({super().__repr__()})'
 
 
 class ChannelCountMode(enum.Enum):
@@ -83,9 +125,9 @@ class ChannelCountMode(enum.Enum):
     Enum of AudioNode::ChannelCountMode from the spec
     """
 
-    CLAMPED_MAX = "clamped-max"
-    EXPLICIT = "explicit"
-    MAX_ = "max"
+    CLAMPED_MAX = 'clamped-max'
+    EXPLICIT = 'explicit'
+    MAX_ = 'max'
 
     def to_json(self) -> str:
         return self.value
@@ -94,14 +136,20 @@ class ChannelCountMode(enum.Enum):
     def from_json(cls, json: str) -> ChannelCountMode:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> ChannelCountMode | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class ChannelInterpretation(enum.Enum):
     """
     Enum of AudioNode::ChannelInterpretation from the spec
     """
 
-    DISCRETE = "discrete"
-    SPEAKERS = "speakers"
+    DISCRETE = 'discrete'
+    SPEAKERS = 'speakers'
 
     def to_json(self) -> str:
         return self.value
@@ -110,11 +158,19 @@ class ChannelInterpretation(enum.Enum):
     def from_json(cls, json: str) -> ChannelInterpretation:
         return cls(json)
 
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> ChannelInterpretation | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
 
 class ParamType(str):
     """
     Enum of AudioParam types
     """
+
+    __slots__ = ()
 
     def to_json(self) -> str:
         return self
@@ -123,8 +179,14 @@ class ParamType(str):
     def from_json(cls, json: str) -> ParamType:
         return cls(json)
 
-    def __repr__(self):
-        return "ParamType({})".format(super().__repr__())
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> ParamType | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
+
+    def __repr__(self) -> str:
+        return f'ParamType({super().__repr__()})'
 
 
 class AutomationRate(enum.Enum):
@@ -132,8 +194,8 @@ class AutomationRate(enum.Enum):
     Enum of AudioParam::AutomationRate from the spec
     """
 
-    A_RATE = "a-rate"
-    K_RATE = "k-rate"
+    A_RATE = 'a-rate'
+    K_RATE = 'k-rate'
 
     def to_json(self) -> str:
         return self.value
@@ -141,6 +203,12 @@ class AutomationRate(enum.Enum):
     @classmethod
     def from_json(cls, json: str) -> AutomationRate:
         return cls(json)
+
+    @classmethod
+    def from_json_optional(cls, json: str | None) -> AutomationRate | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -164,21 +232,27 @@ class ContextRealtimeData:
     callback_interval_variance: float
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["currentTime"] = self.current_time
-        json["renderCapacity"] = self.render_capacity
-        json["callbackIntervalMean"] = self.callback_interval_mean
-        json["callbackIntervalVariance"] = self.callback_interval_variance
+        json: T_JSON_DICT = {}
+        json['currentTime'] = self.current_time
+        json['renderCapacity'] = self.render_capacity
+        json['callbackIntervalMean'] = self.callback_interval_mean
+        json['callbackIntervalVariance'] = self.callback_interval_variance
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ContextRealtimeData:
         return cls(
-            current_time=float(json["currentTime"]),
-            render_capacity=float(json["renderCapacity"]),
-            callback_interval_mean=float(json["callbackIntervalMean"]),
-            callback_interval_variance=float(json["callbackIntervalVariance"]),
+            current_time=float(json['currentTime']),
+            render_capacity=float(json['renderCapacity']),
+            callback_interval_mean=float(json['callbackIntervalMean']),
+            callback_interval_variance=float(json['callbackIntervalVariance']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ContextRealtimeData | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -202,33 +276,37 @@ class BaseAudioContext:
     #: Context sample rate.
     sample_rate: float
 
-    realtime_data: typing.Optional[ContextRealtimeData] = None
+    realtime_data: ContextRealtimeData | None = None
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["contextId"] = self.context_id.to_json()
-        json["contextType"] = self.context_type.to_json()
-        json["contextState"] = self.context_state.to_json()
-        json["callbackBufferSize"] = self.callback_buffer_size
-        json["maxOutputChannelCount"] = self.max_output_channel_count
-        json["sampleRate"] = self.sample_rate
+        json: T_JSON_DICT = {}
+        json['contextId'] = self.context_id.to_json()
+        json['contextType'] = self.context_type.to_json()
+        json['contextState'] = self.context_state.to_json()
+        json['callbackBufferSize'] = self.callback_buffer_size
+        json['maxOutputChannelCount'] = self.max_output_channel_count
+        json['sampleRate'] = self.sample_rate
         if self.realtime_data is not None:
-            json["realtimeData"] = self.realtime_data.to_json()
+            json['realtimeData'] = self.realtime_data.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> BaseAudioContext:
         return cls(
-            context_id=GraphObjectId.from_json(json["contextId"]),
-            context_type=ContextType.from_json(json["contextType"]),
-            context_state=ContextState.from_json(json["contextState"]),
-            callback_buffer_size=float(json["callbackBufferSize"]),
-            max_output_channel_count=float(json["maxOutputChannelCount"]),
-            sample_rate=float(json["sampleRate"]),
-            realtime_data=ContextRealtimeData.from_json(json["realtimeData"])
-            if json.get("realtimeData", None) is not None
-            else None,
+            context_id=GraphObjectId.from_json(json['contextId']),
+            context_type=ContextType.from_json(json['contextType']),
+            context_state=ContextState.from_json(json['contextState']),
+            callback_buffer_size=float(json['callbackBufferSize']),
+            max_output_channel_count=float(json['maxOutputChannelCount']),
+            sample_rate=float(json['sampleRate']),
+            realtime_data=ContextRealtimeData.from_json_optional(json.get('realtimeData')),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> BaseAudioContext | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -242,17 +320,23 @@ class AudioListener:
     context_id: GraphObjectId
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["listenerId"] = self.listener_id.to_json()
-        json["contextId"] = self.context_id.to_json()
+        json: T_JSON_DICT = {}
+        json['listenerId'] = self.listener_id.to_json()
+        json['contextId'] = self.context_id.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AudioListener:
         return cls(
-            listener_id=GraphObjectId.from_json(json["listenerId"]),
-            context_id=GraphObjectId.from_json(json["contextId"]),
+            listener_id=GraphObjectId.from_json(json['listenerId']),
+            context_id=GraphObjectId.from_json(json['contextId']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AudioListener | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -278,31 +362,35 @@ class AudioNode:
     channel_interpretation: ChannelInterpretation
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["nodeId"] = self.node_id.to_json()
-        json["contextId"] = self.context_id.to_json()
-        json["nodeType"] = self.node_type.to_json()
-        json["numberOfInputs"] = self.number_of_inputs
-        json["numberOfOutputs"] = self.number_of_outputs
-        json["channelCount"] = self.channel_count
-        json["channelCountMode"] = self.channel_count_mode.to_json()
-        json["channelInterpretation"] = self.channel_interpretation.to_json()
+        json: T_JSON_DICT = {}
+        json['nodeId'] = self.node_id.to_json()
+        json['contextId'] = self.context_id.to_json()
+        json['nodeType'] = self.node_type.to_json()
+        json['numberOfInputs'] = self.number_of_inputs
+        json['numberOfOutputs'] = self.number_of_outputs
+        json['channelCount'] = self.channel_count
+        json['channelCountMode'] = self.channel_count_mode.to_json()
+        json['channelInterpretation'] = self.channel_interpretation.to_json()
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AudioNode:
         return cls(
-            node_id=GraphObjectId.from_json(json["nodeId"]),
-            context_id=GraphObjectId.from_json(json["contextId"]),
-            node_type=NodeType.from_json(json["nodeType"]),
-            number_of_inputs=float(json["numberOfInputs"]),
-            number_of_outputs=float(json["numberOfOutputs"]),
-            channel_count=float(json["channelCount"]),
-            channel_count_mode=ChannelCountMode.from_json(json["channelCountMode"]),
-            channel_interpretation=ChannelInterpretation.from_json(
-                json["channelInterpretation"]
-            ),
+            node_id=GraphObjectId.from_json(json['nodeId']),
+            context_id=GraphObjectId.from_json(json['contextId']),
+            node_type=NodeType.from_json(json['nodeType']),
+            number_of_inputs=float(json['numberOfInputs']),
+            number_of_outputs=float(json['numberOfOutputs']),
+            channel_count=float(json['channelCount']),
+            channel_count_mode=ChannelCountMode.from_json(json['channelCountMode']),
+            channel_interpretation=ChannelInterpretation.from_json(json['channelInterpretation']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AudioNode | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
 @dataclass
@@ -328,71 +416,85 @@ class AudioParam:
     max_value: float
 
     def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["paramId"] = self.param_id.to_json()
-        json["nodeId"] = self.node_id.to_json()
-        json["contextId"] = self.context_id.to_json()
-        json["paramType"] = self.param_type.to_json()
-        json["rate"] = self.rate.to_json()
-        json["defaultValue"] = self.default_value
-        json["minValue"] = self.min_value
-        json["maxValue"] = self.max_value
+        json: T_JSON_DICT = {}
+        json['paramId'] = self.param_id.to_json()
+        json['nodeId'] = self.node_id.to_json()
+        json['contextId'] = self.context_id.to_json()
+        json['paramType'] = self.param_type.to_json()
+        json['rate'] = self.rate.to_json()
+        json['defaultValue'] = self.default_value
+        json['minValue'] = self.min_value
+        json['maxValue'] = self.max_value
         return json
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AudioParam:
         return cls(
-            param_id=GraphObjectId.from_json(json["paramId"]),
-            node_id=GraphObjectId.from_json(json["nodeId"]),
-            context_id=GraphObjectId.from_json(json["contextId"]),
-            param_type=ParamType.from_json(json["paramType"]),
-            rate=AutomationRate.from_json(json["rate"]),
-            default_value=float(json["defaultValue"]),
-            min_value=float(json["minValue"]),
-            max_value=float(json["maxValue"]),
+            param_id=GraphObjectId.from_json(json['paramId']),
+            node_id=GraphObjectId.from_json(json['nodeId']),
+            context_id=GraphObjectId.from_json(json['contextId']),
+            param_type=ParamType.from_json(json['paramType']),
+            rate=AutomationRate.from_json(json['rate']),
+            default_value=float(json['defaultValue']),
+            min_value=float(json['minValue']),
+            max_value=float(json['maxValue']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AudioParam | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+
+def enable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Enables the WebAudio domain and starts sending context lifetime events.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "WebAudio.enable",
+        'method': 'WebAudio.enable',
     }
     json = yield cmd_dict
 
 
-def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+def disable() -> Generator[T_JSON_DICT, T_JSON_DICT]:
     """
     Disables the WebAudio domain.
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT]
     """
+
     cmd_dict: T_JSON_DICT = {
-        "method": "WebAudio.disable",
+        'method': 'WebAudio.disable',
     }
     json = yield cmd_dict
 
 
 def get_realtime_data(
     context_id: GraphObjectId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, ContextRealtimeData]:
+) -> Generator[T_JSON_DICT, T_JSON_DICT, ContextRealtimeData]:
     """
     Fetch the realtime data from the registered contexts.
 
     :param context_id:
-    :returns:
+    :returns: A generator
+    :rtype: Generator[T_JSON_DICT, T_JSON_DICT, ContextRealtimeData]
     """
-    params: T_JSON_DICT = dict()
-    params["contextId"] = context_id.to_json()
+
+    params: T_JSON_DICT = {}
+    params['contextId'] = context_id.to_json()
     cmd_dict: T_JSON_DICT = {
-        "method": "WebAudio.getRealtimeData",
-        "params": params,
+        'method': 'WebAudio.getRealtimeData',
+        'params': params,
     }
     json = yield cmd_dict
-    return ContextRealtimeData.from_json(json["realtimeData"])
+    return ContextRealtimeData.from_json(json['realtimeData'])
 
 
-@event_class("WebAudio.contextCreated")
+@event_type('WebAudio.contextCreated')
 @dataclass
 class ContextCreated:
     """
@@ -403,10 +505,16 @@ class ContextCreated:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ContextCreated:
-        return cls(context=BaseAudioContext.from_json(json["context"]))
+        return cls(context=BaseAudioContext.from_json(json['context']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ContextCreated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("WebAudio.contextWillBeDestroyed")
+@event_type('WebAudio.contextWillBeDestroyed')
 @dataclass
 class ContextWillBeDestroyed:
     """
@@ -417,10 +525,16 @@ class ContextWillBeDestroyed:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ContextWillBeDestroyed:
-        return cls(context_id=GraphObjectId.from_json(json["contextId"]))
+        return cls(context_id=GraphObjectId.from_json(json['contextId']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ContextWillBeDestroyed | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("WebAudio.contextChanged")
+@event_type('WebAudio.contextChanged')
 @dataclass
 class ContextChanged:
     """
@@ -431,10 +545,16 @@ class ContextChanged:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ContextChanged:
-        return cls(context=BaseAudioContext.from_json(json["context"]))
+        return cls(context=BaseAudioContext.from_json(json['context']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> ContextChanged | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("WebAudio.audioListenerCreated")
+@event_type('WebAudio.audioListenerCreated')
 @dataclass
 class AudioListenerCreated:
     """
@@ -445,10 +565,16 @@ class AudioListenerCreated:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AudioListenerCreated:
-        return cls(listener=AudioListener.from_json(json["listener"]))
+        return cls(listener=AudioListener.from_json(json['listener']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AudioListenerCreated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("WebAudio.audioListenerWillBeDestroyed")
+@event_type('WebAudio.audioListenerWillBeDestroyed')
 @dataclass
 class AudioListenerWillBeDestroyed:
     """
@@ -461,12 +587,18 @@ class AudioListenerWillBeDestroyed:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AudioListenerWillBeDestroyed:
         return cls(
-            context_id=GraphObjectId.from_json(json["contextId"]),
-            listener_id=GraphObjectId.from_json(json["listenerId"]),
+            context_id=GraphObjectId.from_json(json['contextId']),
+            listener_id=GraphObjectId.from_json(json['listenerId']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AudioListenerWillBeDestroyed | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("WebAudio.audioNodeCreated")
+
+@event_type('WebAudio.audioNodeCreated')
 @dataclass
 class AudioNodeCreated:
     """
@@ -477,10 +609,16 @@ class AudioNodeCreated:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AudioNodeCreated:
-        return cls(node=AudioNode.from_json(json["node"]))
+        return cls(node=AudioNode.from_json(json['node']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AudioNodeCreated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("WebAudio.audioNodeWillBeDestroyed")
+@event_type('WebAudio.audioNodeWillBeDestroyed')
 @dataclass
 class AudioNodeWillBeDestroyed:
     """
@@ -493,12 +631,18 @@ class AudioNodeWillBeDestroyed:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AudioNodeWillBeDestroyed:
         return cls(
-            context_id=GraphObjectId.from_json(json["contextId"]),
-            node_id=GraphObjectId.from_json(json["nodeId"]),
+            context_id=GraphObjectId.from_json(json['contextId']),
+            node_id=GraphObjectId.from_json(json['nodeId']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AudioNodeWillBeDestroyed | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("WebAudio.audioParamCreated")
+
+@event_type('WebAudio.audioParamCreated')
 @dataclass
 class AudioParamCreated:
     """
@@ -509,10 +653,16 @@ class AudioParamCreated:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AudioParamCreated:
-        return cls(param=AudioParam.from_json(json["param"]))
+        return cls(param=AudioParam.from_json(json['param']))
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AudioParamCreated | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
 
-@event_class("WebAudio.audioParamWillBeDestroyed")
+@event_type('WebAudio.audioParamWillBeDestroyed')
 @dataclass
 class AudioParamWillBeDestroyed:
     """
@@ -526,13 +676,19 @@ class AudioParamWillBeDestroyed:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> AudioParamWillBeDestroyed:
         return cls(
-            context_id=GraphObjectId.from_json(json["contextId"]),
-            node_id=GraphObjectId.from_json(json["nodeId"]),
-            param_id=GraphObjectId.from_json(json["paramId"]),
+            context_id=GraphObjectId.from_json(json['contextId']),
+            node_id=GraphObjectId.from_json(json['nodeId']),
+            param_id=GraphObjectId.from_json(json['paramId']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> AudioParamWillBeDestroyed | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("WebAudio.nodesConnected")
+
+@event_type('WebAudio.nodesConnected')
 @dataclass
 class NodesConnected:
     """
@@ -542,25 +698,29 @@ class NodesConnected:
     context_id: GraphObjectId
     source_id: GraphObjectId
     destination_id: GraphObjectId
-    source_output_index: typing.Optional[float]
-    destination_input_index: typing.Optional[float]
+    source_output_index: float | None
+    destination_input_index: float | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> NodesConnected:
         return cls(
-            context_id=GraphObjectId.from_json(json["contextId"]),
-            source_id=GraphObjectId.from_json(json["sourceId"]),
-            destination_id=GraphObjectId.from_json(json["destinationId"]),
-            source_output_index=float(json["sourceOutputIndex"])
-            if json.get("sourceOutputIndex", None) is not None
-            else None,
-            destination_input_index=float(json["destinationInputIndex"])
-            if json.get("destinationInputIndex", None) is not None
-            else None,
+            context_id=GraphObjectId.from_json(json['contextId']),
+            source_id=GraphObjectId.from_json(json['sourceId']),
+            destination_id=GraphObjectId.from_json(json['destinationId']),
+            source_output_index=None if json.get('sourceOutputIndex') is None else float(json['sourceOutputIndex']),
+            destination_input_index=None
+            if json.get('destinationInputIndex') is None
+            else float(json['destinationInputIndex']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> NodesConnected | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("WebAudio.nodesDisconnected")
+
+@event_type('WebAudio.nodesDisconnected')
 @dataclass
 class NodesDisconnected:
     """
@@ -570,25 +730,29 @@ class NodesDisconnected:
     context_id: GraphObjectId
     source_id: GraphObjectId
     destination_id: GraphObjectId
-    source_output_index: typing.Optional[float]
-    destination_input_index: typing.Optional[float]
+    source_output_index: float | None
+    destination_input_index: float | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> NodesDisconnected:
         return cls(
-            context_id=GraphObjectId.from_json(json["contextId"]),
-            source_id=GraphObjectId.from_json(json["sourceId"]),
-            destination_id=GraphObjectId.from_json(json["destinationId"]),
-            source_output_index=float(json["sourceOutputIndex"])
-            if json.get("sourceOutputIndex", None) is not None
-            else None,
-            destination_input_index=float(json["destinationInputIndex"])
-            if json.get("destinationInputIndex", None) is not None
-            else None,
+            context_id=GraphObjectId.from_json(json['contextId']),
+            source_id=GraphObjectId.from_json(json['sourceId']),
+            destination_id=GraphObjectId.from_json(json['destinationId']),
+            source_output_index=None if json.get('sourceOutputIndex') is None else float(json['sourceOutputIndex']),
+            destination_input_index=None
+            if json.get('destinationInputIndex') is None
+            else float(json['destinationInputIndex']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> NodesDisconnected | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("WebAudio.nodeParamConnected")
+
+@event_type('WebAudio.nodeParamConnected')
 @dataclass
 class NodeParamConnected:
     """
@@ -598,21 +762,25 @@ class NodeParamConnected:
     context_id: GraphObjectId
     source_id: GraphObjectId
     destination_id: GraphObjectId
-    source_output_index: typing.Optional[float]
+    source_output_index: float | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> NodeParamConnected:
         return cls(
-            context_id=GraphObjectId.from_json(json["contextId"]),
-            source_id=GraphObjectId.from_json(json["sourceId"]),
-            destination_id=GraphObjectId.from_json(json["destinationId"]),
-            source_output_index=float(json["sourceOutputIndex"])
-            if json.get("sourceOutputIndex", None) is not None
-            else None,
+            context_id=GraphObjectId.from_json(json['contextId']),
+            source_id=GraphObjectId.from_json(json['sourceId']),
+            destination_id=GraphObjectId.from_json(json['destinationId']),
+            source_output_index=None if json.get('sourceOutputIndex') is None else float(json['sourceOutputIndex']),
         )
 
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> NodeParamConnected | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
 
-@event_class("WebAudio.nodeParamDisconnected")
+
+@event_type('WebAudio.nodeParamDisconnected')
 @dataclass
 class NodeParamDisconnected:
     """
@@ -622,15 +790,19 @@ class NodeParamDisconnected:
     context_id: GraphObjectId
     source_id: GraphObjectId
     destination_id: GraphObjectId
-    source_output_index: typing.Optional[float]
+    source_output_index: float | None
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> NodeParamDisconnected:
         return cls(
-            context_id=GraphObjectId.from_json(json["contextId"]),
-            source_id=GraphObjectId.from_json(json["sourceId"]),
-            destination_id=GraphObjectId.from_json(json["destinationId"]),
-            source_output_index=float(json["sourceOutputIndex"])
-            if json.get("sourceOutputIndex", None) is not None
-            else None,
+            context_id=GraphObjectId.from_json(json['contextId']),
+            source_id=GraphObjectId.from_json(json['sourceId']),
+            destination_id=GraphObjectId.from_json(json['destinationId']),
+            source_output_index=None if json.get('sourceOutputIndex') is None else float(json['sourceOutputIndex']),
         )
+
+    @classmethod
+    def from_json_optional(cls, json: T_JSON_DICT | None) -> NodeParamDisconnected | None:
+        if json is None:
+            return None
+        return cls.from_json(json)
