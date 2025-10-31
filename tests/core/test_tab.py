@@ -79,6 +79,13 @@ async def test_xpath(browser: zd.Browser) -> None:
     assert result.tag == "li"
     assert result.text == "Apples"
 
+async def test_xpath_no_results(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+
+    results = await tab.xpath('//li[@aria-label="Nonexistent Item"]')
+    
+    assert len(results) == 0
+
 
 async def test_add_handler_type_event(browser: zd.Browser) -> None:
     tab = await browser.get(sample_file("groceries.html"))
