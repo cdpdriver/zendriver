@@ -385,8 +385,8 @@ class Tab(Connection):
         try:
             await self.send(cdp.dom.enable(), True)
             loop = asyncio.get_running_loop()
+            start_time = loop.time()
             while not items:
-                start_time = loop.time()
                 try:
                     items = await self.find_all(xpath, timeout=0)
                 except TimeoutError:
