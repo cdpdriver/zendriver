@@ -390,8 +390,8 @@ class Tab(Connection):
                 await self.send(cdp.dom.enable(), True)
                 items = await self.find_all(xpath, timeout=0)
             except Exception:
-                items = [] # find_elements_by_text may raise exception
-                
+                items = []  # find_elements_by_text may raise exception
+
             await self.disable_dom_agent()
 
         return items
