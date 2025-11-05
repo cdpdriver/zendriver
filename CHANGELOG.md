@@ -21,6 +21,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+
+## [0.14.3] - 2025-09-28
+
+### Fixed
+
+- Fix WebRTC IP Leaks @ethcipher
+
+### Added
+
+- Add `disable_webRTC` and `disable_webGL` agrs to `Config` class @ethcipher
+
 ## [0.14.2] - 2025-09-09
 
 ### Fixed
