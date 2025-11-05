@@ -12,25 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix `browser.stopped` to detect when the browser was closed by the user. @puc9
 - Fix typo in `Browser._handle_target_update` that prevented target_info updates @puc9
 - Fix [#128](https://github.com/cdpdriver/zendriver/issues/218): TimeoutError caused by Tab.xpath @ionutcatana
+- Fix WebRTC IP Leaks @ethcipher
 
 ### Added
+
+- Add `disable_webRTC` and `disable_webGL` agrs to `Config` class @ethcipher
 
 ### Changed
 
 - Fix `.dockerignore` @tomokinakamaru
 
 ### Removed
-
-
-## [0.14.3] - 2025-09-28
-
-### Fixed
-
-- Fix WebRTC IP Leaks @ethcipher
-
-### Added
-
-- Add `disable_webRTC` and `disable_webGL` agrs to `Config` class @ethcipher
 
 ## [0.14.2] - 2025-09-09
 
