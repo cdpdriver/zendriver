@@ -9,9 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix `browser.stopped` to detect when the browser was closed by the user. @puc9
+- Fix typo in `Browser._handle_target_update` that prevented target_info updates @puc9
+- Fix [#128](https://github.com/cdpdriver/zendriver/issues/218): TimeoutError caused by Tab.xpath @ionutcatana
+
 ### Added
 
 ### Changed
+
+- Fix `.dockerignore` @tomokinakamaru
 
 ### Removed
 
