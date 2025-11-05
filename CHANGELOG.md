@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add `disable_webRTC` and `disable_webGL` agrs to `Config` class @ethcipher
+- Add `disable_webrtc` and `disable_webgl` args to `Config` class @ethcipher
 
 ### Changed
 
