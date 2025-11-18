@@ -463,7 +463,7 @@ class Tab(Connection):
                         return []
                     # if supplied node is not found, the dom has changed since acquiring the element
                     # therefore we need to update our passed node and try again
-                    if isinstance(_node, Element):
+                    if isinstance(_node, element.Element):
                         await _node.update()
                     # make sure this isn't turned into infinite loop
                     setattr(_node, "__last", True)
@@ -521,7 +521,7 @@ class Tab(Connection):
                         return None
                     # if supplied node is not found, the dom has changed since acquiring the element
                     # therefore we need to update our passed node and try again
-                    if isinstance(_node, Element):
+                    if isinstance(_node, element.Element):
                         await _node.update()
                     # make sure this isn't turned into infinite loop
                     setattr(_node, "__last", True)
