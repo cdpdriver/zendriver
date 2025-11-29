@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix race condition in `Tab.query_selector` and `Tab.query_selector_all` on stale document. @Avejack
+
 ### Added
 
 ### Changed
