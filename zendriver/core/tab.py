@@ -469,6 +469,13 @@ class Tab(Connection):
                     setattr(_node, "__last", True)
                     return await self.query_selector_all(selector, _node)
             else:
+                if e.message is not None and "could not find node" in e.message.lower():
+                    # The document node is stale; refetch and retry once
+                    doc = await self.send(cdp.dom.get_document(-1, True))
+                    # Prevent double-retry by marking this node as 'last attempt'
+                    setattr(doc, "__last", True)
+                    return await self.query_selector_all(selector, doc)
+
                 await self.disable_dom_agent()
                 raise
         if not node_ids:
@@ -531,7 +538,11 @@ class Tab(Connection):
                 and "could not find node" in e.message.lower()
                 and doc
             ):
-                return None
+                # The document node is stale; refetch and retry once
+                doc = await self.send(cdp.dom.get_document(-1, True))
+                # Prevent double-retry by marking this node as 'last attempt'
+                setattr(doc, "__last", True)
+                return await self.query_selector(selector, doc)
             else:
                 await self.disable_dom_agent()
                 raise
