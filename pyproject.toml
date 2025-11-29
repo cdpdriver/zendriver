@@ -1,6 +1,6 @@
 [project]
 name = "zendriver"
-version = "0.15.1"
+version = "0.15.2"
 description = "A blazing fast, async-first, undetectable webscraping/web automation framework"
 readme = "README.md"
 authors = [{ name = "Stephan Lensky", email = "oss@slensky.com" }]
