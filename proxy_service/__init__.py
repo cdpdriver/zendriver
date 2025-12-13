@@ -10,11 +10,11 @@ Zendriver Proxy Service
 - 超时控制
 """
 
-from .browser_pool import BrowserPool
-from .cookie_manager import CookieManager
-from .fetcher import Fetcher, FetchResult
-from .page_loader import CloudflareConfig, PageLoader, PageLoadResult
-from .proxy_config import ProxyConfig
+from browser_pool import BrowserPool
+from cookie_manager import CookieManager
+from fetcher import Fetcher, FetchResult
+from page_loader import CloudflareConfig, PageLoader, PageLoadResult
+from proxy_config import ProxyConfig
 
 __all__ = [
     "BrowserPool",

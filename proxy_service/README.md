@@ -82,7 +82,7 @@ After=network.target
 [Service]
 Type=simple
 User=your_user
-WorkingDirectory=/home/zhangll/zendriver
+WorkingDirectory=/home/spider/zendriver
 Environment="DISPLAY=:99"
 ExecStartPre=/usr/bin/Xvfb :99 -screen 0 1920x1080x24 -nolisten tcp -ac
 ExecStart=/usr/bin/python3 -m uvicorn proxy_service.main:app --host 0.0.0.0 --port 8000
@@ -158,7 +158,7 @@ After=network.target
 [Service]
 Type=simple
 User=your_user
-WorkingDirectory=/home/zhangll/zendriver
+WorkingDirectory=/home/spider/zendriver
 ExecStart=/usr/bin/python3 -m uvicorn proxy_service.main:app --host 0.0.0.0 --port 8000
 Restart=always
 RestartSec=10
