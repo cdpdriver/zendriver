@@ -2,16 +2,21 @@
 Fetcher - 核心抓取逻辑
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from zendriver import cdp
 
 from .browser_pool import BrowserPool
 from .cookie_manager import CookieManager
+
+if TYPE_CHECKING:
+    from .proxy_config import ProxyConfig
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +61,7 @@ class Fetcher:
         url: str,
         wait_for: str | None = None,
         timeout: float | None = None,
+        proxy: ProxyConfig | None = None,
     ) -> FetchResult:
         """
         抓取页面 HTML
@@ -64,6 +70,7 @@ class Fetcher:
             url: 目标 URL
             wait_for: 等待的 CSS 选择器（可选）
             timeout: 超时时间（秒）
+            proxy: 代理配置（可选）
 
         Returns:
             FetchResult
@@ -76,11 +83,11 @@ class Fetcher:
         error = None
 
         try:
-            # 1. 获取 Tab（会等待信号量）
-            tab = await self.browser_pool.acquire()
+            # 1. 获取 Tab（会等待信号量，并设置代理认证）
+            tab = await self.browser_pool.acquire(proxy)
 
-            # 2. 加载该域名的 Cookies
-            await self._load_cookies(tab, url)
+            # 2. 加载该 (域名, 代理) 的 Cookies
+            await self._load_cookies(tab, url, proxy)
 
             # 3. 导航到 URL
             await tab.get(url)
@@ -111,8 +118,8 @@ class Fetcher:
             final_url = tab.url or url
             html = await tab.get_content()
 
-            # 6. 保存 Cookies
-            await self._save_cookies(tab, url)
+            # 6. 保存 Cookies（按域名+代理）
+            await self._save_cookies(tab, url, proxy)
 
             elapsed = time.time() - start_time
             return FetchResult(
@@ -150,10 +157,12 @@ class Fetcher:
                 pass
             await asyncio.sleep(0.1)
 
-    async def _load_cookies(self, tab, url: str) -> None:
-        """加载域名对应的 cookies 到 tab"""
+    async def _load_cookies(
+        self, tab, url: str, proxy: ProxyConfig | None
+    ) -> None:
+        """加载 (域名, 代理) 对应的 cookies 到 tab"""
         try:
-            cookies_data = await self.cookie_manager.get_cookies(url)
+            cookies_data = await self.cookie_manager.get_cookies(url, proxy)
             if not cookies_data:
                 return
 
@@ -175,13 +184,18 @@ class Fetcher:
 
             if cookie_params:
                 await tab.send(cdp.storage.set_cookies(cookie_params))
-                logger.debug(f"Loaded {len(cookie_params)} cookies for {url}")
+                logger.debug(
+                    f"Loaded {len(cookie_params)} cookies for {url} "
+                    f"(proxy: {proxy.server if proxy else None})"
+                )
 
         except Exception as e:
             logger.warning(f"Failed to load cookies: {e}")
 
-    async def _save_cookies(self, tab, url: str) -> None:
-        """从 tab 保存 cookies 到管理器"""
+    async def _save_cookies(
+        self, tab, url: str, proxy: ProxyConfig | None
+    ) -> None:
+        """从 tab 保存 cookies 到管理器（按域名+代理）"""
         try:
             cookies = await tab.send(cdp.storage.get_cookies())
             if not cookies:
@@ -202,8 +216,11 @@ class Fetcher:
                     }
                 )
 
-            await self.cookie_manager.save_cookies(url, cookies_data)
-            logger.debug(f"Saved {len(cookies_data)} cookies for {url}")
+            await self.cookie_manager.save_cookies(url, cookies_data, proxy)
+            logger.debug(
+                f"Saved {len(cookies_data)} cookies for {url} "
+                f"(proxy: {proxy.server if proxy else None})"
+            )
 
         except Exception as e:
             logger.warning(f"Failed to save cookies: {e}")

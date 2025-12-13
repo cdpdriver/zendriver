@@ -8,7 +8,6 @@ Proxy Service - FastAPI 入口
     python -m proxy_service.main
 """
 
-import asyncio
 import logging
 from contextlib import asynccontextmanager
 from typing import Any
@@ -19,6 +18,7 @@ from pydantic import BaseModel, Field
 from .browser_pool import BrowserPool
 from .cookie_manager import CookieManager
 from .fetcher import Fetcher
+from .proxy_config import ProxyConfig
 
 # 配置日志
 logging.basicConfig(
@@ -68,8 +68,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Zendriver Proxy Service",
-    description="简单的浏览器代理服务，支持多并发、Cookie 管理、元素等待",
-    version="0.1.0",
+    description="浏览器代理服务，支持多并发、代理、Cookie 管理、元素等待",
+    version="0.2.0",
     lifespan=lifespan,
 )
 
@@ -81,6 +81,10 @@ class FetchRequest(BaseModel):
     url: str = Field(..., description="目标 URL")
     wait_for: str | None = Field(None, description="等待的 CSS 选择器")
     timeout: float | None = Field(None, description="超时时间（秒），默认 30")
+    proxy: str | None = Field(
+        None,
+        description="代理 URL，格式: http://user:pass@host:port 或 socks5://host:port",
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -89,6 +93,7 @@ class FetchRequest(BaseModel):
                     "url": "https://example.com",
                     "wait_for": "#main-content",
                     "timeout": 20,
+                    "proxy": "http://user:pass@proxy.example.com:8080",
                 }
             ]
         }
@@ -111,13 +116,19 @@ class StatusResponse(BaseModel):
     status: str
     max_concurrent: int
     headless: bool
-    cookie_domains: list[str]
+    browsers: list[dict[str, Any]] = Field(
+        ..., description="浏览器实例列表 [{proxy, tabs}]"
+    )
+    cookie_keys: list[dict[str, Any]] = Field(
+        ..., description="Cookie 键列表 [{domain, proxy}]"
+    )
 
 
 class CookiesResponse(BaseModel):
     """Cookie 响应"""
 
     domain: str = Field(..., description="域名")
+    proxy: str | None = Field(None, description="代理服务器")
     cookies: list[dict[str, Any]] = Field(..., description="Cookie 列表")
 
 
@@ -130,14 +141,24 @@ async def fetch_page(request: FetchRequest) -> dict[str, Any]:
     - **url**: 目标 URL
     - **wait_for**: 等待的 CSS 选择器（可选）
     - **timeout**: 超时时间，默认 30 秒
+    - **proxy**: 代理 URL（可选），格式: http://user:pass@host:port
     """
     if not fetcher:
         raise HTTPException(status_code=503, detail="Service not ready")
+
+    # 解析代理配置
+    proxy_config = None
+    if request.proxy:
+        try:
+            proxy_config = ProxyConfig.parse(request.proxy)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid proxy URL: {e}")
 
     result = await fetcher.fetch(
         url=request.url,
         wait_for=request.wait_for,
         timeout=request.timeout,
+        proxy=proxy_config,
     )
     return result.to_dict()
 
@@ -148,24 +169,39 @@ async def get_status() -> dict[str, Any]:
     if not browser_pool or not cookie_manager:
         raise HTTPException(status_code=503, detail="Service not ready")
 
-    domains = await cookie_manager.list_domains()
+    browsers = await browser_pool.get_stats()
+    cookie_keys = await cookie_manager.list_keys()
+
     return {
         "status": "running" if browser_pool.is_started else "stopped",
         "max_concurrent": browser_pool.max_concurrent,
         "headless": browser_pool.headless,
-        "cookie_domains": domains,
+        "browsers": browsers,
+        "cookie_keys": cookie_keys,
     }
 
 
 @app.get("/cookies", response_model=CookiesResponse)
-async def get_cookies(domain: str) -> dict[str, Any]:
+async def get_cookies(
+    domain: str,
+    proxy: str | None = None,
+) -> dict[str, Any]:
     """
-    获取指定域名的 Cookies
+    获取指定 (域名, 代理) 的 Cookies
 
     - **domain**: 域名或 URL（如 example.com 或 https://example.com/path）
+    - **proxy**: 代理服务器地址（可选），如 http://proxy:8080
     """
     if not cookie_manager:
         raise HTTPException(status_code=503, detail="Service not ready")
+
+    # 解析代理配置
+    proxy_config = None
+    if proxy:
+        try:
+            proxy_config = ProxyConfig.parse(proxy)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid proxy URL: {e}")
 
     # 如果输入的是 URL，自动提取域名
     parsed_domain = cookie_manager.get_domain(domain)
@@ -174,23 +210,36 @@ async def get_cookies(domain: str) -> dict[str, Any]:
 
     # 构造完整 URL 用于查询
     url = f"https://{parsed_domain}" if not domain.startswith("http") else domain
-    cookies = await cookie_manager.get_cookies(url)
+    cookies = await cookie_manager.get_cookies(url, proxy_config)
 
     return {
         "domain": parsed_domain,
+        "proxy": proxy_config.server if proxy_config else None,
         "cookies": cookies,
     }
 
 
 @app.delete("/cookies")
-async def clear_cookies(domain: str | None = None) -> dict[str, str]:
+async def clear_cookies(
+    domain: str | None = None,
+    proxy: str | None = None,
+) -> dict[str, str]:
     """
     清除 Cookies
 
     - **domain**: 指定域名或 URL，不传则清除所有
+    - **proxy**: 指定代理，不传则清除该域名的所有代理
     """
     if not cookie_manager:
         raise HTTPException(status_code=503, detail="Service not ready")
+
+    # 解析代理配置
+    proxy_config = None
+    if proxy:
+        try:
+            proxy_config = ProxyConfig.parse(proxy)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid proxy URL: {e}")
 
     if domain:
         # 如果输入的是 URL，自动提取域名
@@ -198,11 +247,22 @@ async def clear_cookies(domain: str | None = None) -> dict[str, str]:
         if not parsed_domain:
             parsed_domain = domain
         url = f"https://{parsed_domain}" if not domain.startswith("http") else domain
-        await cookie_manager.clear_cookies(url)
-        return {"message": f"Cookies cleared for {parsed_domain}"}
+        await cookie_manager.clear_cookies(url, proxy_config)
+
+        if proxy_config:
+            return {
+                "message": f"Cookies cleared for {parsed_domain} (proxy: {proxy_config.server})"
+            }
+        else:
+            return {"message": f"Cookies cleared for {parsed_domain} (all proxies)"}
     else:
-        await cookie_manager.clear_cookies()
-        return {"message": "All cookies cleared"}
+        await cookie_manager.clear_cookies(None, proxy_config)
+        if proxy_config:
+            return {
+                "message": f"Cookies cleared for all domains (proxy: {proxy_config.server})"
+            }
+        else:
+            return {"message": "All cookies cleared"}
 
 
 @app.get("/health")
