@@ -68,6 +68,7 @@ class BrowserPool:
                 start_kwargs = {
                     "headless": self.headless,
                     "browser_args": self._browser_args_with_defaults(proxy),
+                    "sandbox": False,
                 }
                 if self.browser_executable_path:
                     start_kwargs["browser_executable_path"] = self.browser_executable_path
