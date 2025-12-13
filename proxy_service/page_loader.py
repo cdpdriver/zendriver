@@ -99,7 +99,7 @@ class PageLoader:
 
     # 无法访问的页面文本
     UNREACHABLE_TEXTS = [
-        "This site can't be reached",
+        "This site can’t be reached",
         "ERR_CONNECTION_REFUSED",
         "ERR_NAME_NOT_RESOLVED",
         "ERR_CONNECTION_TIMED_OUT",

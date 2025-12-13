@@ -89,3 +89,6 @@ venv.bak/
 
 # Pycharm
 /.idea
+
+
+.conda
