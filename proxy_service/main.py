@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 from .browser_pool import BrowserPool
 from .cookie_manager import CookieManager
 from .fetcher import Fetcher
+from .page_loader import CloudflareConfig
 from .proxy_config import ProxyConfig
 
 # 配置日志
@@ -68,13 +69,22 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Zendriver Proxy Service",
-    description="浏览器代理服务，支持多并发、代理、Cookie 管理、元素等待",
-    version="0.2.0",
+    description="浏览器代理服务，支持多并发、代理、Cookie 管理、Cloudflare 验证、元素等待",
+    version="0.3.0",
     lifespan=lifespan,
 )
 
 
 # 请求/响应模型
+class CloudflareConfigModel(BaseModel):
+    """Cloudflare 验证配置"""
+
+    enabled: bool = Field(True, description="是否启用 CF 验证")
+    max_retries: int = Field(3, description="最大重试次数")
+    click_delay: float = Field(2.0, description="点击间隔（秒）")
+    challenge_timeout: float = Field(15.0, description="验证超时（秒）")
+
+
 class FetchRequest(BaseModel):
     """抓取请求"""
 
@@ -85,6 +95,10 @@ class FetchRequest(BaseModel):
         None,
         description="代理 URL，格式: http://user:pass@host:port 或 socks5://host:port",
     )
+    cloudflare: CloudflareConfigModel | None = Field(
+        None,
+        description="Cloudflare 验证配置，不传则使用默认配置",
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -94,10 +108,24 @@ class FetchRequest(BaseModel):
                     "wait_for": "#main-content",
                     "timeout": 20,
                     "proxy": "http://user:pass@proxy.example.com:8080",
+                    "cloudflare": {
+                        "enabled": True,
+                        "max_retries": 3,
+                        "click_delay": 2.0,
+                        "challenge_timeout": 15.0,
+                    },
                 }
             ]
         }
     }
+
+
+class CloudflareStatusModel(BaseModel):
+    """Cloudflare 状态"""
+
+    detected: bool = Field(..., description="是否检测到 CF 挑战")
+    solved: bool = Field(..., description="是否解决成功")
+    retries: int = Field(..., description="重试次数")
 
 
 class FetchResponse(BaseModel):
@@ -108,6 +136,8 @@ class FetchResponse(BaseModel):
     url: str = Field(..., description="最终 URL（可能有重定向）")
     elapsed: float = Field(..., description="耗时（秒）")
     error: str | None = Field(None, description="错误信息")
+    status: str | None = Field(None, description="页面状态: ok/blocked/queue/unreachable")
+    cloudflare: CloudflareStatusModel = Field(..., description="Cloudflare 状态")
 
 
 class StatusResponse(BaseModel):
@@ -142,6 +172,7 @@ async def fetch_page(request: FetchRequest) -> dict[str, Any]:
     - **wait_for**: 等待的 CSS 选择器（可选）
     - **timeout**: 超时时间，默认 30 秒
     - **proxy**: 代理 URL（可选），格式: http://user:pass@host:port
+    - **cloudflare**: Cloudflare 验证配置（可选）
     """
     if not fetcher:
         raise HTTPException(status_code=503, detail="Service not ready")
@@ -154,11 +185,22 @@ async def fetch_page(request: FetchRequest) -> dict[str, Any]:
         except ValueError as e:
             raise HTTPException(status_code=400, detail=f"Invalid proxy URL: {e}")
 
+    # 解析 Cloudflare 配置
+    cf_config = None
+    if request.cloudflare:
+        cf_config = CloudflareConfig(
+            enabled=request.cloudflare.enabled,
+            max_retries=request.cloudflare.max_retries,
+            click_delay=request.cloudflare.click_delay,
+            challenge_timeout=request.cloudflare.challenge_timeout,
+        )
+
     result = await fetcher.fetch(
         url=request.url,
         wait_for=request.wait_for,
         timeout=request.timeout,
         proxy=proxy_config,
+        cf_config=cf_config,
     )
     return result.to_dict()
 

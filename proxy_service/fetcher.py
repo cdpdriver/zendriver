@@ -4,7 +4,6 @@ Fetcher - 核心抓取逻辑
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
 from dataclasses import dataclass
@@ -14,6 +13,7 @@ from zendriver import cdp
 
 from .browser_pool import BrowserPool
 from .cookie_manager import CookieManager
+from .page_loader import CloudflareConfig, PageLoader
 
 if TYPE_CHECKING:
     from .proxy_config import ProxyConfig
@@ -31,8 +31,16 @@ class FetchResult:
     elapsed: float
     error: str | None = None
 
+    # Cloudflare 状态
+    cf_detected: bool = False
+    cf_solved: bool = False
+    cf_retries: int = 0
+
+    # 页面状态
+    status: str = "ok"
+
     def to_dict(self) -> dict[str, Any]:
-        result = {
+        result: dict[str, Any] = {
             "success": self.success,
             "html": self.html,
             "url": self.url,
@@ -40,6 +48,15 @@ class FetchResult:
         }
         if self.error:
             result["error"] = self.error
+        if self.status != "ok":
+            result["status"] = self.status
+
+        # Cloudflare 信息
+        result["cloudflare"] = {
+            "detected": self.cf_detected,
+            "solved": self.cf_solved,
+            "retries": self.cf_retries,
+        }
         return result
 
 
@@ -55,6 +72,7 @@ class Fetcher:
         self.browser_pool = browser_pool
         self.cookie_manager = cookie_manager
         self.default_timeout = default_timeout
+        self.page_loader = PageLoader()
 
     async def fetch(
         self,
@@ -62,6 +80,7 @@ class Fetcher:
         wait_for: str | None = None,
         timeout: float | None = None,
         proxy: ProxyConfig | None = None,
+        cf_config: CloudflareConfig | None = None,
     ) -> FetchResult:
         """
         抓取页面 HTML
@@ -71,6 +90,7 @@ class Fetcher:
             wait_for: 等待的 CSS 选择器（可选）
             timeout: 超时时间（秒）
             proxy: 代理配置（可选）
+            cf_config: Cloudflare 配置（可选）
 
         Returns:
             FetchResult
@@ -78,9 +98,6 @@ class Fetcher:
         timeout = timeout or self.default_timeout
         start_time = time.time()
         tab = None
-        html = ""
-        final_url = url
-        error = None
 
         try:
             # 1. 获取 Tab（会等待信号量，并设置代理认证）
@@ -89,45 +106,30 @@ class Fetcher:
             # 2. 加载该 (域名, 代理) 的 Cookies
             await self._load_cookies(tab, url, proxy)
 
-            # 3. 导航到 URL
-            await tab.get(url)
+            # 3. 使用 PageLoader 加载页面（处理 CF 验证）
+            load_result = await self.page_loader.load(
+                tab=tab,
+                url=url,
+                wait_for=wait_for,
+                timeout=timeout,
+                cf_config=cf_config,
+            )
 
-            # 4. 等待页面加载
-            if wait_for:
-                # 等待指定元素出现
-                try:
-                    await asyncio.wait_for(
-                        self._wait_for_selector(tab, wait_for),
-                        timeout=timeout,
-                    )
-                except asyncio.TimeoutError:
-                    error = f"Timeout waiting for selector: {wait_for}"
-                    logger.warning(error)
-            else:
-                # 等待页面加载完成
-                try:
-                    await asyncio.wait_for(
-                        tab.wait_for_ready_state(),
-                        timeout=timeout,
-                    )
-                except asyncio.TimeoutError:
-                    error = "Timeout waiting for page load"
-                    logger.warning(error)
-
-            # 5. 获取最终 URL 和 HTML
-            final_url = tab.url or url
-            html = await tab.get_content()
-
-            # 6. 保存 Cookies（按域名+代理）
-            await self._save_cookies(tab, url, proxy)
+            # 4. 保存 Cookies（按域名+代理）
+            if load_result.success:
+                await self._save_cookies(tab, url, proxy)
 
             elapsed = time.time() - start_time
             return FetchResult(
-                success=error is None,
-                html=html,
-                url=final_url,
+                success=load_result.success,
+                html=load_result.html,
+                url=load_result.final_url,
                 elapsed=elapsed,
-                error=error,
+                error=load_result.error,
+                cf_detected=load_result.cf_detected,
+                cf_solved=load_result.cf_solved,
+                cf_retries=load_result.cf_retries,
+                status=load_result.status,
             )
 
         except Exception as e:
@@ -135,27 +137,16 @@ class Fetcher:
             logger.exception(f"Error fetching {url}")
             return FetchResult(
                 success=False,
-                html=html,
-                url=final_url,
+                html="",
+                url=url,
                 elapsed=elapsed,
                 error=str(e),
             )
 
         finally:
-            # 7. 释放 Tab
+            # 5. 释放 Tab
             if tab:
                 await self.browser_pool.release(tab)
-
-    async def _wait_for_selector(self, tab, selector: str) -> None:
-        """等待元素出现"""
-        while True:
-            try:
-                elem = await tab.select(selector)
-                if elem:
-                    return
-            except Exception:
-                pass
-            await asyncio.sleep(0.1)
 
     async def _load_cookies(
         self, tab, url: str, proxy: ProxyConfig | None
