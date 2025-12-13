@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 MAX_CONCURRENT = 5  # 最大并发数
 DEFAULT_TIMEOUT = 30  # 默认超时（秒）
 HEADLESS = False  # 无头模式
-
+BROWSER_EXECUTABLE_PATH = "/usr/local/bin/google-chrome" # 浏览器可执行文件路径
 
 # 全局实例
 browser_pool: BrowserPool | None = None
@@ -64,7 +64,7 @@ async def lifespan(app: FastAPI):
 
     # 启动时
     logger.info("Starting proxy service...")
-    browser_pool = BrowserPool(max_concurrent=MAX_CONCURRENT, headless=HEADLESS)
+    browser_pool = BrowserPool(max_concurrent=MAX_CONCURRENT, headless=HEADLESS, browser_executable_path=BROWSER_EXECUTABLE_PATH)
     cookie_manager = CookieManager()
     fetcher = Fetcher(
         browser_pool=browser_pool,

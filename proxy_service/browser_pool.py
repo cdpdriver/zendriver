@@ -27,10 +27,12 @@ class BrowserPool:
         max_concurrent: int = 5,
         headless: bool = True,
         browser_args: list[str] | None = None,
+        browser_executable_path: str | None = None,
     ):
         self.max_concurrent = max_concurrent
         self.headless = headless
         self.browser_args = browser_args or []
+        self.browser_executable_path = browser_executable_path
 
         # proxy_server -> Browser 实例
         self._browsers: dict[str | None, Browser] = {}
@@ -63,10 +65,13 @@ class BrowserPool:
         async with self._lock:
             if key not in self._browsers:
                 logger.info(f"Creating browser for proxy: {key}")
-                browser = await zd.start(
-                    headless=self.headless,
-                    browser_args=self._browser_args_with_defaults(proxy),
-                )
+                start_kwargs = {
+                    "headless": self.headless,
+                    "browser_args": self._browser_args_with_defaults(proxy),
+                }
+                if self.browser_executable_path:
+                    start_kwargs["browser_executable_path"] = self.browser_executable_path
+                browser = await zd.start(**start_kwargs)
                 self._browsers[key] = browser
                 self._started = True
                 logger.info(f"Browser created for proxy: {key}")
