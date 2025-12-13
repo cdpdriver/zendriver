@@ -6,20 +6,37 @@ Proxy Service - FastAPI 入口
 
 或者直接运行:
     python -m proxy_service.main
+    或
+    python ./proxy_service/main.py
 """
 
 import logging
+import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from .browser_pool import BrowserPool
-from .cookie_manager import CookieManager
-from .fetcher import Fetcher
-from .page_loader import CloudflareConfig
-from .proxy_config import ProxyConfig
+# 处理直接运行时的导入问题
+try:
+    # 尝试相对导入（作为模块运行时）
+    from .browser_pool import BrowserPool
+    from .cookie_manager import CookieManager
+    from .fetcher import Fetcher
+    from .page_loader import CloudflareConfig
+    from .proxy_config import ProxyConfig
+except ImportError:
+    # 直接运行时，添加项目根目录到 Python 路径并使用绝对导入
+    project_root = Path(__file__).parent.parent
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+    from proxy_service.browser_pool import BrowserPool
+    from proxy_service.cookie_manager import CookieManager
+    from proxy_service.fetcher import Fetcher
+    from proxy_service.page_loader import CloudflareConfig
+    from proxy_service.proxy_config import ProxyConfig
 
 # 配置日志
 logging.basicConfig(
