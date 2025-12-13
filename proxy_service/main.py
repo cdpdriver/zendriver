@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 # 配置
 MAX_CONCURRENT = 5  # 最大并发数
 DEFAULT_TIMEOUT = 30  # 默认超时（秒）
-HEADLESS = True  # 无头模式
+HEADLESS = False  # 无头模式
 
 
 # 全局实例
