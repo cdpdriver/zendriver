@@ -15,11 +15,11 @@ from typing import Any
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from browser_pool import BrowserPool
-from cookie_manager import CookieManager
-from fetcher import Fetcher
-from page_loader import CloudflareConfig
-from proxy_config import ProxyConfig
+from .browser_pool import BrowserPool
+from .cookie_manager import CookieManager
+from .fetcher import Fetcher
+from .page_loader import CloudflareConfig
+from .proxy_config import ProxyConfig
 
 # 配置日志
 logging.basicConfig(

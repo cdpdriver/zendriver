@@ -11,9 +11,9 @@ from typing import TYPE_CHECKING, Any
 
 from zendriver import cdp
 
-from browser_pool import BrowserPool
-from cookie_manager import CookieManager
-from page_loader import CloudflareConfig, PageLoader
+from .browser_pool import BrowserPool
+from .cookie_manager import CookieManager
+from .page_loader import CloudflareConfig, PageLoader
 
 if TYPE_CHECKING:
     from .proxy_config import ProxyConfig
