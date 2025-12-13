@@ -46,7 +46,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # 配置
-MAX_CONCURRENT = 5  # 最大并发数
+MAX_CONCURRENT = 32  # 最大并发数
 DEFAULT_TIMEOUT = 30  # 默认超时（秒）
 HEADLESS = False  # 无头模式
 BROWSER_EXECUTABLE_PATH = "/usr/local/bin/google-chrome" # 浏览器可执行文件路径
