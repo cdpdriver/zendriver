@@ -114,6 +114,13 @@ class StatusResponse(BaseModel):
     cookie_domains: list[str]
 
 
+class CookiesResponse(BaseModel):
+    """Cookie 响应"""
+
+    domain: str = Field(..., description="域名")
+    cookies: list[dict[str, Any]] = Field(..., description="Cookie 列表")
+
+
 # API 端点
 @app.post("/fetch", response_model=FetchResponse)
 async def fetch_page(request: FetchRequest) -> dict[str, Any]:
@@ -150,19 +157,49 @@ async def get_status() -> dict[str, Any]:
     }
 
 
+@app.get("/cookies", response_model=CookiesResponse)
+async def get_cookies(domain: str) -> dict[str, Any]:
+    """
+    获取指定域名的 Cookies
+
+    - **domain**: 域名或 URL（如 example.com 或 https://example.com/path）
+    """
+    if not cookie_manager:
+        raise HTTPException(status_code=503, detail="Service not ready")
+
+    # 如果输入的是 URL，自动提取域名
+    parsed_domain = cookie_manager.get_domain(domain)
+    if not parsed_domain:
+        parsed_domain = domain
+
+    # 构造完整 URL 用于查询
+    url = f"https://{parsed_domain}" if not domain.startswith("http") else domain
+    cookies = await cookie_manager.get_cookies(url)
+
+    return {
+        "domain": parsed_domain,
+        "cookies": cookies,
+    }
+
+
 @app.delete("/cookies")
 async def clear_cookies(domain: str | None = None) -> dict[str, str]:
     """
     清除 Cookies
 
-    - **domain**: 指定域名，不传则清除所有
+    - **domain**: 指定域名或 URL，不传则清除所有
     """
     if not cookie_manager:
         raise HTTPException(status_code=503, detail="Service not ready")
 
     if domain:
-        await cookie_manager.clear_cookies(f"https://{domain}")
-        return {"message": f"Cookies cleared for {domain}"}
+        # 如果输入的是 URL，自动提取域名
+        parsed_domain = cookie_manager.get_domain(domain)
+        if not parsed_domain:
+            parsed_domain = domain
+        url = f"https://{parsed_domain}" if not domain.startswith("http") else domain
+        await cookie_manager.clear_cookies(url)
+        return {"message": f"Cookies cleared for {parsed_domain}"}
     else:
         await cookie_manager.clear_cookies()
         return {"message": "All cookies cleared"}
