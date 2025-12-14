@@ -10,7 +10,8 @@ from urllib.parse import urlparse
 class ProxyConfig:
     """代理配置"""
 
-    server: str  # http://host:port（用于浏览器参数和缓存 key）
+    server: str  # http://host:port（用于浏览器启动参数）
+    proxy_key: str  # http://user@host:port（用于缓存 key，区分不同用户名）
     host: str
     port: int
     username: str | None = None
@@ -35,8 +36,15 @@ class ProxyConfig:
         scheme = parsed.scheme or "http"
         server = f"{scheme}://{parsed.hostname}:{parsed.port}"
 
+        # proxy_key 包含用户名，用于区分同一 ip:port 但不同用户的代理
+        if parsed.username:
+            proxy_key = f"{scheme}://{parsed.username}@{parsed.hostname}:{parsed.port}"
+        else:
+            proxy_key = server
+
         return cls(
             server=server,
+            proxy_key=proxy_key,
             host=parsed.hostname,
             port=parsed.port,
             username=parsed.username,
@@ -54,9 +62,9 @@ class ProxyConfig:
         return f"--proxy-server={self.server}"
 
     def __hash__(self) -> int:
-        return hash(self.server)
+        return hash(self.proxy_key)
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, ProxyConfig):
-            return self.server == other.server
+            return self.proxy_key == other.proxy_key
         return False

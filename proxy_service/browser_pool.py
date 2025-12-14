@@ -67,7 +67,7 @@ class BrowserPool:
         self, proxy: ProxyConfig | None = None
     ) -> "Browser":
         """获取或创建指定代理的浏览器实例"""
-        key = proxy.server if proxy else None
+        key = proxy.proxy_key if proxy else None
 
         async with self._lock:
             if key not in self._browsers:
@@ -191,7 +191,7 @@ class BrowserPool:
 
         # 启用 Fetch 域，处理认证请求
         await tab.send(cdp.fetch.enable(handle_auth_requests=True))
-        logger.debug(f"Proxy auth setup complete for {proxy.server}")
+        logger.debug(f"Proxy auth setup complete for {proxy.proxy_key}")
 
     async def release(self, tab: "Tab") -> None:
         """释放 Tab（确保信号量一定释放）"""

@@ -273,7 +273,7 @@ async def get_cookies(
 
     return {
         "domain": parsed_domain,
-        "proxy": proxy_config.server if proxy_config else None,
+        "proxy": proxy_config.proxy_key if proxy_config else None,
         "cookies": cookies,
     }
 
@@ -310,7 +310,7 @@ async def clear_cookies(
 
         if proxy_config:
             return {
-                "message": f"Cookies cleared for {parsed_domain} (proxy: {proxy_config.server})"
+                "message": f"Cookies cleared for {parsed_domain} (proxy: {proxy_config.proxy_key})"
             }
         else:
             return {"message": f"Cookies cleared for {parsed_domain} (all proxies)"}
@@ -318,7 +318,7 @@ async def clear_cookies(
         await cookie_manager.clear_cookies(None, proxy_config)
         if proxy_config:
             return {
-                "message": f"Cookies cleared for all domains (proxy: {proxy_config.server})"
+                "message": f"Cookies cleared for all domains (proxy: {proxy_config.proxy_key})"
             }
         else:
             return {"message": "All cookies cleared"}

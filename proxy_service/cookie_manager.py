@@ -33,8 +33,8 @@ class CookieManager:
     ) -> tuple[str, str | None]:
         """生成存储 key"""
         domain = self.get_domain(url)
-        proxy_server = proxy.server if proxy else None
-        return (domain, proxy_server)
+        proxy_key = proxy.proxy_key if proxy else None
+        return (domain, proxy_key)
 
     async def get_cookies(
         self, url: str, proxy: ProxyConfig | None = None
@@ -83,8 +83,8 @@ class CookieManager:
                     self._cookies.pop(k, None)
             else:
                 # 清除指定代理的所有域名
-                proxy_server = proxy.server if proxy else None
-                keys_to_remove = [k for k in self._cookies if k[1] == proxy_server]
+                proxy_key = proxy.proxy_key if proxy else None
+                keys_to_remove = [k for k in self._cookies if k[1] == proxy_key]
                 for k in keys_to_remove:
                     self._cookies.pop(k, None)
 

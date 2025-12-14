@@ -221,7 +221,7 @@ class Fetcher:
                 await tab.send(cdp.storage.set_cookies(cookie_params))
                 logger.debug(
                     f"Loaded {len(cookie_params)} cookies for {url} "
-                    f"(proxy: {proxy.server if proxy else None})"
+                    f"(proxy: {proxy.proxy_key if proxy else None})"
                 )
 
         except Exception as e:
@@ -254,7 +254,7 @@ class Fetcher:
             await self.cookie_manager.save_cookies(url, cookies_data, proxy)
             logger.debug(
                 f"Saved {len(cookies_data)} cookies for {url} "
-                f"(proxy: {proxy.server if proxy else None})"
+                f"(proxy: {proxy.proxy_key if proxy else None})"
             )
 
         except Exception as e:
