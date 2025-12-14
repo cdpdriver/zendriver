@@ -4,6 +4,7 @@ Fetcher - 核心抓取逻辑
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from dataclasses import dataclass
@@ -19,6 +20,9 @@ if TYPE_CHECKING:
     from .proxy_config import ProxyConfig
 
 logger = logging.getLogger(__name__)
+
+# 额外超时时间（秒）- 在 page_loader timeout 基础上增加的缓冲
+EXTRA_TIMEOUT_BUFFER = 30.0
 
 
 @dataclass
@@ -96,7 +100,47 @@ class Fetcher:
             FetchResult
         """
         timeout = timeout or self.default_timeout
+        # 总超时 = 页面超时 + 额外缓冲（用于 acquire/release 等操作）
+        total_timeout = timeout + EXTRA_TIMEOUT_BUFFER
         start_time = time.time()
+
+        try:
+            # 使用总超时包裹整个操作，防止任何操作无限挂起
+            return await asyncio.wait_for(
+                self._do_fetch(url, wait_for, timeout, proxy, cf_config, start_time),
+                timeout=total_timeout,
+            )
+        except asyncio.TimeoutError:
+            elapsed = time.time() - start_time
+            logger.error(f"Total timeout ({total_timeout}s) exceeded for {url}")
+            return FetchResult(
+                success=False,
+                html="",
+                url=url,
+                elapsed=elapsed,
+                error=f"Total timeout ({total_timeout}s) exceeded",
+            )
+        except Exception as e:
+            elapsed = time.time() - start_time
+            logger.exception(f"Unexpected error fetching {url}")
+            return FetchResult(
+                success=False,
+                html="",
+                url=url,
+                elapsed=elapsed,
+                error=str(e),
+            )
+
+    async def _do_fetch(
+        self,
+        url: str,
+        wait_for: str | None,
+        timeout: float,
+        proxy: ProxyConfig | None,
+        cf_config: CloudflareConfig | None,
+        start_time: float,
+    ) -> FetchResult:
+        """实际执行抓取操作"""
         tab = None
 
         try:

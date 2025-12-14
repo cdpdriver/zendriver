@@ -135,9 +135,13 @@ class PageLoader:
         cf_retries = 0
 
         try:
-            # 导航到 URL
+            # 导航到 URL（带超时保护）
             logger.info(f"Navigating to: {url}")
-            await tab.get(url)
+            try:
+                await asyncio.wait_for(tab.get(url), timeout=min(timeout, 30.0))
+            except asyncio.TimeoutError:
+                logger.warning(f"Navigation timeout for {url}, continuing...")
+                # 导航超时不直接失败，继续检查页面状态
 
             while time.time() - start_time < timeout:
                 elapsed = time.time() - start_time
@@ -241,7 +245,10 @@ class PageLoader:
                 else:
                     # 无 wait_for，检查页面是否加载完成
                     try:
-                        ready_state = await tab.evaluate("document.readyState")
+                        ready_state = await asyncio.wait_for(
+                            tab.evaluate("document.readyState"),
+                            timeout=5.0,
+                        )
                         if ready_state == "complete":
                             # 额外等待一小段时间确保 JS 执行完成
                             await asyncio.sleep(0.5)
@@ -254,6 +261,8 @@ class PageLoader:
                                 cf_solved=cf_solved,
                                 cf_retries=cf_retries,
                             )
+                    except asyncio.TimeoutError:
+                        logger.debug("readyState check timeout")
                     except Exception:
                         pass
 
@@ -285,13 +294,16 @@ class PageLoader:
 
     async def _check_page_status(self, tab: "Tab") -> tuple[str, str]:
         """
-        检查页面状态
+        检查页面状态（带超时）
 
         Returns:
             (status, message) - status: ok/blocked/queue/unreachable
         """
         try:
-            text = await tab.evaluate("document.body ? document.body.innerText : ''")
+            text = await asyncio.wait_for(
+                tab.evaluate("document.body ? document.body.innerText : ''"),
+                timeout=5.0,
+            )
             if not text:
                 return "ok", ""
 
@@ -311,14 +323,20 @@ class PageLoader:
                     return "unreachable", unreachable
 
             return "ok", ""
+        except asyncio.TimeoutError:
+            logger.debug("Page status check timeout")
+            return "ok", ""
         except Exception as e:
             logger.debug(f"Error checking page status: {e}")
             return "ok", ""
 
     async def _safe_get_content(self, tab: "Tab") -> str:
-        """安全获取页面内容"""
+        """安全获取页面内容（带超时）"""
         try:
-            return await tab.get_content()
+            return await asyncio.wait_for(tab.get_content(), timeout=10.0)
+        except asyncio.TimeoutError:
+            logger.warning("Get content timeout")
+            return ""
         except Exception as e:
             logger.warning(f"Failed to get page content: {e}")
             return ""

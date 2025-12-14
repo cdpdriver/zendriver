@@ -330,6 +330,46 @@ async def health_check() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/health/detail")
+async def health_detail() -> dict[str, Any]:
+    """
+    详细健康检查
+
+    返回信号量状态、浏览器状态等详细信息，用于诊断服务问题
+    """
+    if not browser_pool or not cookie_manager:
+        raise HTTPException(status_code=503, detail="Service not ready")
+
+    semaphore_status = browser_pool.get_semaphore_status()
+    browsers = await browser_pool.get_stats()
+
+    # 判断健康状态
+    is_healthy = True
+    issues = []
+
+    # 检查信号量是否耗尽
+    if semaphore_status["available"] == 0:
+        is_healthy = False
+        issues.append("All semaphore slots are in use")
+
+    # 检查是否有浏览器实例
+    if not browsers:
+        issues.append("No browser instances")
+
+    return {
+        "healthy": is_healthy,
+        "issues": issues,
+        "semaphore": semaphore_status,
+        "browsers": browsers,
+        "config": {
+            "max_concurrent": browser_pool.max_concurrent,
+            "headless": browser_pool.headless,
+            "browser_max_age": browser_pool.browser_max_age,
+            "health_check_interval": browser_pool.health_check_interval,
+        },
+    }
+
+
 # 直接运行入口
 if __name__ == "__main__":
     import uvicorn
