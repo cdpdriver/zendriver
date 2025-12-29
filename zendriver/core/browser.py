@@ -264,7 +264,7 @@ class Browser:
         :param new_tab: open new tab
         :param new_window:  open new window
         :return: Page
-        :raises: asyncio.TimeoutError
+        :raises asyncio.TimeoutError:
         """
         if not self.connection:
             raise RuntimeError("Browser not yet started. use await browser.start()")
@@ -685,7 +685,6 @@ class CookieJar:
         get all cookies
 
         :param requests_cookie_format: when True, returns python http.cookiejar.Cookie objects, compatible  with requests library and many others.
-        :type requests_cookie_format: bool
         :return:
         :rtype:
 
@@ -723,7 +722,6 @@ class CookieJar:
         set cookies
 
         :param cookies: list of cookies
-        :type cookies:
         :return:
         :rtype:
         """
@@ -745,7 +743,6 @@ class CookieJar:
         save all cookies (or a subset, controlled by `pattern`) to a file to be restored later
 
         :param file:
-        :type file:
         :param pattern: regex style pattern string.
                any cookie that has a  domain, key or value field which matches the pattern will be included.
                default = ".*"  (all)
@@ -754,7 +751,6 @@ class CookieJar:
                     - have a string "cf" (cloudflare)
                     - have ".com" in them, in either domain, key or value field.
                     - contain "nowsecure"
-        :type pattern: str
         :return:
         :rtype:
         """
@@ -799,7 +795,6 @@ class CookieJar:
         load all cookies (or a subset, controlled by `pattern`) from a file created by :py:meth:`~save_cookies`.
 
         :param file:
-        :type file:
         :param pattern: regex style pattern string.
                any cookie that has a  domain, key or value field which matches the pattern will be included.
                default = ".*"  (all)
@@ -808,7 +803,6 @@ class CookieJar:
                     - have a string "cf" (cloudflare)
                     - have ".com" in them, in either domain, key or value field.
                     - contain "nowsecure"
-        :type pattern: str
         :return:
         :rtype:
         """

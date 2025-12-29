@@ -11,17 +11,26 @@ markdown_extensions:
   - admonition
   - md_in_html
 nav:
-  - Documentation:
-      - Introduction: index.md
-      - Quickstart: quickstart.md
+  - Introduction: index.md
+  - Quickstart: quickstart.md
   - Tutorials:
       - About these Tutorials: tutorials/index.md
-      - Tutorials:
-          - Infinitely scrolling feed: tutorials/infinite-scrolling.md
-          - Creating accounts: tutorials/account-creation.md
-          - Reading API responses: tutorials/api-responses.md
-          - Playing with CDP: tutorials/cdp.md
+      - Infinitely scrolling feed: tutorials/infinite-scrolling.md
+      - Creating accounts: tutorials/account-creation.md
+      - Reading API responses: tutorials/api-responses.md
+      - Playing with CDP: tutorials/cdp.md
   - Reference:
+      - core:
+          - browser: reference/core/browser.md
+          - cloudflare: reference/core/cloudflare.md
+          - config: reference/core/config.md
+          - connection: reference/core/connection.md
+          - element: reference/core/element.md
+          - expect: reference/core/expect.md
+          - intercept: reference/core/intercept.md
+          - keys: reference/core/keys.md
+          - tab: reference/core/tab.md
+          - util: reference/core/util.md
       - cdp:
           - accessibility: reference/cdp/accessibility.md
           - animation: reference/cdp/animation.md
@@ -77,8 +86,7 @@ nav:
           - util: reference/cdp/util.md
           - web_audio: reference/cdp/web_audio.md
           - web_authn: reference/cdp/web_authn.md
-  - Release Notes:
-      - Release Notes: release-notes.md
+  - Release Notes: release-notes.md
 plugins:
   - search
   - mkdocstrings:

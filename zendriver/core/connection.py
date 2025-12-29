@@ -353,9 +353,7 @@ class Connection(metaclass=CantTouchThis):
         the next time you make network traffic you will see your console print like crazy.
 
         :param event_type_or_domain:
-        :type event_type_or_domain:
         :param handler:
-        :type handler:
 
         :return:
         :rtype:
@@ -417,7 +415,6 @@ class Connection(metaclass=CantTouchThis):
     async def aopen(self) -> None:
         """
         opens the websocket connection. should not be called manually by users
-        :param kw:
         :return:
         """
 
@@ -469,7 +466,6 @@ class Connection(metaclass=CantTouchThis):
         note: this is not an async method, just a regular method!
 
         :param cdp_obj:
-        :type cdp_obj:
         :return:
         :rtype:
         """
@@ -481,7 +477,6 @@ class Connection(metaclass=CantTouchThis):
         when `t` is provided, ensures waiting for `t` seconds, no matter what.
 
         :param t:
-        :type t:
         :return:
         :rtype:
         """
