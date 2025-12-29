@@ -32,12 +32,9 @@ def create(
     we don't need to fetch it for every single element.
 
     :param node: cdp dom node representation
-    :type node: cdp.dom.Node
     :param tab: the target object to which this element belongs
-    :type tab: Tab
     :param tree: [Optional] the full node tree to which <node> belongs, enhances performance.
                 when not provided, you need to call `await elem.update()` before using .children / .parent
-    :type tree:
     """
 
     elem = Element(node, tab, tree)
@@ -51,9 +48,7 @@ class Element:
         Represents an (HTML) DOM Element
 
         :param node: cdp dom node representation
-        :type node: cdp.dom.Node
         :param tab: the target object to which this element belongs
-        :type tab: Tab
         """
         if not node:
             raise Exception("node cannot be None")
@@ -218,7 +213,6 @@ class Element:
             href = element.get("href")
 
         :param name: The name of the attribute to retrieve.
-        :type name: str
         :return: The value of the attribute, or None if it does not exist.
         :rtype: str | None
         """
@@ -455,7 +449,6 @@ class Element:
         calling the element object will call a js method on the object
         eg, element.play() in case of a video element, it will call .play()
         :param js_method:
-        :type js_method:
         :return:
         :rtype:
         """
@@ -477,11 +470,8 @@ class Element:
             - function myFunction(elem) { alert(elem) }
 
         :param js_function: the js function definition which received this element.
-        :type js_function: str
         :param return_by_value:
-        :type return_by_value:
         :param await_promise: when True, waits for the promise to resolve before returning
-        :type await_promise: bool
         :return:
         :rtype:
         """
@@ -619,16 +609,11 @@ class Element:
         drag an element to another element or target coordinates. dragging of elements should be supported  by the site of course
 
 
-        :param destination: another element where to drag to, or a tuple (x,y) of ints representing coordinate
-        :type destination: Element or coordinate as x,y tuple
-
+        :param destination: target Element or coordinates (x,y) to drag to
         :param relative: when True, treats coordinate as relative. for example (-100, 200) will move left 100px and down 200px
-        :type relative:
-
         :param steps: move in <steps> points, this could make it look more "natural" (default 1),
                but also a lot slower.
                for very smooth action use 50-100
-        :type steps: int
         :return:
         :rtype:
         """
@@ -758,13 +743,7 @@ class Element:
 
         hint, if you ever get stuck where using py:meth:`~click`
         does not work, sending the keystroke \\n or \\r\\n or a spacebar work wonders!
-
-        when special_characters is True, it will use grapheme clusters to send the text:
-        if the character is in the printable ASCII range, it sends it using dispatch_key_event.
-        otherwise, it uses insertText, which handles special characters more robustly.
-
         :param text: text to send
-        :param special_characters: when True, uses grapheme clusters to send the text.
         :return: None
         """
         await self.apply("(elem) => elem.focus()")
@@ -897,7 +876,6 @@ class Element:
         When the element is hidden, or has no size, or is otherwise not capturable, a RuntimeError is raised
 
         :param format: jpeg or png (defaults to jpeg)
-        :type format: str
         :param scale: the scale of the screenshot, eg: 1 = size as is, 2 = double, 0.5 is half
         :return: screenshot data as base64 encoded
         :rtype: str
@@ -938,9 +916,7 @@ class Element:
         When the element is hidden, or has no size, or is otherwise not capturable, a RuntimeError is raised
 
         :param filename: uses this as the save path
-        :type filename: PathLike
         :param format: jpeg or png (defaults to jpeg)
-        :type format: str
         :param scale: the scale of the screenshot, eg: 1 = size as is, 2 = double, 0.5 is half
         :return: the path/filename of saved screenshot
         :rtype: str
@@ -977,10 +953,7 @@ class Element:
         """
         displays for a short time a red dot on the element (only if the element itself is visible)
 
-        :param coords: x,y
-        :type coords: x,y
         :param duration: seconds (default 0.5)
-        :type duration:
         :return:
         :rtype:
         """
