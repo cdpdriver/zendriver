@@ -49,41 +49,30 @@ async def start(
     with best practice defaults.
     note: this should be called ```await start()```
 
-
     :param user_data_dir:
-    :type user_data_dir: PathLike
 
     :param headless:
-    :type headless: bool
 
     :param browser_executable_path:
-    :type browser_executable_path: PathLike
 
     :param browser_args: ["--some-chromeparam=somevalue", "some-other-param=someval"]
-    :type browser_args: List[str]
 
     :param sandbox: default True, but when set to False it adds --no-sandbox to the params, also
     when using linux under a root user, it adds False automatically (else chrome won't start
-    :type sandbox: bool
 
     :param lang: language string
-    :type lang: str
 
     :param port: if you connect to an existing debuggable session, you can specify the port here
                  if both host and port are provided, zendriver will not start a local chrome browser!
-    :type port: int
 
     :param host: if you connect to an existing debuggable session, you can specify the host here
                  if both host and port are provided, zendriver will not start a local chrome browser!
-    :type host: str
 
     :param expert:  when set to True, enabled "expert" mode.
                     This conveys, the inclusion of parameters: --disable-web-security ----disable-site-isolation-trials,
                     as well as some scripts and patching useful for debugging (for example, ensuring shadow-root is always in "open" mode)
-    :type expert: bool
 
     :param user_agent: if set, this will be used as the user agent for the browser.
-    :type user_agent: str | None
 
     :return:
     """
@@ -209,13 +198,9 @@ def circle(
     a generator will calculate coordinates around a circle.
 
     :param x: start x position
-    :type x: float
     :param y: start y position
-    :type y: float
     :param radius: size of the circle
-    :type radius: int
     :param num: the amount of points calculated (higher => slower, more cpu, but more detailed)
-    :type num: int
     :return:
     :rtype:
     """
@@ -286,9 +271,7 @@ def compare_target_info(
     it returns a list of tuples [ ... ( key_which_has_changed, old_value, new_value) ]
 
     :param info1:
-    :type info1:
     :param info2:
-    :type info2:
     :return:
     :rtype:
     """
@@ -311,7 +294,6 @@ def cdp_get_module(domain: Union[str, types.ModuleType]) -> Any:
     get cdp module by given string
 
     :param domain:
-    :type domain:
     :return:
     :rtype:
     """
