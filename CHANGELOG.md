@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Docs: `core` modules included in documentation reference section. Slight modifications were done, mostly to remove warnings. @Kajmany
+
 ### Removed
 
 ## [0.15.2] - 2025-11-29

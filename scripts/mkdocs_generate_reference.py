@@ -30,7 +30,10 @@ def clean_reference_docs_dir() -> None:
 def get_documented_modules() -> list[Path]:
     return [
         path.relative_to(PACKAGE_ROOT)
-        for path in sorted(PACKAGE_ROOT.rglob("cdp/*.py"))
+        for path in (
+            sorted(PACKAGE_ROOT.rglob("core/*.py"))
+            + sorted(PACKAGE_ROOT.rglob("cdp/*.py"))
+        )
         if not path.stem.startswith("_")
     ]
 

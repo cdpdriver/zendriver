@@ -22,6 +22,17 @@ nav:
           - Reading API responses: tutorials/api-responses.md
           - Playing with CDP: tutorials/cdp.md
   - Reference:
+      - core:
+          - browser: reference/core/browser.md
+          - cloudflare: reference/core/cloudflare.md
+          - config: reference/core/config.md
+          - connection: reference/core/connection.md
+          - element: reference/core/element.md
+          - expect: reference/core/expect.md
+          - intercept: reference/core/intercept.md
+          - keys: reference/core/keys.md
+          - tab: reference/core/tab.md
+          - util: reference/core/util.md
       - cdp:
           - accessibility: reference/cdp/accessibility.md
           - animation: reference/cdp/animation.md

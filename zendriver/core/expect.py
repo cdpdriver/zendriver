@@ -13,9 +13,7 @@ class BaseRequestExpectation:
     based on a URL pattern. It sets up handlers for request and response events and provides
     properties to access the request, response, and response body.
     :param tab: The Tab instance to monitor.
-    :type tab: Tab
     :param url_pattern: The URL pattern to match requests and responses.
-    :type url_pattern: Union[str, re.Pattern[str]]
     """
 
     def __init__(self, tab: Connection, url_pattern: Union[str, re.Pattern[str]]):
@@ -36,7 +34,6 @@ class BaseRequestExpectation:
         """
         Internal handler for request events.
         :param event: The request event.
-        :type event: cdp.network.RequestWillBeSent
         """
         if re.fullmatch(self.url_pattern, event.request.url):
             self._remove_request_handler()
@@ -47,7 +44,6 @@ class BaseRequestExpectation:
         """
         Internal handler for response events.
         :param event: The response event.
-        :type event: cdp.network.ResponseReceived
         """
         if event.request_id == self.request_id:
             self._remove_response_handler()
@@ -59,7 +55,6 @@ class BaseRequestExpectation:
         """
         Internal handler for loading finished events.
         :param event: The loading finished event.
-        :type event: cdp.network.LoadingFinished
         """
         if event.request_id == self.request_id:
             self._remove_loading_finished_handler()
@@ -159,9 +154,7 @@ class RequestExpectation(BaseRequestExpectation):
     Class for handling request expectations.
     This class extends `BaseRequestExpectation` and provides a property to access the matched request.
     :param tab: The Tab instance to monitor.
-    :type tab: Tab
     :param url_pattern: The URL pattern to match requests.
-    :type url_pattern: Union[str, re.Pattern[str]]
     """
 
     @property
@@ -179,9 +172,7 @@ class ResponseExpectation(BaseRequestExpectation):
     Class for handling response expectations.
     This class extends `BaseRequestExpectation` and provides a property to access the matched response.
     :param tab: The Tab instance to monitor.
-    :type tab: Tab
     :param url_pattern: The URL pattern to match responses.
-    :type url_pattern: Union[str, re.Pattern[str]]
     """
 
     @property
