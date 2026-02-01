@@ -67,7 +67,6 @@ class Config:
         :param browser: which browser to use. Can be "chrome", "brave" or "auto". Default is "auto".
         :param browser_args: forwarded to browser executable. eg : ["--some-chromeparam=somevalue", "some-other-param=someval"]
         :param sandbox: disables sandbox
-        :param autodiscover_targets: use autodiscovery of targets
         :param lang: language string to use other than the default "en-US,en;q=0.9"
         :param user_agent: custom user-agent string
         :param expert: when set to True, enabled "expert" mode.
@@ -75,16 +74,6 @@ class Config:
                as well as some scripts and patching useful for debugging (for example, ensuring shadow-root is always in "open" mode)
 
         :param kwargs:
-
-        :type user_data_dir: PathLike
-        :type headless: bool
-        :type browser_executable_path: PathLike
-        :type browser: BrowserType
-        :type browser_args: list[str]
-        :type sandbox: bool
-        :type lang: str
-        :type user_agent: str
-        :type kwargs: dict
         """
 
         if not browser_args:
@@ -184,7 +173,6 @@ class Config:
         to a folder (containing the manifest), or extension file (crx)
 
         :param extension_path:
-        :type extension_path:
         :return:
         :rtype:
         """

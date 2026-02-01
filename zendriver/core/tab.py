@@ -200,14 +200,12 @@ class Tab(Connection):
         can also be used to wait for such element to appear.
 
         :param text: text to search for. note: script contents are also considered text
-        :type text: str
-        :param best_match:  :param best_match:  when True (default), it will return the element which has the most
-                                               comparable string length. this could help tremendously, when for example
-                                               you search for "login", you'd probably want the login button element,
-                                               and not thousands of scripts,meta,headings containing a string of "login".
-                                               When False, it will return naively just the first match (but is way faster).
-         :type best_match: bool
-         :param return_enclosing_element:
+        :param best_match:  when True (default), it will return the element which has the most
+                 comparable string length. this could help tremendously, when for example
+                 you search for "login", you'd probably want the login button element,
+                 and not thousands of scripts,meta,headings containing a string of "login".
+                 When False, it will return naively just the first match (but is way faster).
+        :param return_enclosing_element:
                  since we deal with nodes instead of elements, the find function most often returns
                  so called text nodes, which is actually a element of plain text, which is
                  the somehow imaginary "child" of a "span", "p", "script" or any other elements which have text between their opening
@@ -223,9 +221,7 @@ class Tab(Connection):
                  # todo, automatically determine node type
                  # ignore the return_enclosing_element flag if the found node is NOT a text node but a
                  # regular element (one having a tag) in which case that is exactly what we need.
-         :type return_enclosing_element: bool
         :param timeout: raise timeout exception when after this many seconds nothing is found.
-        :type timeout: float,int
         """
         loop = asyncio.get_running_loop()
         start_time = loop.time()
@@ -256,11 +252,7 @@ class Tab(Connection):
         can also be used to wait for such element to appear.
 
         :param selector: css selector, eg a[href], button[class*=close], a > img[src]
-        :type selector: str
-
         :param timeout: raise timeout exception when after this many seconds nothing is found.
-        :type timeout: float,int
-
         """
         loop = asyncio.get_running_loop()
         start_time = loop.time()
@@ -292,10 +284,7 @@ class Tab(Connection):
         can also be used to wait for such element to appear.
 
         :param text: text to search for. note: script contents are also considered text
-        :type text: str
-
         :param timeout: raise timeout exception when after this many seconds nothing is found.
-        :type timeout: float,int
         """
         loop = asyncio.get_running_loop()
         now = loop.time()
@@ -326,11 +315,8 @@ class Tab(Connection):
 
 
         :param selector: css selector, eg a[href], button[class*=close], a > img[src]
-        :type selector: str
         :param timeout: raise timeout exception when after this many seconds nothing is found.
-        :type timeout: float,int
         :param include_frames: whether to include results in iframes.
-        :type include_frames: bool
         """
 
         loop = asyncio.get_running_loop()
@@ -375,9 +361,7 @@ class Tab(Connection):
 
 
         :param xpath:
-        :type xpath: str
         :param timeout: 2.5
-        :type timeout: float
         :return:List[Element] or []
         :rtype:
         """
@@ -436,9 +420,7 @@ class Tab(Connection):
         it returns all matching :py:obj:`zendriver.Element` objects.
 
         :param selector: css selector. (first time? => https://www.w3schools.com/cssref/css_selectors.php )
-        :type selector: str
         :param _node: internal use
-        :type _node:
         :return:
         :rtype:
         """
@@ -502,7 +484,6 @@ class Tab(Connection):
         find single element based on css selector string
 
         :param selector: css selector(s)
-        :type selector: str
         :return:
         :rtype:
         """
@@ -564,9 +545,7 @@ class Tab(Connection):
         which happen to contain that text.
 
         :param text:
-        :type text:
         :param tag_hint: when provided, narrows down search to only elements which match given tag eg: a, div, script, span
-        :type tag_hint: str
         :return:
         :rtype:
         """
@@ -655,15 +634,12 @@ class Tab(Connection):
         finds and returns the first element containing <text>, or best match
 
         :param text:
-        :type text:
         :param best_match:  when True, which is MUCH more expensive (thus much slower),
                             will find the closest match based on length.
                             this could help tremendously, when for example you search for "login", you'd probably want the login button element,
                             and not thousands of scripts,meta,headings containing a string of "login".
 
-        :type best_match: bool
         :param return_enclosing_element:
-        :type return_enclosing_element:
         :return:
         :rtype:
         """
@@ -709,9 +685,7 @@ class Tab(Connection):
         Reloads the page
 
         :param ignore_cache: when set to True (default), it ignores cache, and re-downloads the items
-        :type ignore_cache:
         :param script_to_evaluate_on_load: script to run on load. I actually haven't experimented with this one, so no guarantees.
-        :type script_to_evaluate_on_load:
         :return:
         :rtype:
         """
@@ -768,10 +742,7 @@ class Tab(Connection):
         note: complex objects might not be serializable, therefore this method is not a "source of thruth"
 
         :param obj_name: the js object to dump
-        :type obj_name: str
-
         :param return_by_value: if you want an tuple of cdp objects (returnvalue, errors), set this to False
-        :type return_by_value: bool
 
         example
         ------
@@ -938,8 +909,8 @@ class Tab(Connection):
         close the current target (ie: tab,window,page)
         :return:
         :rtype:
-        :raises: asyncio.TimeoutError
-        :raises: RuntimeError
+        :raises asyncio.TimeoutError:
+        :raises RuntimeError:
         """
 
         if not self.browser or not self.browser.connection:
@@ -1013,13 +984,9 @@ class Tab(Connection):
         set window size and position
 
         :param left: pixels from the left of the screen to the window top-left corner
-        :type left:
         :param top: pixels from the top of the screen to the window top-left corner
-        :type top:
         :param width: width of the window in pixels
-        :type width:
         :param height: height of the window in pixels
-        :type height:
         :return:
         :rtype:
         """
@@ -1054,31 +1021,16 @@ class Tab(Connection):
         something which leads to either of those, like min, mini, mi,  max, ma, maxi, full, fu, no, nor
         in case state is set other than "normal", the left, top, width, and height are ignored.
 
-        :param left:
-            desired offset from left, in pixels
-        :type left: int
-
-        :param top:
-            desired offset from the top, in pixels
-        :type top: int
-
-        :param width:
-            desired width in pixels
-        :type width: int
-
-        :param height:
-            desired height in pixels
-        :type height: int
-
+        :param left: desired offset from left, in pixels
+        :param top: desired offset from the top, in pixels
+        :param width: desired width in pixels
+        :param height: desired height in pixels
         :param state:
             can be one of the following strings:
                 - normal
                 - fullscreen
                 - maximized
                 - minimized
-
-        :type state: str
-
         """
         available_states = ["minimized", "maximized", "fullscreen", "normal"]
         window_id: cdp.browser.WindowID
@@ -1112,8 +1064,6 @@ class Tab(Connection):
 
         :param amount: number in percentage. 25 is a quarter of page, 50 half, and 1000 is 10x the page
         :param speed: number swipe speed in pixels per second (default: 800).
-        :type amount: int
-        :type speed: int
         :return:
         :rtype:
         """
@@ -1142,9 +1092,6 @@ class Tab(Connection):
 
         :param amount: number in percentage. 25 is a quarter of page, 50 half, and 1000 is 10x the page
         :param speed: number swipe speed in pixels per second (default: 800).
-        :type amount: int
-        :type speed: int
-
         :return:
         :rtype:
         """
@@ -1178,17 +1125,14 @@ class Tab(Connection):
         the requested element(s) are found.
 
         it will block for a maximum of <timeout> seconds, after which
-        an TimeoutError will be raised
+        a TimeoutError will be raised
 
         :param selector: css selector
-        :type selector:
         :param text: text
-        :type text:
         :param timeout:
-        :type timeout:
         :return:
         :rtype: Element
-        :raises: asyncio.TimeoutError
+        :raises asyncio.TimeoutError:
         """
         loop = asyncio.get_running_loop()
         start_time = loop.time()
@@ -1219,9 +1163,7 @@ class Tab(Connection):
         """
         Waits for the page to reach a certain ready state.
         :param until: The ready state to wait for. Can be one of "loading", "interactive", or "complete".
-        :type until: str
         :param timeout: The maximum number of seconds to wait.
-        :type timeout: int
         :raises asyncio.TimeoutError: If the timeout is reached before the ready state is reached.
         :return: True if the ready state is reached.
         :rtype: bool
@@ -1247,7 +1189,6 @@ class Tab(Connection):
         """
         Creates a request expectation for a specific URL pattern.
         :param url_pattern: The URL pattern to match requests.
-        :type url_pattern: Union[str, re.Pattern[str]]
         :return: A RequestExpectation instance.
         :rtype: RequestExpectation
         """
@@ -1259,7 +1200,6 @@ class Tab(Connection):
         """
         Creates a response expectation for a specific URL pattern.
         :param url_pattern: The URL pattern to match responses.
-        :type url_pattern: Union[str, re.Pattern[str]]
         :return: A ResponseExpectation instance.
         :rtype: ResponseExpectation
         """
@@ -1283,11 +1223,8 @@ class Tab(Connection):
         Sets up interception for network requests matching a URL pattern, request stage, and resource type.
 
         :param url_pattern: URL string or regex pattern to match requests.
-        :type url_pattern: Union[str, re.Pattern[str]]
         :param request_stage: Stage of the request to intercept (e.g., request, response).
-        :type request_stage: RequestStage
         :param resource_type: Type of resource (e.g., Document, Script, Image).
-        :type resource_type: ResourceType
         :return: A BaseFetchInterception instance for further configuration or awaiting intercepted requests.
         :rtype: BaseFetchInterception
 
@@ -1383,9 +1320,7 @@ class Tab(Connection):
         This is not the same as :py:obj:`Element.screenshot_b64`, which takes a screenshot of a single element only
 
         :param format: jpeg or png (defaults to jpeg)
-        :type format: str
         :param full_page: when False (default) it captures the current viewport. when True, it captures the entire page
-        :type full_page: bool
         :return: screenshot data as base64 encoded
         :rtype: str
         """
@@ -1422,11 +1357,8 @@ class Tab(Connection):
         This is not the same as :py:obj:`Element.save_screenshot`, which saves a screenshot of a single element only
 
         :param filename: uses this as the save path
-        :type filename: PathLike
         :param format: jpeg or png (defaults to jpeg)
-        :type format: str
         :param full_page: when False (default) it captures the current viewport. when True, it captures the entire page
-        :type full_page: bool
         :return: the path/filename of saved screenshot
         :rtype: str
         """
@@ -1484,7 +1416,6 @@ class Tab(Connection):
         this is required for any download function to work (well not entirely, since when unset we set a default folder)
 
         :param path:
-        :type path:
         :return:
         :rtype:
         """
@@ -1601,9 +1532,7 @@ class Tab(Connection):
     ) -> None:
         """native click on position x,y
         :param y:
-        :type y:
         :param x:
-        :type x:
         :param button: str (default = "left")
         :param buttons: which button (default 1 = left)
         :param modifiers: *(Optional)* Bit field representing pressed modifier keys.
@@ -1712,7 +1641,6 @@ class Tab(Connection):
         dict items must be strings. simple types will be converted to strings automatically.
 
         :param items: dict containing {key:str, value:str}
-        :type items: dict[str,str]
         :return:
         :rtype:
         """
@@ -1755,11 +1683,8 @@ class Tab(Connection):
         all pages and requests.
 
         :param user_agent: user agent string
-        :type user_agent: str
         :param accept_language: accept language string
-        :type accept_language: str
         :param platform: platform string
-        :type platform: str
         :return:
         :rtype:
         """
@@ -1789,7 +1714,6 @@ class Tab(Connection):
         on whether text= is set or selector= is set
 
         :param selector: css selector string
-        :type selector: str
         :return:
         :rtype:
         """
