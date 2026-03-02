@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>React Controlled Input Test</title>
+    <script>
+        window.onload = function () {
+            const input = document.getElementById('controlled-input');
+            const stateDisplay = document.getElementById('state-value');
+            const changeCount = document.getElementById('change-count');
+
+            // Simulated React state
+            let reactState = '10';
+            let changeCallCount = 0;
+
+            // Save the native prototype getter/setter before installing the tracker.
+            const nativeDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+            const nativeSetter = nativeDescriptor.set;
+            const nativeGetter = nativeDescriptor.get;
+
+            // React's _valueTracker: remembers the last value that went through the
+            // instance-level setter so React can tell whether a change is genuinely new.
+            let trackerValue;
+
+            // Install React's instance-level value property on this specific DOM node.
+            // This is exactly what React does internally when it first renders a controlled input.
+            // Direct assignments (el.value = x) go through this setter, updating the tracker.
+            Object.defineProperty(input, 'value', {
+                configurable: true,
+                get: function () {
+                    return nativeGetter.call(this);
+                },
+                set: function (val) {
+                    trackerValue = '' + val;       // tracker records the assignment
+                    nativeSetter.call(this, val);  // actual DOM value update
+                }
+            });
+
+            // Set the initial controlled value through the tracker (as React does on commit).
+            input.value = reactState;  // → trackerValue = "10", DOM = "10"
+
+            // React's change detection: fires onChange only when the new DOM value
+            // differs from what the tracker last recorded.
+            input.addEventListener('input', function () {
+                const currentDOMValue = nativeGetter.call(input);
+
+                if (currentDOMValue === trackerValue) {
+                    // DOM value matches tracker → React concludes "I already knew about this"
+                    // → onChange is NOT fired → state remains unchanged
+                    return;
+                }
+
+                // Values differ → genuine change detected → fire onChange
+                changeCallCount++;
+                reactState = currentDOMValue;
+                trackerValue = currentDOMValue;
+                stateDisplay.textContent = reactState;
+                changeCount.textContent = String(changeCallCount);
+            });
+
+            stateDisplay.textContent = reactState;
+            changeCount.textContent = '0';
+
+            // Simulates React committing a re-render with the current controlled state.
+            // In a real React app, the async scheduler does this between user operations.
+            // Uses the native prototype setter directly (bypassing the tracker instance property),
+            // which is exactly what React's commit phase does.
+            window.simulateReactRerender = function () {
+                nativeSetter.call(input, reactState);
+                trackerValue = reactState;
+            };
+        };
+    </script>
+</head>
+<body>
+<h1>React Controlled Input Simulation</h1>
+<p>Simulates a React-controlled input to reproduce the _valueTracker silent failure bug.</p>
+<div>
+    <label for="controlled-input">Price:</label>
+    <input id="controlled-input" type="text"/>
+</div>
+<div>
+    <p>React state: <span id="state-value">10</span></p>
+    <p>onChange calls: <span id="change-count">0</span></p>
+</div>
+</body>
+</html>
