@@ -700,7 +700,19 @@ class Element:
 
     async def clear_input(self) -> None:
         """clears an input field"""
-        await self.apply('function (element) { element.value = "" } ')
+        # Use the native prototype setter instead of a direct element.value assignment.
+        # Direct assignment goes through React's instance-level tracker setter, updating
+        # trackerValue and the DOM simultaneously. The subsequent InputEvent then sees no
+        # mismatch and skips onChange. The native setter bypasses the tracker so React
+        # correctly fires onChange.
+        await self.apply(
+            """
+                (el) => {
+                    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, '');
+                    el.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true }));
+                }
+            """
+        )
 
     async def clear_input_by_deleting(self) -> None:
         """
@@ -714,22 +726,33 @@ class Element:
             """
                 async function clearByDeleting(n, d = 50) {
                     n.focus();
-                    n.setSelectionRange(0, 0);
+                    const nativeSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
                     while (n.value.length > 0) {
+                        // Place cursor at end before each keydown. Using Backspace (keyCode 8)
+                        // from the end is more reliable than Delete at position 0, which can
+                        // be a no-op on some VM environments where VK_DELETE is treated as
+                        // backward-delete, causing an infinite loop.
+                        const len = n.value.length;
+                        n.setSelectionRange(len, len);
                         n.dispatchEvent(
                             new KeyboardEvent("keydown", {
-                                key: "Delete",
-                                code: "Delete",
-                                keyCode: 46,
-                                which: 46,
-                                bubbles: !0,
-                                cancelable: !0,
+                                key: "Backspace",
+                                code: "Backspace",
+                                keyCode: 8,
+                                which: 8,
+                                bubbles: true,
+                                cancelable: true,
                             })
                         );
-                        n.value = n.value.slice(1);
+                        // Use native prototype setter to bypass React's _valueTracker.
+                        // Direct assignment (n.value = x) goes through React's instance-level
+                        // setter, updating trackerValue and DOM simultaneously — the subsequent
+                        // InputEvent sees no mismatch and skips onChange. The native setter
+                        // leaves trackerValue stale so React correctly fires onChange.
+                        nativeSetter.call(n, n.value.slice(0, -1));
+                        n.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true }));
                         await new Promise((r) => setTimeout(r, d));
                     }
-                    n.dispatchEvent(new Event("input", { bubbles: !0 }));
                 }
             """,
             await_promise=True,

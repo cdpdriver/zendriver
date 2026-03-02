@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix `clear_input()` and `clear_input_by_deleting()` silently failing on React controlled inputs due to `_valueTracker` mechanism; also fix infinite loop in `clear_input_by_deleting()` on some VM environments caused by `VK_DELETE` being treated as backward-delete. @nathanfallet
+
 ### Added
 
 ### Changed
