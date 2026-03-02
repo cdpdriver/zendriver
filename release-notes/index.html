@@ -1,0 +1,4872 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://zendriver.dev/release-notes/">
+      
+      
+        <link rel="prev" href="../reference/cdp/web_authn/">
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.44">
+    
+    
+      
+        <title>Release Notes - Zendriver</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.0253249f.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#release-notes" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Zendriver" class="md-header__button md-logo" aria-label="Zendriver" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Zendriver
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Release Notes
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/cdpdriver/zendriver" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cdpdriver/zendriver
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href=".." class="md-tabs__link">
+          
+  
+  Documentation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorials/" class="md-tabs__link">
+          
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../reference/core/browser/" class="md-tabs__link">
+          
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  Release Notes
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Zendriver" class="md-nav__button md-logo" aria-label="Zendriver" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Zendriver
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/cdpdriver/zendriver" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cdpdriver/zendriver
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Documentation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Documentation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    About these Tutorials
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/infinite-scrolling/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Infinitely scrolling feed
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/account-creation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Creating accounts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/api-responses/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reading API responses
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/cdp/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Playing with CDP
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Reference
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    core
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            core
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/core/browser/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    browser
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/core/cloudflare/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    cloudflare
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/core/config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    config
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/core/connection/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    connection
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/core/element/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    element
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/core/expect/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    expect
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/core/intercept/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    intercept
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/core/keys/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    keys
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/core/tab/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    tab
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/core/util/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    util
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    cdp
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            cdp
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/accessibility/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    accessibility
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/animation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    animation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/audits/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    audits
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/autofill/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    autofill
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/background_service/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    background_service
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/bluetooth_emulation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    bluetooth_emulation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/browser/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    browser
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/cache_storage/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    cache_storage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/cast/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    cast
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/console/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    console
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/css/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    css
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/debugger/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    debugger
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/device_access/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    device_access
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/device_orientation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    device_orientation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/dom/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    dom
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/dom_debugger/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    dom_debugger
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/dom_snapshot/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    dom_snapshot
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/dom_storage/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    dom_storage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/emulation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    emulation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/event_breakpoints/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    event_breakpoints
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/extensions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    extensions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/fed_cm/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    fed_cm
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/fetch/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    fetch
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/file_system/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    file_system
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/headless_experimental/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    headless_experimental
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/heap_profiler/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    heap_profiler
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/indexed_db/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    indexed_db
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/input_/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    input_
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/inspector/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    inspector
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/io/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    io
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/layer_tree/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    layer_tree
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/log/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    log
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/media/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    media
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/memory/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    memory
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/network/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    network
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/overlay/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    overlay
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/page/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    page
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/performance/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/performance_timeline/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    performance_timeline
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/preload/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    preload
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/profiler/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    profiler
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/pwa/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pwa
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/runtime/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    runtime
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/schema/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    schema
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/security/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    security
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/service_worker/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    service_worker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/storage/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    storage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/system_info/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    system_info
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/target/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    target
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/tethering/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    tethering
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/tracing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    tracing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/util/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    util
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/web_audio/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    web_audio
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cdp/web_authn/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    web_authn
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Release Notes
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Release Notes
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Release Notes
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Release Notes
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0152-2025-11-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.15.2] - 2025-11-29
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.15.2] - 2025-11-29">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0151-2025-11-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.15.1] - 2025-11-18
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.15.1] - 2025-11-18">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0150-2025-11-04" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.15.0] - 2025-11-04
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.15.0] - 2025-11-04">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0142-2025-09-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.14.2] - 2025-09-09
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.14.2] - 2025-09-09">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0141-2025-09-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.14.1] - 2025-09-07
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.14.1] - 2025-09-07">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0140-2025-08-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.14.0] - 2025-08-28
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.14.0] - 2025-08-28">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0131-2025-07-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.13.1] - 2025-07-27
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.13.1] - 2025-07-27">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0130-2025-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.13.0] - 2025-07-24
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.13.0] - 2025-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0121-2025-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.12.1] - 2025-07-17
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.12.1] - 2025-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0120-2025-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.12.0] - 2025-07-17
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.12.0] - 2025-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0110-2025-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.11.0] - 2025-07-16
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.11.0] - 2025-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0102-2025-07-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.10.2] - 2025-07-06
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.10.2] - 2025-07-06">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0101-2025-07-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.10.1] - 2025-07-06
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.10.1] - 2025-07-06">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0100-2025-07-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.10.0] - 2025-07-05
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.10.0] - 2025-07-05">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#090-2025-07-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.9.0] - 2025-07-01
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.9.0] - 2025-07-01">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#081-2025-06-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.8.1] - 2025-06-07
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.8.1] - 2025-06-07">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#080-2025-06-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.8.0] - 2025-06-01
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.8.0] - 2025-06-01">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#071-2025-05-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.7.1] - 2025-05-08
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.7.1] - 2025-05-08">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#070-2025-04-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.7.0] - 2025-04-28
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.7.0] - 2025-04-28">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#061-2025-04-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.6.1] - 2025-04-25
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.6.1] - 2025-04-25">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#060-2025-04-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.6.0] - 2025-04-20
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.6.0] - 2025-04-20">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#052-2025-04-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.5.2] - 2025-04-09
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.5.2] - 2025-04-09">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#051-2025-02-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.5.1] - 2025-02-16
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.5.1] - 2025-02-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#050-2025-02-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.5.0] - 2025-02-16
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.5.0] - 2025-02-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#043-2025-02-11" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.4.3] - 2025-02-11
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.4.3] - 2025-02-11">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#042-2025-02-11" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.4.2] - 2025-02-11
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.4.2] - 2025-02-11">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#041-2025-02-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.4.1] - 2025-02-09
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.4.1] - 2025-02-09">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#040-2025-02-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.4.0] - 2025-02-06
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.4.0] - 2025-02-06">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#031-2025-01-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.3.1] - 2025-01-28
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.3.1] - 2025-01-28">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#030-2025-01-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.3.0] - 2025-01-25
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.3.0] - 2025-01-25">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#023-2024-12-14" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.2.3] - 2024-12-14
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.3] - 2024-12-14">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_21" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#022-2024-11-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.2.2] - 2024-11-23
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.2] - 2024-11-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_22" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#021-2024-11-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.2.1] - 2024-11-23
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.1] - 2024-11-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#020-2024-11-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.2.0] - 2024-11-17
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.0] - 2024-11-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#015-2024-11-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.1.5] - 2024-11-17
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1.5] - 2024-11-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_23" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#014-2024-11-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.1.4] - 2024-11-17
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1.4] - 2024-11-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_24" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#013-2024-11-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.1.3] - 2024-11-12
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1.3] - 2024-11-12">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#012-2024-11-11" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.1.2] - 2024-11-11
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1.2] - 2024-11-11">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_25" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#011-2024-10-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.1.1] - 2024-10-29
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1.1] - 2024-10-29">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#010-2024-10-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.1.0] - 2024-10-20
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1.0] - 2024-10-20">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_26" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Removed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0152-2025-11-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.15.2] - 2025-11-29
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.15.2] - 2025-11-29">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0151-2025-11-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.15.1] - 2025-11-18
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.15.1] - 2025-11-18">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0150-2025-11-04" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.15.0] - 2025-11-04
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.15.0] - 2025-11-04">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0142-2025-09-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.14.2] - 2025-09-09
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.14.2] - 2025-09-09">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0141-2025-09-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.14.1] - 2025-09-07
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.14.1] - 2025-09-07">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0140-2025-08-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.14.0] - 2025-08-28
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.14.0] - 2025-08-28">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0131-2025-07-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.13.1] - 2025-07-27
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.13.1] - 2025-07-27">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0130-2025-07-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.13.0] - 2025-07-24
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.13.0] - 2025-07-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0121-2025-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.12.1] - 2025-07-17
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.12.1] - 2025-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0120-2025-07-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.12.0] - 2025-07-17
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.12.0] - 2025-07-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0110-2025-07-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.11.0] - 2025-07-16
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.11.0] - 2025-07-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0102-2025-07-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.10.2] - 2025-07-06
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.10.2] - 2025-07-06">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0101-2025-07-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.10.1] - 2025-07-06
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.10.1] - 2025-07-06">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#0100-2025-07-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.10.0] - 2025-07-05
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.10.0] - 2025-07-05">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#090-2025-07-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.9.0] - 2025-07-01
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.9.0] - 2025-07-01">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#081-2025-06-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.8.1] - 2025-06-07
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.8.1] - 2025-06-07">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#080-2025-06-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.8.0] - 2025-06-01
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.8.0] - 2025-06-01">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#071-2025-05-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.7.1] - 2025-05-08
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.7.1] - 2025-05-08">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#070-2025-04-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.7.0] - 2025-04-28
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.7.0] - 2025-04-28">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#061-2025-04-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.6.1] - 2025-04-25
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.6.1] - 2025-04-25">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#060-2025-04-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.6.0] - 2025-04-20
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.6.0] - 2025-04-20">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#052-2025-04-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.5.2] - 2025-04-09
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.5.2] - 2025-04-09">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#051-2025-02-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.5.1] - 2025-02-16
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.5.1] - 2025-02-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#050-2025-02-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.5.0] - 2025-02-16
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.5.0] - 2025-02-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#043-2025-02-11" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.4.3] - 2025-02-11
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.4.3] - 2025-02-11">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#042-2025-02-11" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.4.2] - 2025-02-11
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.4.2] - 2025-02-11">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#041-2025-02-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.4.1] - 2025-02-09
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.4.1] - 2025-02-09">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#040-2025-02-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.4.0] - 2025-02-06
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.4.0] - 2025-02-06">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#031-2025-01-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.3.1] - 2025-01-28
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.3.1] - 2025-01-28">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#030-2025-01-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.3.0] - 2025-01-25
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.3.0] - 2025-01-25">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#023-2024-12-14" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.2.3] - 2024-12-14
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.3] - 2024-12-14">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_21" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#022-2024-11-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.2.2] - 2024-11-23
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.2] - 2024-11-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_22" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#021-2024-11-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.2.1] - 2024-11-23
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.1] - 2024-11-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#020-2024-11-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.2.0] - 2024-11-17
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.2.0] - 2024-11-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#015-2024-11-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.1.5] - 2024-11-17
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1.5] - 2024-11-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_23" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#014-2024-11-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.1.4] - 2024-11-17
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1.4] - 2024-11-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_24" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#013-2024-11-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.1.3] - 2024-11-12
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1.3] - 2024-11-12">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#012-2024-11-11" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.1.2] - 2024-11-11
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1.2] - 2024-11-11">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_25" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#011-2024-10-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.1.1] - 2024-10-29
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1.1] - 2024-10-29">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#010-2024-10-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      [0.1.0] - 2024-10-20
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1.0] - 2024-10-20">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_26" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      Added
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Removed
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="release-notes">Release Notes</h1>
+<h2 id="0152-2025-11-29">[0.15.2] - 2025-11-29</h2>
+<h3 id="fixed">Fixed</h3>
+<ul>
+<li>Fix race condition in <code>Tab.query_selector</code> and <code>Tab.query_selector_all</code> on stale document. @Avejack</li>
+</ul>
+<h2 id="0151-2025-11-18">[0.15.1] - 2025-11-18</h2>
+<h3 id="fixed_1">Fixed</h3>
+<ul>
+<li>Fix <code>NameError</code> in <code>Tab.query_selector</code> and <code>Tab.query_selector_all</code> due to type-checking import of <code>Element</code>. @Avejack</li>
+</ul>
+<h2 id="0150-2025-11-04">[0.15.0] - 2025-11-04</h2>
+<h3 id="fixed_2">Fixed</h3>
+<ul>
+<li>Fix <code>browser.stopped</code> to detect when the browser was closed by the user. @puc9</li>
+<li>Fix typo in <code>Browser._handle_target_update</code> that prevented target_info updates @puc9</li>
+<li>Fix <a href="https://github.com/cdpdriver/zendriver/issues/218">#128</a>: TimeoutError caused by Tab.xpath @ionutcatana</li>
+<li>Fix WebRTC IP Leaks @ethcipher</li>
+</ul>
+<h3 id="added">Added</h3>
+<ul>
+<li>Add <code>disable_webrtc</code> and <code>disable_webgl</code> args to <code>Config</code> class @ethcipher</li>
+</ul>
+<h3 id="changed">Changed</h3>
+<ul>
+<li>Fix <code>.dockerignore</code> @tomokinakamaru</li>
+</ul>
+<h2 id="0142-2025-09-09">[0.14.2] - 2025-09-09</h2>
+<h3 id="fixed_3">Fixed</h3>
+<ul>
+<li>Fix <code>evaluate</code> to return the correct value instead of None for falsy values @thromer</li>
+</ul>
+<h2 id="0141-2025-09-07">[0.14.1] - 2025-09-07</h2>
+<h3 id="fixed_4">Fixed</h3>
+<ul>
+<li>Fix calls to <code>evaluate</code> that return JSON: only set <code>serialization_options</code> when <code>return_by_value=False</code> @thromer</li>
+<li>Fix <a href="https://github.com/cdpdriver/zendriver/issues/184">#184</a>: <code>download_path</code> error in <code>DownloadExpectation</code> @MadsHangaard</li>
+</ul>
+<h2 id="0140-2025-08-28">[0.14.0] - 2025-08-28</h2>
+<h3 id="fixed_5">Fixed</h3>
+<ul>
+<li>Add nodriver evaluate serialization options for improved JavaScript evaluation @dbrun3</li>
+</ul>
+<h3 id="added_1">Added</h3>
+<ul>
+<li>Allow reset expect and intercept @nathanfallet</li>
+</ul>
+<h2 id="0131-2025-07-27">[0.13.1] - 2025-07-27</h2>
+<h3 id="fixed_6">Fixed</h3>
+<ul>
+<li>Remove unnecessary usage of <code>typing_extensions</code> (fixes <code>No module named 'typing_extensions'</code> error) @stephanlensky</li>
+<li>Fix verify_cf() @H1steria</li>
+<li>Fix relative coordinates of flash_point() @H1steria</li>
+</ul>
+<h3 id="added_2">Added</h3>
+<ul>
+<li>Add flash_point() to Tab.mouse_click() @H1steria</li>
+</ul>
+<h3 id="changed_1">Changed</h3>
+<ul>
+<li>Remove Connection <code>__getattr__</code> and replace it with declared <code>@property</code> @nathanfallet</li>
+<li>Deprecate Element <code>__getattr__</code> and add <code>get(name: str)</code> method @nathanfallet</li>
+</ul>
+<h2 id="0130-2025-07-24">[0.13.0] - 2025-07-24</h2>
+<h3 id="fixed_7">Fixed</h3>
+<ul>
+<li>Gracefully close the browser process on exit @nathanfallet</li>
+</ul>
+<h3 id="added_3">Added</h3>
+<ul>
+<li>Add support for Brave browser @H1steria</li>
+</ul>
+<h2 id="0121-2025-07-17">[0.12.1] - 2025-07-17</h2>
+<h3 id="fixed_8">Fixed</h3>
+<ul>
+<li>Remove usage of StrEnum to fix compatibility with Python 3.10 @stephanlensky</li>
+</ul>
+<h2 id="0120-2025-07-17">[0.12.0] - 2025-07-17</h2>
+<h3 id="added_4">Added</h3>
+<ul>
+<li>Added <code>Tab.intercept</code> @nathanfallet</li>
+</ul>
+<h2 id="0110-2025-07-16">[0.11.0] - 2025-07-16</h2>
+<h3 id="added_5">Added</h3>
+<ul>
+<li>Complete rewrite of keyboard input system with new <code>KeyEvents</code> class in <code>zendriver.core.keys</code> @hvgupta</li>
+<li>Added support for modifiers (Ctrl, Alt, Shift, Meta)</li>
+<li>Added support for special keys including arrows, escape, delete and backspace</li>
+<li>Added <code>KeyEvents.from_text()</code> class method for converting plain text to cdp events</li>
+<li>Added <code>KeyEvents.from_mixed_input()</code> class method for handling mixed sequences of text, special keys to cdp events</li>
+<li>Proper Handling of shift variants of keys</li>
+<li>Comprehensive key event types: <code>CHAR</code>, <code>KEY_DOWN</code>, <code>KEY_UP</code></li>
+<li>Added key event type (<code>DOWN_AND_UP</code>) as a combination of <code>KEY_DOWN</code> and <code>KEY_UP</code></li>
+</ul>
+<h3 id="changed_2">Changed</h3>
+<ul>
+<li><code>Element.send_keys()</code> now uses the new <code>KeyEvents</code> system (it is still backwards compatible with passing a string) @hvgupta</li>
+<li>Key event processing now properly handles modifier key sequences @hvgupta</li>
+<li>Update CDP schemas @nathanfallet</li>
+</ul>
+<h2 id="0102-2025-07-06">[0.10.2] - 2025-07-06</h2>
+<h3 id="fixed_9">Fixed</h3>
+<ul>
+<li>Refactor to asynchronous handlers to avoid blocking the listening loop @nathanfallet</li>
+</ul>
+<h2 id="0101-2025-07-06">[0.10.1] - 2025-07-06</h2>
+<h3 id="fixed_10">Fixed</h3>
+<ul>
+<li>Added <code>Tab.flash_point</code> from nodriver @nathanfallet</li>
+<li>Ensured loading is finished in expect @nathanfallet</li>
+</ul>
+<h2 id="0100-2025-07-05">[0.10.0] - 2025-07-05</h2>
+<h3 id="fixed_11">Fixed</h3>
+<ul>
+<li>Refactor element waiting loops in <code>find_*</code> and <code>select*</code> methods. @H1steria</li>
+<li>Improve <code>query_selector</code> error handling to consistently return <code>None</code> when a node is not found. @H1steria</li>
+<li>Add user_agent option to allow bypassing cloudflare javascript challenge in headless mode. @H1steria</li>
+<li>Fixed <code>lang</code> parameter never being set in <code>Browser.start</code> @nathanfallet</li>
+</ul>
+<h3 id="added_6">Added</h3>
+<ul>
+<li>Added <code>mouse_move</code> and <code>mouse_click</code> methods from nodriver. @H1steria</li>
+</ul>
+<h2 id="090-2025-07-01">[0.9.0] - 2025-07-01</h2>
+<h3 id="added_7">Added</h3>
+<ul>
+<li>Added <code>speed</code> in <code>Tab.scroll_down</code> and <code>Tab.scroll_up</code> methods to control the scroll speed @nathanfallet</li>
+<li>Allow to wait for promise in <code>Element.apply</code> method @nathanfallet</li>
+<li>Added <code>Element.clear_input_by_deleting</code> to handle inputs with custom delete behavior @nathanfallet</li>
+<li>Added <code>Tab.xpath</code> from nodriver @nathanfallet</li>
+</ul>
+<h2 id="081-2025-06-07">[0.8.1] - 2025-06-07</h2>
+<h3 id="fixed_12">Fixed</h3>
+<ul>
+<li>Add an optional <code>special_characters</code> flag to <code>Element.send_keys</code> to support sending special characters (e.g. emojis) @nathanfallet</li>
+</ul>
+<h2 id="080-2025-06-01">[0.8.0] - 2025-06-01</h2>
+<h3 id="fixed_13">Fixed</h3>
+<ul>
+<li>Fixed tests so that they can run on Windows (and still run on Linux like before) @nathanfallet</li>
+<li>Remove usage of asyncio subprocess for better compatibility on Windows @nathanfallet</li>
+<li>Added a missing Chrome Canary path for Windows @nathanfallet</li>
+<li>Added a flag to re-enable <code>--load-extension</code> (disabled by default in Chrome 136+) @nathanfallet</li>
+</ul>
+<h2 id="071-2025-05-08">[0.7.1] - 2025-05-08</h2>
+<h3 id="changed_3">Changed</h3>
+<ul>
+<li>Updated CDP models @jsuarezl</li>
+</ul>
+<h2 id="070-2025-04-28">[0.7.0] - 2025-04-28</h2>
+<h3 id="added_8">Added</h3>
+<ul>
+<li>Added <code>Tab.screenshot_b64</code> and <code>Element.screenshot_b64</code> methods to return screenshot as base64 string @falmar</li>
+<li>Added <code>Tab.print_to_pdf</code> to print the current page to a PDF file @stephanlensky</li>
+</ul>
+<h2 id="061-2025-04-25">[0.6.1] - 2025-04-25</h2>
+<h3 id="fixed_14">Fixed</h3>
+<ul>
+<li>Fix race condition in <code>Browser.get</code> and <code>Tab.close</code> which could cause exceptions, especially when running multiple browsers in parallel @stephanlensky</li>
+</ul>
+<h2 id="060-2025-04-20">[0.6.0] - 2025-04-20</h2>
+<h3 id="fixed_15">Fixed</h3>
+<ul>
+<li><code>Browser.get</code> and <code>Tab.close</code> will now wait for their appropiate target events before returning @ccev</li>
+</ul>
+<h3 id="added_9">Added</h3>
+<ul>
+<li>Added <code>Tab.save_snapshot</code> to export the current page to MHTML format.</li>
+</ul>
+<h2 id="052-2025-04-09">[0.5.2] - 2025-04-09</h2>
+<h3 id="fixed_16">Fixed</h3>
+<ul>
+<li>Fixed type annotation of <code>Element.children</code> @stephanlensky</li>
+</ul>
+<h2 id="051-2025-02-16">[0.5.1] - 2025-02-16</h2>
+<h3 id="changed_4">Changed</h3>
+<ul>
+<li>Deprecated <code>zendriver.loop()</code> function. You should instead use <code>asyncio</code> functions directly, for example:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">your_main_method</span><span class="p">())</span>
+</code></pre></div>
+<h2 id="050-2025-02-16">[0.5.0] - 2025-02-16</h2>
+<h3 id="added_10">Added</h3>
+<ul>
+<li>Add <code>tab.expect_download</code> methods to wait for download file @3mora2</li>
+</ul>
+<h2 id="043-2025-02-11">[0.4.3] - 2025-02-11</h2>
+<h3 id="added_11">Added</h3>
+<ul>
+<li>Add logs for Chrome process output on connection failure @stephanlensky</li>
+</ul>
+<h3 id="changed_5">Changed</h3>
+<ul>
+<li>Default and launch changed to use <code>about:blank</code> (faster start and less bandwidth) @raycardillo</li>
+</ul>
+<h2 id="042-2025-02-11">[0.4.2] - 2025-02-11</h2>
+<h3 id="fixed_17">Fixed</h3>
+<ul>
+<li>Multiple Browsers can be created without one affecting the other @raycardillo</li>
+</ul>
+<h2 id="041-2025-02-09">[0.4.1] - 2025-02-09</h2>
+<h3 id="fixed_18">Fixed</h3>
+<ul>
+<li>Ignore irrelevant <code>DOM.disable</code> errors @raycardillo</li>
+<li>Test scripts improved for running on macOS @raycardillo</li>
+</ul>
+<h2 id="040-2025-02-06">[0.4.0] - 2025-02-06</h2>
+<h3 id="added_12">Added</h3>
+<ul>
+<li>Add <code>tab.expect_request</code> and <code>tab.expect_response</code> methods to wait for a specific request or response @3mora2</li>
+<li>Add <code>tab.wait_for_ready_state</code> method for to wait for page to load @3mora2</li>
+<li>Add <code>tab.remove_handlers</code> method for removing handlers @khamaileon</li>
+<li>Clean up temporary profiles when <code>Browser.stop()</code> is called @barrycarey</li>
+</ul>
+<h2 id="031-2025-01-28">[0.3.1] - 2025-01-28</h2>
+<h3 id="fixed_19">Fixed</h3>
+<ul>
+<li>Fixed bug in <code>find</code>/<code>find_element_by_text</code> which caused <code>ProtocolException</code> when no results were found @stephanlensky</li>
+</ul>
+<h2 id="030-2025-01-25">[0.3.0] - 2025-01-25</h2>
+<h3 id="fixed_20">Fixed</h3>
+<ul>
+<li>Added <code>Tab.set_user_agent()</code> function for programmatically configuring the user-agent, language, and platform @stephanlensky</li>
+<li>Improved a few type annotations (<code>Connection.send()</code> function now returns correctly typed values based on the provided <code>cdp_obj</code>) @stephanlensky</li>
+</ul>
+<h2 id="023-2024-12-14">[0.2.3] - 2024-12-14</h2>
+<h3 id="fixed_21">Fixed</h3>
+<ul>
+<li>Fixed mypy linting errors (attempt 2) @stephanlensky</li>
+</ul>
+<h3 id="added_13">Added</h3>
+<ul>
+<li>Handle browser process shutdown on 'Failed to connect to browser' @desoul99</li>
+<li>Added configurable browser connection timeout and tries @desoul99</li>
+</ul>
+<h2 id="022-2024-11-23">[0.2.2] - 2024-11-23</h2>
+<h3 id="fixed_22">Fixed</h3>
+<ul>
+<li>Fix <code>AttributeError: 'tuple' object has no attribute 'value'</code> error in <code>connection.py</code> when using headless browser, @slimshreydy</li>
+</ul>
+<h2 id="021-2024-11-23">[0.2.1] - 2024-11-23</h2>
+<h3 id="added_14">Added</h3>
+<ul>
+<li>Add automated testing framework! @stephanlensky</li>
+<li>For now, just a few tests are written, including one to test browserscan.com bot detection</li>
+<li>In the future, we can expand this test suite further (see <a href="https://github.com/stephanlensky/zendriver/issues/18">Zendriver#18</a>)</li>
+<li>Add return type annotation to <code>Tab.get_content()</code> @stephanlensky</li>
+</ul>
+<h3 id="changed_6">Changed</h3>
+<ul>
+<li>Upgraded <code>websockets</code> to latest version (<code>&gt;=14.0</code>) @yoori @stephanlensky</li>
+</ul>
+<h2 id="020-2024-11-17">[0.2.0] - 2024-11-17</h2>
+<h3 id="changed_7">Changed</h3>
+<ul>
+<li>Updated CDP models @stephanlensky</li>
+</ul>
+<h2 id="015-2024-11-17">[0.1.5] - 2024-11-17</h2>
+<h3 id="fixed_23">Fixed</h3>
+<ul>
+<li>Reverted non-functional fixes for mypy linting errors (oops) @stephanlensky</li>
+</ul>
+<h2 id="014-2024-11-17">[0.1.4] - 2024-11-17</h2>
+<h3 id="fixed_24">Fixed</h3>
+<ul>
+<li>Fixed a large number of mypy linting errors (should not result in any functional change) @stephanlensky</li>
+</ul>
+<h3 id="added_15">Added</h3>
+<ul>
+<li>Added <code>zendriver.__version__</code> attribute to get current package version at runtime @stephanlensky</li>
+</ul>
+<h2 id="013-2024-11-12">[0.1.3] - 2024-11-12</h2>
+<h3 id="added_16">Added</h3>
+<ul>
+<li>Added support for <code>DOM.scrollableFlagUpdated</code> experimental CDP event. @michaellee94</li>
+</ul>
+<h2 id="012-2024-11-11">[0.1.2] - 2024-11-11</h2>
+<h3 id="fixed_25">Fixed</h3>
+<ul>
+<li>Pinned requirement <code>websockets&lt;14</code>, fixing the <code>AttributeError: 'NoneType' object has no attribute 'closed'</code> crash which occurs on the latest version of <code>websockets</code>. @stephanlensky</li>
+<li>Fixed incorrect <code>browser.close()</code> method in examples and documentation -- the correct method is <code>browser.stop()</code>. @stephanlensky</li>
+<li>Fixed <code>atexit</code> handler to correctly handle async <code>browser.stop()</code> method. @stephanlensky</li>
+</ul>
+<h2 id="011-2024-10-29">[0.1.1] - 2024-10-29</h2>
+<h3 id="added_17">Added</h3>
+<ul>
+<li>Support for Python 3.10 and Python 3.11. All versions &gt;=3.10 are now supported. @stephanlensky</li>
+</ul>
+<h2 id="010-2024-10-20">[0.1.0] - 2024-10-20</h2>
+<p>Initial version, forked from <a href="https://github.com/ultrafunkamsterdam/nodriver/commit/1bb6003c7f0db4d3ec05fdf3fc8c8e0804260103">ultrafunkamsterdam/nodriver@<code>1bb6003</code></a> with a variety of improvements.</p>
+<h3 id="fixed_26">Fixed</h3>
+<ul>
+<li><code>Browser.set_all</code> cookies function now correctly uses provided cookies @ilkecan</li>
+<li>"successfully removed temp profile" message printed on exit is now only shown only when a profile was actually removed. Message is now logged at debug level instead of printed. @mreiden @stephanlensky</li>
+<li>Fix crash on starting browser in headless mode @ilkecan</li>
+<li>Fix <code>Browser.stop()</code> method to give the browser instance time to shut down before force killing @stephanlensky</li>
+<li>Many <code>ruff</code> lint issues @stephanlensky</li>
+</ul>
+<h3 id="added_18">Added</h3>
+<ul>
+<li>Support for linting with <code>ruff</code> and <code>mypy</code>. All <code>ruff</code> lints are fixed in the initial release, but many <code>mypy</code> issues remain to be fixed at a later date. @stephanlensky</li>
+<li><code>py.typed</code> marker so importing as a library in other packages no longer causes <code>mypy</code> errors. @stephanlensky</li>
+</ul>
+<h3 id="changed_8">Changed</h3>
+<ul>
+<li>Project is now built with <a href="https://github.com/astral-sh/uv"><code>uv</code></a>. Automatically install dependencies to a venv with <code>uv sync</code>, run commands from the venv with <code>uv run</code>, and build the project with <code>uv build</code>. See the official <a href="https://docs.astral.sh/uv/"><code>uv</code> docs</a> for more information. @stephanlensky</li>
+<li>Docs migrated from sphinx to <a href="https://squidfunk.github.io/mkdocs-material/">mkdocs-material</a>. @stephanlensky</li>
+<li><code>Browser.stop()</code> is now async (so it must be <code>await</code>ed) @stephanlensky</li>
+</ul>
+<h3 id="removed">Removed</h3>
+<ul>
+<li>Twitter account creation example @stephanlensky</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../reference/cdp/web_authn/" class="md-footer__link md-footer__link--prev" aria-label="Previous: web_authn">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                web_authn
+              </div>
+            </div>
+          </a>
+        
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.footer", "navigation.tabs", "navigation.expand"], "search": "../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.83f73b43.min.js"></script>
+      
+    
+  </body>
+</html>
