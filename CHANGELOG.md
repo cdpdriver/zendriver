@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix `query_selector_all` and `select_all(include_frames=True)` not searching nested iframes. CDP's `querySelectorAll` only queries within a single document boundary, so elements inside nested iframes were never found. Now walks the full DOM tree to collect each iframe's `content_document` and queries them individually. Also adds a guard for cross-origin iframes where `content_document` is `None`. @chronoAP
+
 ### Added
 
 ### Changed
