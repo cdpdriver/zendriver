@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Prevent listener crashes on late CDP responses for cancelled/completed transactions, and clean up cancelled `send()` transactions to avoid stale mapper entries. @Avejack
+
 ### Added
 
 ### Changed
