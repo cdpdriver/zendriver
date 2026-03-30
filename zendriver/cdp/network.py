@@ -2481,13 +2481,18 @@ class ClientSecurityState:
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> ClientSecurityState:
+        policy_key = (
+            "privateNetworkRequestPolicy"
+            if "privateNetworkRequestPolicy" in json
+            else "localNetworkAccessRequestPolicy"
+        )
         return cls(
             initiator_is_secure_context=bool(json["initiatorIsSecureContext"]),
             initiator_ip_address_space=IPAddressSpace.from_json(
                 json["initiatorIPAddressSpace"]
             ),
             private_network_request_policy=PrivateNetworkRequestPolicy.from_json(
-                json["privateNetworkRequestPolicy"]
+                json[policy_key]
             ),
         )
 

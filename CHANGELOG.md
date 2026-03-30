@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix `KeyError` on Chrome 146+ due to CDP renaming `privateNetworkRequestPolicy` to `localNetworkAccessRequestPolicy` in `Network.requestWillBeSentExtraInfo`
+
 ### Added
 
 ### Changed
