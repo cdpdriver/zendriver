@@ -338,6 +338,16 @@ async def test_manual_disable_send(browser: zd.Browser) -> None:
     assert zd.cdp.network not in tab.enabled_domains
 
 
+async def test_auto_enable_domain(browser: zd.Browser) -> None:
+    tab = browser.main_tab
+    assert tab is not None
+    tab.add_handler(zd.cdp.network, lambda _: None)
+    # disable send will overwrite auto enabled domain from handler
+    await tab.get(sample_file("profile.html"))
+    assert zd.cdp.network not in tab.manually_enabled_domains
+    assert zd.cdp.network in tab.enabled_domains
+
+
 async def test_evaluate_complex_object_no_error(browser: zd.Browser) -> None:
     tab = await browser.get(sample_file("complex_object.html"))
     await tab.wait_for_ready_state("complete")

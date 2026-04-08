@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix `Connection._register_handlers` reenabling already manually enabled domains by tracking 
+
 ### Added
 
 ### Changed
