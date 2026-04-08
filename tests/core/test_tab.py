@@ -277,6 +277,25 @@ async def test_intercept(browser: zd.Browser) -> None:
         # assert original_response["name"] == "Zendriver"
 
 
+async def test_handler_wont_overwrite_custom_enable(browser: zd.Browser) -> None:
+    tab = browser.main_tab
+    assert tab is not None
+    await tab.send(
+        zd.cdp.fetch.enable(
+            [
+                zd.cdp.fetch.RequestPattern(
+                    url_pattern="*/user-data.json",
+                    request_stage=RequestStage.RESPONSE,
+                    resource_type=ResourceType.XHR,
+                )
+            ]
+        )
+    )
+
+    tab.add_handler(zd.cdp.fetch.RequestPaused, lambda _: None)
+    await tab.get(sample_file("profile.html"))
+
+
 async def test_intercept_with_reload(browser: zd.Browser) -> None:
     tab = browser.main_tab
     assert tab is not None

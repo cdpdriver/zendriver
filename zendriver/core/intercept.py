@@ -72,9 +72,9 @@ class BaseFetchInterception:
                 ]
             )
         )
-        self.tab.enabled_domains.append(
-            cdp.fetch
-        )  # trick to avoid another `fetch.enable` call by _register_handlers
+        # self.tab.enabled_domains.append(
+        #     cdp.fetch
+        # )  # trick to avoid another `fetch.enable` call by _register_handlers
         self.tab.add_handler(cdp.fetch.RequestPaused, self._response_handler)
 
     async def _teardown(self) -> None:
