@@ -598,9 +598,9 @@ class Connection(metaclass=CantTouchThis):
             tx.id = next(self.__count__)
         self.mapper.update({tx.id: tx})
 
-        self._handle_enabled_domains(tx)
         if not _is_update:
             await self._register_handlers()
+        self._handle_enabled_domains(tx)
         await self.websocket.send(tx.message)
         try:
             return await tx  # type: ignore
