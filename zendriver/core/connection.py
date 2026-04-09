@@ -531,36 +531,6 @@ class Connection(metaclass=CantTouchThis):
         )
         self.target = target_info
 
-    def _handle_enabled_domains(self, tx: Transaction) -> None:
-        """
-        update enabled domain lists accordingly for enable/disable domain transactions
-
-        :param tx:
-        :return:
-        :rtype:
-        """
-        is_enable = tx.method.endswith(".enable")
-        is_disable = tx.method.endswith(".disable")
-        if is_enable or is_disable:
-            domain_name, _, _ = tx.method.partition(".")
-            try:
-                domain_mod = util.cdp_get_module(domain_name.lower())
-            except ModuleNotFoundError:
-                logger.debug(
-                    "Could not find module for domain %s",
-                    domain_name,
-                )
-                return
-
-            # manual enables/disables always overwrite auto enabled domains
-            if domain_mod in self.enabled_domains:
-                self.enabled_domains.remove(domain_mod)
-
-            if is_disable and domain_mod in self.manually_enabled_domains:
-                self.manually_enabled_domains.remove(domain_mod)
-            if is_enable and domain_mod not in self.manually_enabled_domains:
-                self.manually_enabled_domains.append(domain_mod)
-
     async def send(
         self,
         cdp_obj: Generator[dict[str, Any], dict[str, Any], T],
@@ -664,6 +634,36 @@ class Connection(metaclass=CantTouchThis):
             # temp variable when we registered it or saw handlers for it.
             # items still present at this point are unused and need removal
             self.enabled_domains.remove(ed)
+
+    def _handle_enabled_domains(self, tx: Transaction) -> None:
+        """
+        update enabled domain lists accordingly for enable/disable domain transactions
+
+        :param tx:
+        :return:
+        :rtype:
+        """
+        is_enable = tx.method.endswith(".enable")
+        is_disable = tx.method.endswith(".disable")
+        if is_enable or is_disable:
+            domain_name, _, _ = tx.method.partition(".")
+            try:
+                domain_mod = util.cdp_get_module(domain_name.lower())
+            except ModuleNotFoundError:
+                logger.debug(
+                    "Could not find module for domain %s",
+                    domain_name,
+                )
+                return
+
+            # manual enables/disables always overwrite auto enabled domains
+            if domain_mod in self.enabled_domains:
+                self.enabled_domains.remove(domain_mod)
+
+            if is_disable and domain_mod in self.manually_enabled_domains:
+                self.manually_enabled_domains.remove(domain_mod)
+            if is_enable and domain_mod not in self.manually_enabled_domains:
+                self.manually_enabled_domains.append(domain_mod)
 
     async def _prepare_headless(self) -> None:
         if getattr(self, "_prep_headless_done", None):
