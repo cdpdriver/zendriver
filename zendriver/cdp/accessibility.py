@@ -293,7 +293,8 @@ class AXPropertyName(enum.Enum):
     - from 'live' to 'root': attributes which apply to nodes in live regions
     - from 'autocomplete' to 'valuetext': attributes which apply to widgets
     - from 'checked' to 'selected': states which apply to widgets
-    - from 'activedescendant' to 'owns' - relationships between elements other than parent/child/sibling.
+    - from 'activedescendant' to 'owns': relationships between elements other than parent/child/sibling
+    - from 'activeFullscreenElement' to 'uninteresting': reasons why this noode is hidden
     """
 
     ACTIONS = "actions"
@@ -337,6 +338,23 @@ class AXPropertyName(enum.Enum):
     LABELLEDBY = "labelledby"
     OWNS = "owns"
     URL = "url"
+    ACTIVE_FULLSCREEN_ELEMENT = "activeFullscreenElement"
+    ACTIVE_MODAL_DIALOG = "activeModalDialog"
+    ACTIVE_ARIA_MODAL_DIALOG = "activeAriaModalDialog"
+    ARIA_HIDDEN_ELEMENT = "ariaHiddenElement"
+    ARIA_HIDDEN_SUBTREE = "ariaHiddenSubtree"
+    EMPTY_ALT = "emptyAlt"
+    EMPTY_TEXT = "emptyText"
+    INERT_ELEMENT = "inertElement"
+    INERT_SUBTREE = "inertSubtree"
+    LABEL_CONTAINER = "labelContainer"
+    LABEL_FOR = "labelFor"
+    NOT_RENDERED = "notRendered"
+    NOT_VISIBLE = "notVisible"
+    PRESENTATIONAL_ROLE = "presentationalRole"
+    PROBABLY_PRESENTATIONAL = "probablyPresentational"
+    INACTIVE_CAROUSEL_TAB_CONTENT = "inactiveCarouselTabContent"
+    UNINTERESTING = "uninteresting"
 
     def to_json(self) -> str:
         return self.value

@@ -171,9 +171,6 @@ class AnimationEffect:
     #: ``AnimationEffect``'s iteration start.
     iteration_start: float
 
-    #: ``AnimationEffect``'s iterations.
-    iterations: float
-
     #: ``AnimationEffect``'s iteration duration.
     #: Milliseconds for time based animations and
     #: percentage [0 - 100] for scroll driven animations
@@ -189,6 +186,9 @@ class AnimationEffect:
     #: ``AnimationEffect``'s timing function.
     easing: str
 
+    #: ``AnimationEffect``'s iterations. Omitted if the value is infinite.
+    iterations: typing.Optional[float] = None
+
     #: ``AnimationEffect``'s target node.
     backend_node_id: typing.Optional[dom.BackendNodeId] = None
 
@@ -200,11 +200,12 @@ class AnimationEffect:
         json["delay"] = self.delay
         json["endDelay"] = self.end_delay
         json["iterationStart"] = self.iteration_start
-        json["iterations"] = self.iterations
         json["duration"] = self.duration
         json["direction"] = self.direction
         json["fill"] = self.fill
         json["easing"] = self.easing
+        if self.iterations is not None:
+            json["iterations"] = self.iterations
         if self.backend_node_id is not None:
             json["backendNodeId"] = self.backend_node_id.to_json()
         if self.keyframes_rule is not None:
@@ -217,11 +218,13 @@ class AnimationEffect:
             delay=float(json["delay"]),
             end_delay=float(json["endDelay"]),
             iteration_start=float(json["iterationStart"]),
-            iterations=float(json["iterations"]),
             duration=float(json["duration"]),
             direction=str(json["direction"]),
             fill=str(json["fill"]),
             easing=str(json["easing"]),
+            iterations=float(json["iterations"])
+            if json.get("iterations", None) is not None
+            else None,
             backend_node_id=dom.BackendNodeId.from_json(json["backendNodeId"])
             if json.get("backendNodeId", None) is not None
             else None,

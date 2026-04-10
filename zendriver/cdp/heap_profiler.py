@@ -215,17 +215,21 @@ def get_sampling_profile() -> (
 
 def start_sampling(
     sampling_interval: typing.Optional[float] = None,
+    stack_depth: typing.Optional[float] = None,
     include_objects_collected_by_major_gc: typing.Optional[bool] = None,
     include_objects_collected_by_minor_gc: typing.Optional[bool] = None,
 ) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
     """
     :param sampling_interval: *(Optional)* Average sample interval in bytes. Poisson distribution is used for the intervals. The default value is 32768 bytes.
+    :param stack_depth: *(Optional)* Maximum stack depth. The default value is 128.
     :param include_objects_collected_by_major_gc: *(Optional)* By default, the sampling heap profiler reports only objects which are still alive when the profile is returned via getSamplingProfile or stopSampling, which is useful for determining what functions contribute the most to steady-state memory usage. This flag instructs the sampling heap profiler to also include information about objects discarded by major GC, which will show which functions cause large temporary memory usage or long GC pauses.
     :param include_objects_collected_by_minor_gc: *(Optional)* By default, the sampling heap profiler reports only objects which are still alive when the profile is returned via getSamplingProfile or stopSampling, which is useful for determining what functions contribute the most to steady-state memory usage. This flag instructs the sampling heap profiler to also include information about objects discarded by minor GC, which is useful when tuning a latency-sensitive application for minimal GC activity.
     """
     params: T_JSON_DICT = dict()
     if sampling_interval is not None:
         params["samplingInterval"] = sampling_interval
+    if stack_depth is not None:
+        params["stackDepth"] = stack_depth
     if include_objects_collected_by_major_gc is not None:
         params["includeObjectsCollectedByMajorGC"] = (
             include_objects_collected_by_major_gc

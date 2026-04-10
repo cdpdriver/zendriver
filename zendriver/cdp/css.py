@@ -15,18 +15,6 @@ from . import dom
 from . import page
 
 
-class StyleSheetId(str):
-    def to_json(self) -> str:
-        return self
-
-    @classmethod
-    def from_json(cls, json: str) -> StyleSheetId:
-        return cls(json)
-
-    def __repr__(self):
-        return "StyleSheetId({})".format(super().__repr__())
-
-
 class StyleSheetOrigin(enum.Enum):
     """
     Stylesheet type: "injected" for stylesheets injected via extension, "user-agent" for user-agent
@@ -323,7 +311,7 @@ class CSSStyleSheetHeader:
     """
 
     #: The stylesheet identifier.
-    style_sheet_id: StyleSheetId
+    style_sheet_id: dom.StyleSheetId
 
     #: Owner frame identifier.
     frame_id: page.FrameId
@@ -412,7 +400,7 @@ class CSSStyleSheetHeader:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> CSSStyleSheetHeader:
         return cls(
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"]),
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"]),
             frame_id=page.FrameId.from_json(json["frameId"]),
             source_url=str(json["sourceURL"]),
             origin=StyleSheetOrigin.from_json(json["origin"]),
@@ -458,10 +446,13 @@ class CSSRule:
 
     #: The css style sheet identifier (absent for user agent stylesheet and user-specified
     #: stylesheet rules) this rule came from.
-    style_sheet_id: typing.Optional[StyleSheetId] = None
+    style_sheet_id: typing.Optional[dom.StyleSheetId] = None
 
     #: Array of selectors from ancestor style rules, sorted by distance from the current rule.
     nesting_selectors: typing.Optional[typing.List[str]] = None
+
+    #: The BackendNodeId of the DOM node that constitutes the origin tree scope of this rule.
+    origin_tree_scope_node_id: typing.Optional[dom.BackendNodeId] = None
 
     #: Media list array (for rules involving media queries). The array enumerates media queries
     #: starting with the innermost one, going outwards.
@@ -490,6 +481,10 @@ class CSSRule:
     #: The array enumerates @starting-style at-rules starting with the innermost one, going outwards.
     starting_styles: typing.Optional[typing.List[CSSStartingStyle]] = None
 
+    #: @navigation CSS at-rule array.
+    #: The array enumerates @navigation at-rules starting with the innermost one, going outwards.
+    navigations: typing.Optional[typing.List[CSSNavigation]] = None
+
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = dict()
         json["selectorList"] = self.selector_list.to_json()
@@ -499,6 +494,8 @@ class CSSRule:
             json["styleSheetId"] = self.style_sheet_id.to_json()
         if self.nesting_selectors is not None:
             json["nestingSelectors"] = [i for i in self.nesting_selectors]
+        if self.origin_tree_scope_node_id is not None:
+            json["originTreeScopeNodeId"] = self.origin_tree_scope_node_id.to_json()
         if self.media is not None:
             json["media"] = [i.to_json() for i in self.media]
         if self.container_queries is not None:
@@ -513,6 +510,8 @@ class CSSRule:
             json["ruleTypes"] = [i.to_json() for i in self.rule_types]
         if self.starting_styles is not None:
             json["startingStyles"] = [i.to_json() for i in self.starting_styles]
+        if self.navigations is not None:
+            json["navigations"] = [i.to_json() for i in self.navigations]
         return json
 
     @classmethod
@@ -521,11 +520,16 @@ class CSSRule:
             selector_list=SelectorList.from_json(json["selectorList"]),
             origin=StyleSheetOrigin.from_json(json["origin"]),
             style=CSSStyle.from_json(json["style"]),
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"])
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"])
             if json.get("styleSheetId", None) is not None
             else None,
             nesting_selectors=[str(i) for i in json["nestingSelectors"]]
             if json.get("nestingSelectors", None) is not None
+            else None,
+            origin_tree_scope_node_id=dom.BackendNodeId.from_json(
+                json["originTreeScopeNodeId"]
+            )
+            if json.get("originTreeScopeNodeId", None) is not None
             else None,
             media=[CSSMedia.from_json(i) for i in json["media"]]
             if json.get("media", None) is not None
@@ -552,6 +556,9 @@ class CSSRule:
             ]
             if json.get("startingStyles", None) is not None
             else None,
+            navigations=[CSSNavigation.from_json(i) for i in json["navigations"]]
+            if json.get("navigations", None) is not None
+            else None,
         )
 
 
@@ -568,6 +575,7 @@ class CSSRuleType(enum.Enum):
     SCOPE_RULE = "ScopeRule"
     STYLE_RULE = "StyleRule"
     STARTING_STYLE_RULE = "StartingStyleRule"
+    NAVIGATION_RULE = "NavigationRule"
 
     def to_json(self) -> str:
         return self.value
@@ -585,7 +593,7 @@ class RuleUsage:
 
     #: The css style sheet identifier (absent for user agent stylesheet and user-specified
     #: stylesheet rules) this rule came from.
-    style_sheet_id: StyleSheetId
+    style_sheet_id: dom.StyleSheetId
 
     #: Offset of the start of the rule (including selector) from the beginning of the stylesheet.
     start_offset: float
@@ -607,7 +615,7 @@ class RuleUsage:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> RuleUsage:
         return cls(
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"]),
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"]),
             start_offset=float(json["startOffset"]),
             end_offset=float(json["endOffset"]),
             used=bool(json["used"]),
@@ -703,6 +711,25 @@ class CSSComputedStyleProperty:
 
 
 @dataclass
+class ComputedStyleExtraFields:
+    #: Returns whether or not this node is being rendered with base appearance,
+    #: which happens when it has its appearance property set to base/base-select
+    #: or it is in the subtree of an element being rendered with base appearance.
+    is_appearance_base: bool
+
+    def to_json(self) -> T_JSON_DICT:
+        json: T_JSON_DICT = dict()
+        json["isAppearanceBase"] = self.is_appearance_base
+        return json
+
+    @classmethod
+    def from_json(cls, json: T_JSON_DICT) -> ComputedStyleExtraFields:
+        return cls(
+            is_appearance_base=bool(json["isAppearanceBase"]),
+        )
+
+
+@dataclass
 class CSSStyle:
     """
     CSS style representation.
@@ -716,7 +743,7 @@ class CSSStyle:
 
     #: The css style sheet identifier (absent for user agent stylesheet and user-specified
     #: stylesheet rules) this rule came from.
-    style_sheet_id: typing.Optional[StyleSheetId] = None
+    style_sheet_id: typing.Optional[dom.StyleSheetId] = None
 
     #: Style declaration text (if available).
     css_text: typing.Optional[str] = None
@@ -743,7 +770,7 @@ class CSSStyle:
             shorthand_entries=[
                 ShorthandEntry.from_json(i) for i in json["shorthandEntries"]
             ],
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"])
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"])
             if json.get("styleSheetId", None) is not None
             else None,
             css_text=str(json["cssText"])
@@ -861,7 +888,7 @@ class CSSMedia:
     range_: typing.Optional[SourceRange] = None
 
     #: Identifier of the stylesheet containing this object (if exists).
-    style_sheet_id: typing.Optional[StyleSheetId] = None
+    style_sheet_id: typing.Optional[dom.StyleSheetId] = None
 
     #: Array of media queries.
     media_list: typing.Optional[typing.List[MediaQuery]] = None
@@ -891,7 +918,7 @@ class CSSMedia:
             range_=SourceRange.from_json(json["range"])
             if json.get("range", None) is not None
             else None,
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"])
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"])
             if json.get("styleSheetId", None) is not None
             else None,
             media_list=[MediaQuery.from_json(i) for i in json["mediaList"]]
@@ -989,7 +1016,7 @@ class CSSContainerQuery:
     range_: typing.Optional[SourceRange] = None
 
     #: Identifier of the stylesheet containing this object (if exists).
-    style_sheet_id: typing.Optional[StyleSheetId] = None
+    style_sheet_id: typing.Optional[dom.StyleSheetId] = None
 
     #: Optional name for the container.
     name: typing.Optional[str] = None
@@ -1002,6 +1029,9 @@ class CSSContainerQuery:
 
     #: true if the query contains scroll-state() queries.
     queries_scroll_state: typing.Optional[bool] = None
+
+    #: true if the query contains anchored() queries.
+    queries_anchored: typing.Optional[bool] = None
 
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = dict()
@@ -1018,6 +1048,8 @@ class CSSContainerQuery:
             json["logicalAxes"] = self.logical_axes.to_json()
         if self.queries_scroll_state is not None:
             json["queriesScrollState"] = self.queries_scroll_state
+        if self.queries_anchored is not None:
+            json["queriesAnchored"] = self.queries_anchored
         return json
 
     @classmethod
@@ -1027,7 +1059,7 @@ class CSSContainerQuery:
             range_=SourceRange.from_json(json["range"])
             if json.get("range", None) is not None
             else None,
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"])
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"])
             if json.get("styleSheetId", None) is not None
             else None,
             name=str(json["name"]) if json.get("name", None) is not None else None,
@@ -1039,6 +1071,9 @@ class CSSContainerQuery:
             else None,
             queries_scroll_state=bool(json["queriesScrollState"])
             if json.get("queriesScrollState", None) is not None
+            else None,
+            queries_anchored=bool(json["queriesAnchored"])
+            if json.get("queriesAnchored", None) is not None
             else None,
         )
 
@@ -1060,7 +1095,7 @@ class CSSSupports:
     range_: typing.Optional[SourceRange] = None
 
     #: Identifier of the stylesheet containing this object (if exists).
-    style_sheet_id: typing.Optional[StyleSheetId] = None
+    style_sheet_id: typing.Optional[dom.StyleSheetId] = None
 
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = dict()
@@ -1080,7 +1115,53 @@ class CSSSupports:
             range_=SourceRange.from_json(json["range"])
             if json.get("range", None) is not None
             else None,
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"])
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"])
+            if json.get("styleSheetId", None) is not None
+            else None,
+        )
+
+
+@dataclass
+class CSSNavigation:
+    """
+    CSS Navigation at-rule descriptor.
+    """
+
+    #: Navigation rule text.
+    text: str
+
+    #: Whether the navigation condition is satisfied.
+    active: typing.Optional[bool] = None
+
+    #: The associated rule header range in the enclosing stylesheet (if
+    #: available).
+    range_: typing.Optional[SourceRange] = None
+
+    #: Identifier of the stylesheet containing this object (if exists).
+    style_sheet_id: typing.Optional[dom.StyleSheetId] = None
+
+    def to_json(self) -> T_JSON_DICT:
+        json: T_JSON_DICT = dict()
+        json["text"] = self.text
+        if self.active is not None:
+            json["active"] = self.active
+        if self.range_ is not None:
+            json["range"] = self.range_.to_json()
+        if self.style_sheet_id is not None:
+            json["styleSheetId"] = self.style_sheet_id.to_json()
+        return json
+
+    @classmethod
+    def from_json(cls, json: T_JSON_DICT) -> CSSNavigation:
+        return cls(
+            text=str(json["text"]),
+            active=bool(json["active"])
+            if json.get("active", None) is not None
+            else None,
+            range_=SourceRange.from_json(json["range"])
+            if json.get("range", None) is not None
+            else None,
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"])
             if json.get("styleSheetId", None) is not None
             else None,
         )
@@ -1100,7 +1181,7 @@ class CSSScope:
     range_: typing.Optional[SourceRange] = None
 
     #: Identifier of the stylesheet containing this object (if exists).
-    style_sheet_id: typing.Optional[StyleSheetId] = None
+    style_sheet_id: typing.Optional[dom.StyleSheetId] = None
 
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = dict()
@@ -1118,7 +1199,7 @@ class CSSScope:
             range_=SourceRange.from_json(json["range"])
             if json.get("range", None) is not None
             else None,
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"])
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"])
             if json.get("styleSheetId", None) is not None
             else None,
         )
@@ -1138,7 +1219,7 @@ class CSSLayer:
     range_: typing.Optional[SourceRange] = None
 
     #: Identifier of the stylesheet containing this object (if exists).
-    style_sheet_id: typing.Optional[StyleSheetId] = None
+    style_sheet_id: typing.Optional[dom.StyleSheetId] = None
 
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = dict()
@@ -1156,7 +1237,7 @@ class CSSLayer:
             range_=SourceRange.from_json(json["range"])
             if json.get("range", None) is not None
             else None,
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"])
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"])
             if json.get("styleSheetId", None) is not None
             else None,
         )
@@ -1173,7 +1254,7 @@ class CSSStartingStyle:
     range_: typing.Optional[SourceRange] = None
 
     #: Identifier of the stylesheet containing this object (if exists).
-    style_sheet_id: typing.Optional[StyleSheetId] = None
+    style_sheet_id: typing.Optional[dom.StyleSheetId] = None
 
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = dict()
@@ -1189,7 +1270,7 @@ class CSSStartingStyle:
             range_=SourceRange.from_json(json["range"])
             if json.get("range", None) is not None
             else None,
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"])
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"])
             if json.get("styleSheetId", None) is not None
             else None,
         )
@@ -1393,7 +1474,7 @@ class CSSTryRule:
 
     #: The css style sheet identifier (absent for user agent stylesheet and user-specified
     #: stylesheet rules) this rule came from.
-    style_sheet_id: typing.Optional[StyleSheetId] = None
+    style_sheet_id: typing.Optional[dom.StyleSheetId] = None
 
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = dict()
@@ -1408,7 +1489,7 @@ class CSSTryRule:
         return cls(
             origin=StyleSheetOrigin.from_json(json["origin"]),
             style=CSSStyle.from_json(json["style"]),
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"])
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"])
             if json.get("styleSheetId", None) is not None
             else None,
         )
@@ -1433,7 +1514,7 @@ class CSSPositionTryRule:
 
     #: The css style sheet identifier (absent for user agent stylesheet and user-specified
     #: stylesheet rules) this rule came from.
-    style_sheet_id: typing.Optional[StyleSheetId] = None
+    style_sheet_id: typing.Optional[dom.StyleSheetId] = None
 
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = dict()
@@ -1452,7 +1533,7 @@ class CSSPositionTryRule:
             origin=StyleSheetOrigin.from_json(json["origin"]),
             style=CSSStyle.from_json(json["style"]),
             active=bool(json["active"]),
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"])
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"])
             if json.get("styleSheetId", None) is not None
             else None,
         )
@@ -1520,40 +1601,57 @@ class CSSPropertyRegistration:
 
 
 @dataclass
-class CSSFontPaletteValuesRule:
+class CSSAtRule:
     """
-    CSS font-palette-values rule representation.
+    CSS generic @rule representation.
     """
+
+    #: Type of at-rule.
+    type_: str
 
     #: Parent stylesheet's origin.
     origin: StyleSheetOrigin
 
-    #: Associated font palette name.
-    font_palette_name: Value
-
     #: Associated style declaration.
     style: CSSStyle
 
+    #: Subsection of font-feature-values, if this is a subsection.
+    subsection: typing.Optional[str] = None
+
+    #: LINT.ThenChange(//third_party/blink/renderer/core/inspector/inspector_style_sheet.cc:FontVariantAlternatesFeatureType,//third_party/blink/renderer/core/inspector/inspector_css_agent.cc:FontVariantAlternatesFeatureType)
+    #: Associated name, if applicable.
+    name: typing.Optional[Value] = None
+
     #: The css style sheet identifier (absent for user agent stylesheet and user-specified
     #: stylesheet rules) this rule came from.
-    style_sheet_id: typing.Optional[StyleSheetId] = None
+    style_sheet_id: typing.Optional[dom.StyleSheetId] = None
 
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = dict()
+        json["type"] = self.type_
         json["origin"] = self.origin.to_json()
-        json["fontPaletteName"] = self.font_palette_name.to_json()
         json["style"] = self.style.to_json()
+        if self.subsection is not None:
+            json["subsection"] = self.subsection
+        if self.name is not None:
+            json["name"] = self.name.to_json()
         if self.style_sheet_id is not None:
             json["styleSheetId"] = self.style_sheet_id.to_json()
         return json
 
     @classmethod
-    def from_json(cls, json: T_JSON_DICT) -> CSSFontPaletteValuesRule:
+    def from_json(cls, json: T_JSON_DICT) -> CSSAtRule:
         return cls(
+            type_=str(json["type"]),
             origin=StyleSheetOrigin.from_json(json["origin"]),
-            font_palette_name=Value.from_json(json["fontPaletteName"]),
             style=CSSStyle.from_json(json["style"]),
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"])
+            subsection=str(json["subsection"])
+            if json.get("subsection", None) is not None
+            else None,
+            name=Value.from_json(json["name"])
+            if json.get("name", None) is not None
+            else None,
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"])
             if json.get("styleSheetId", None) is not None
             else None,
         )
@@ -1576,7 +1674,7 @@ class CSSPropertyRule:
 
     #: The css style sheet identifier (absent for user agent stylesheet and user-specified
     #: stylesheet rules) this rule came from.
-    style_sheet_id: typing.Optional[StyleSheetId] = None
+    style_sheet_id: typing.Optional[dom.StyleSheetId] = None
 
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = dict()
@@ -1593,7 +1691,7 @@ class CSSPropertyRule:
             origin=StyleSheetOrigin.from_json(json["origin"]),
             property_name=Value.from_json(json["propertyName"]),
             style=CSSStyle.from_json(json["style"]),
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"])
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"])
             if json.get("styleSheetId", None) is not None
             else None,
         )
@@ -1646,6 +1744,9 @@ class CSSFunctionConditionNode:
     #: @supports CSS at-rule condition. Only one type of condition should be set.
     supports: typing.Optional[CSSSupports] = None
 
+    #: @navigation condition. Only one type of condition should be set.
+    navigation: typing.Optional[CSSNavigation] = None
+
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = dict()
         json["children"] = [i.to_json() for i in self.children]
@@ -1656,6 +1757,8 @@ class CSSFunctionConditionNode:
             json["containerQueries"] = self.container_queries.to_json()
         if self.supports is not None:
             json["supports"] = self.supports.to_json()
+        if self.navigation is not None:
+            json["navigation"] = self.navigation.to_json()
         return json
 
     @classmethod
@@ -1671,6 +1774,9 @@ class CSSFunctionConditionNode:
             else None,
             supports=CSSSupports.from_json(json["supports"])
             if json.get("supports", None) is not None
+            else None,
+            navigation=CSSNavigation.from_json(json["navigation"])
+            if json.get("navigation", None) is not None
             else None,
         )
 
@@ -1727,7 +1833,10 @@ class CSSFunctionRule:
 
     #: The css style sheet identifier (absent for user agent stylesheet and user-specified
     #: stylesheet rules) this rule came from.
-    style_sheet_id: typing.Optional[StyleSheetId] = None
+    style_sheet_id: typing.Optional[dom.StyleSheetId] = None
+
+    #: The BackendNodeId of the DOM node that constitutes the origin tree scope of this rule.
+    origin_tree_scope_node_id: typing.Optional[dom.BackendNodeId] = None
 
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = dict()
@@ -1737,6 +1846,8 @@ class CSSFunctionRule:
         json["children"] = [i.to_json() for i in self.children]
         if self.style_sheet_id is not None:
             json["styleSheetId"] = self.style_sheet_id.to_json()
+        if self.origin_tree_scope_node_id is not None:
+            json["originTreeScopeNodeId"] = self.origin_tree_scope_node_id.to_json()
         return json
 
     @classmethod
@@ -1746,8 +1857,13 @@ class CSSFunctionRule:
             origin=StyleSheetOrigin.from_json(json["origin"]),
             parameters=[CSSFunctionParameter.from_json(i) for i in json["parameters"]],
             children=[CSSFunctionNode.from_json(i) for i in json["children"]],
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"])
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"])
             if json.get("styleSheetId", None) is not None
+            else None,
+            origin_tree_scope_node_id=dom.BackendNodeId.from_json(
+                json["originTreeScopeNodeId"]
+            )
+            if json.get("originTreeScopeNodeId", None) is not None
             else None,
         )
 
@@ -1769,7 +1885,7 @@ class CSSKeyframeRule:
 
     #: The css style sheet identifier (absent for user agent stylesheet and user-specified
     #: stylesheet rules) this rule came from.
-    style_sheet_id: typing.Optional[StyleSheetId] = None
+    style_sheet_id: typing.Optional[dom.StyleSheetId] = None
 
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = dict()
@@ -1786,7 +1902,7 @@ class CSSKeyframeRule:
             origin=StyleSheetOrigin.from_json(json["origin"]),
             key_text=Value.from_json(json["keyText"]),
             style=CSSStyle.from_json(json["style"]),
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"])
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"])
             if json.get("styleSheetId", None) is not None
             else None,
         )
@@ -1799,7 +1915,7 @@ class StyleDeclarationEdit:
     """
 
     #: The css style sheet identifier.
-    style_sheet_id: StyleSheetId
+    style_sheet_id: dom.StyleSheetId
 
     #: The range of the style text in the enclosing stylesheet.
     range_: SourceRange
@@ -1817,14 +1933,14 @@ class StyleDeclarationEdit:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> StyleDeclarationEdit:
         return cls(
-            style_sheet_id=StyleSheetId.from_json(json["styleSheetId"]),
+            style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"]),
             range_=SourceRange.from_json(json["range"]),
             text=str(json["text"]),
         )
 
 
 def add_rule(
-    style_sheet_id: StyleSheetId,
+    style_sheet_id: dom.StyleSheetId,
     rule_text: str,
     location: SourceRange,
     node_for_property_syntax_validation: typing.Optional[dom.NodeId] = None,
@@ -1856,7 +1972,7 @@ def add_rule(
 
 
 def collect_class_names(
-    style_sheet_id: StyleSheetId,
+    style_sheet_id: dom.StyleSheetId,
 ) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[str]]:
     """
     Returns all class names from specified stylesheet.
@@ -1876,7 +1992,7 @@ def collect_class_names(
 
 def create_style_sheet(
     frame_id: page.FrameId, force: typing.Optional[bool] = None
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, StyleSheetId]:
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, dom.StyleSheetId]:
     """
     Creates a new special "via-inspector" stylesheet in the frame with given ``frameId``.
 
@@ -1893,7 +2009,7 @@ def create_style_sheet(
         "params": params,
     }
     json = yield cmd_dict
-    return StyleSheetId.from_json(json["styleSheetId"])
+    return dom.StyleSheetId.from_json(json["styleSheetId"])
 
 
 def disable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
@@ -1995,12 +2111,19 @@ def get_background_colors(
 
 def get_computed_style_for_node(
     node_id: dom.NodeId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[CSSComputedStyleProperty]]:
+) -> typing.Generator[
+    T_JSON_DICT,
+    T_JSON_DICT,
+    typing.Tuple[typing.List[CSSComputedStyleProperty], ComputedStyleExtraFields],
+]:
     """
     Returns the computed style for a DOM node identified by ``nodeId``.
 
     :param node_id:
-    :returns: Computed style for the specified DOM node.
+    :returns: A tuple with the following items:
+
+        0. **computedStyle** - Computed style for the specified DOM node.
+        1. **extraFields** - A list of non-standard "extra fields" which blink stores alongside each computed style.
     """
     params: T_JSON_DICT = dict()
     params["nodeId"] = node_id.to_json()
@@ -2009,7 +2132,10 @@ def get_computed_style_for_node(
         "params": params,
     }
     json = yield cmd_dict
-    return [CSSComputedStyleProperty.from_json(i) for i in json["computedStyle"]]
+    return (
+        [CSSComputedStyleProperty.from_json(i) for i in json["computedStyle"]],
+        ComputedStyleExtraFields.from_json(json["extraFields"]),
+    )
 
 
 def resolve_values(
@@ -2029,10 +2155,12 @@ def resolve_values(
     to the provided property syntax, the value is parsed using combined
     syntax as if null ``propertyName`` was provided. If the value cannot be
     resolved even then, return the provided value without any changes.
+    Note: this function currently does not resolve CSS random() function,
+    it returns unmodified random() function parts.`
 
     **EXPERIMENTAL**
 
-    :param values: Substitution functions (var()/env()/attr()) and cascade-dependent keywords (revert/revert-layer) do not work.
+    :param values: Cascade-dependent keywords (revert/revert-layer) do not work.
     :param node_id: Id of the node in whose context the expression is evaluated
     :param property_name: *(Optional)* Only longhands and custom property names are accepted.
     :param pseudo_type: *(Optional)* Pseudo element type, only works for pseudo elements that generate elements in the tree, such as ::before and ::after.
@@ -2174,7 +2302,7 @@ def get_matched_styles_for_node(
         typing.Optional[int],
         typing.Optional[typing.List[CSSPropertyRule]],
         typing.Optional[typing.List[CSSPropertyRegistration]],
-        typing.Optional[CSSFontPaletteValuesRule],
+        typing.Optional[typing.List[CSSAtRule]],
         typing.Optional[dom.NodeId],
         typing.Optional[typing.List[CSSFunctionRule]],
     ],
@@ -2196,7 +2324,7 @@ def get_matched_styles_for_node(
         8. **activePositionFallbackIndex** - *(Optional)* Index of the active fallback in the applied position-try-fallback property, will not be set if there is no active position-try fallback.
         9. **cssPropertyRules** - *(Optional)* A list of CSS at-property rules matching this node.
         10. **cssPropertyRegistrations** - *(Optional)* A list of CSS property registrations matching this node.
-        11. **cssFontPaletteValuesRule** - *(Optional)* A font-palette-values rule matching this node.
+        11. **cssAtRules** - *(Optional)* A list of simple @rules matching this node or its pseudo-elements.
         12. **parentLayoutNodeId** - *(Optional)* Id of the first parent element that does not have display: contents.
         13. **cssFunctionRules** - *(Optional)* A list of CSS at-function rules referenced by styles of this node.
     """
@@ -2244,8 +2372,8 @@ def get_matched_styles_for_node(
         [CSSPropertyRegistration.from_json(i) for i in json["cssPropertyRegistrations"]]
         if json.get("cssPropertyRegistrations", None) is not None
         else None,
-        CSSFontPaletteValuesRule.from_json(json["cssFontPaletteValuesRule"])
-        if json.get("cssFontPaletteValuesRule", None) is not None
+        [CSSAtRule.from_json(i) for i in json["cssAtRules"]]
+        if json.get("cssAtRules", None) is not None
         else None,
         dom.NodeId.from_json(json["parentLayoutNodeId"])
         if json.get("parentLayoutNodeId", None) is not None
@@ -2254,6 +2382,21 @@ def get_matched_styles_for_node(
         if json.get("cssFunctionRules", None) is not None
         else None,
     )
+
+
+def get_environment_variables() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, dict]:
+    """
+    Returns the values of the default UA-defined environment variables used in env()
+
+    **EXPERIMENTAL**
+
+    :returns:
+    """
+    cmd_dict: T_JSON_DICT = {
+        "method": "CSS.getEnvironmentVariables",
+    }
+    json = yield cmd_dict
+    return dict(json["environmentVariables"])
 
 
 def get_media_queries() -> (
@@ -2292,7 +2435,7 @@ def get_platform_fonts_for_node(
 
 
 def get_style_sheet_text(
-    style_sheet_id: StyleSheetId,
+    style_sheet_id: dom.StyleSheetId,
 ) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, str]:
     """
     Returns the current textual content for a stylesheet.
@@ -2335,7 +2478,7 @@ def get_layers_for_node(
 
 
 def get_location_for_selector(
-    style_sheet_id: StyleSheetId, selector_text: str
+    style_sheet_id: dom.StyleSheetId, selector_text: str
 ) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[SourceRange]]:
     """
     Given a CSS selector text and a style sheet ID, getLocationForSelector
@@ -2447,7 +2590,7 @@ def set_effective_property_value_for_node(
 
 
 def set_property_rule_property_name(
-    style_sheet_id: StyleSheetId, range_: SourceRange, property_name: str
+    style_sheet_id: dom.StyleSheetId, range_: SourceRange, property_name: str
 ) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, Value]:
     """
     Modifies the property rule property name.
@@ -2470,7 +2613,7 @@ def set_property_rule_property_name(
 
 
 def set_keyframe_key(
-    style_sheet_id: StyleSheetId, range_: SourceRange, key_text: str
+    style_sheet_id: dom.StyleSheetId, range_: SourceRange, key_text: str
 ) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, Value]:
     """
     Modifies the keyframe rule key text.
@@ -2493,7 +2636,7 @@ def set_keyframe_key(
 
 
 def set_media_text(
-    style_sheet_id: StyleSheetId, range_: SourceRange, text: str
+    style_sheet_id: dom.StyleSheetId, range_: SourceRange, text: str
 ) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, CSSMedia]:
     """
     Modifies the rule selector.
@@ -2516,7 +2659,7 @@ def set_media_text(
 
 
 def set_container_query_text(
-    style_sheet_id: StyleSheetId, range_: SourceRange, text: str
+    style_sheet_id: dom.StyleSheetId, range_: SourceRange, text: str
 ) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, CSSContainerQuery]:
     """
     Modifies the expression of a container query.
@@ -2541,7 +2684,7 @@ def set_container_query_text(
 
 
 def set_supports_text(
-    style_sheet_id: StyleSheetId, range_: SourceRange, text: str
+    style_sheet_id: dom.StyleSheetId, range_: SourceRange, text: str
 ) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, CSSSupports]:
     """
     Modifies the expression of a supports at-rule.
@@ -2565,8 +2708,33 @@ def set_supports_text(
     return CSSSupports.from_json(json["supports"])
 
 
+def set_navigation_text(
+    style_sheet_id: dom.StyleSheetId, range_: SourceRange, text: str
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, CSSNavigation]:
+    """
+    Modifies the expression of a navigation at-rule.
+
+    **EXPERIMENTAL**
+
+    :param style_sheet_id:
+    :param range_:
+    :param text:
+    :returns: The resulting CSS Navigation rule after modification.
+    """
+    params: T_JSON_DICT = dict()
+    params["styleSheetId"] = style_sheet_id.to_json()
+    params["range"] = range_.to_json()
+    params["text"] = text
+    cmd_dict: T_JSON_DICT = {
+        "method": "CSS.setNavigationText",
+        "params": params,
+    }
+    json = yield cmd_dict
+    return CSSNavigation.from_json(json["navigation"])
+
+
 def set_scope_text(
-    style_sheet_id: StyleSheetId, range_: SourceRange, text: str
+    style_sheet_id: dom.StyleSheetId, range_: SourceRange, text: str
 ) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, CSSScope]:
     """
     Modifies the expression of a scope at-rule.
@@ -2591,7 +2759,7 @@ def set_scope_text(
 
 
 def set_rule_selector(
-    style_sheet_id: StyleSheetId, range_: SourceRange, selector: str
+    style_sheet_id: dom.StyleSheetId, range_: SourceRange, selector: str
 ) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, SelectorList]:
     """
     Modifies the rule selector.
@@ -2614,7 +2782,7 @@ def set_rule_selector(
 
 
 def set_style_sheet_text(
-    style_sheet_id: StyleSheetId, text: str
+    style_sheet_id: dom.StyleSheetId, text: str
 ) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.Optional[str]]:
     """
     Sets the new stylesheet text.
@@ -2787,11 +2955,11 @@ class StyleSheetChanged:
     Fired whenever a stylesheet is changed as a result of the client operation.
     """
 
-    style_sheet_id: StyleSheetId
+    style_sheet_id: dom.StyleSheetId
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> StyleSheetChanged:
-        return cls(style_sheet_id=StyleSheetId.from_json(json["styleSheetId"]))
+        return cls(style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"]))
 
 
 @event_class("CSS.styleSheetRemoved")
@@ -2802,11 +2970,11 @@ class StyleSheetRemoved:
     """
 
     #: Identifier of the removed stylesheet.
-    style_sheet_id: StyleSheetId
+    style_sheet_id: dom.StyleSheetId
 
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> StyleSheetRemoved:
-        return cls(style_sheet_id=StyleSheetId.from_json(json["styleSheetId"]))
+        return cls(style_sheet_id=dom.StyleSheetId.from_json(json["styleSheetId"]))
 
 
 @event_class("CSS.computedStyleUpdated")
