@@ -508,12 +508,160 @@ class PressureMetadata:
         )
 
 
+@dataclass
+class WorkAreaInsets:
+    #: Work area top inset in pixels. Default is 0;
+    top: typing.Optional[int] = None
+
+    #: Work area left inset in pixels. Default is 0;
+    left: typing.Optional[int] = None
+
+    #: Work area bottom inset in pixels. Default is 0;
+    bottom: typing.Optional[int] = None
+
+    #: Work area right inset in pixels. Default is 0;
+    right: typing.Optional[int] = None
+
+    def to_json(self) -> T_JSON_DICT:
+        json: T_JSON_DICT = dict()
+        if self.top is not None:
+            json["top"] = self.top
+        if self.left is not None:
+            json["left"] = self.left
+        if self.bottom is not None:
+            json["bottom"] = self.bottom
+        if self.right is not None:
+            json["right"] = self.right
+        return json
+
+    @classmethod
+    def from_json(cls, json: T_JSON_DICT) -> WorkAreaInsets:
+        return cls(
+            top=int(json["top"]) if json.get("top", None) is not None else None,
+            left=int(json["left"]) if json.get("left", None) is not None else None,
+            bottom=int(json["bottom"])
+            if json.get("bottom", None) is not None
+            else None,
+            right=int(json["right"]) if json.get("right", None) is not None else None,
+        )
+
+
+class ScreenId(str):
+    def to_json(self) -> str:
+        return self
+
+    @classmethod
+    def from_json(cls, json: str) -> ScreenId:
+        return cls(json)
+
+    def __repr__(self):
+        return "ScreenId({})".format(super().__repr__())
+
+
+@dataclass
+class ScreenInfo:
+    """
+    Screen information similar to the one returned by window.getScreenDetails() method,
+    see https://w3c.github.io/window-management/#screendetailed.
+    """
+
+    #: Offset of the left edge of the screen.
+    left: int
+
+    #: Offset of the top edge of the screen.
+    top: int
+
+    #: Width of the screen.
+    width: int
+
+    #: Height of the screen.
+    height: int
+
+    #: Offset of the left edge of the available screen area.
+    avail_left: int
+
+    #: Offset of the top edge of the available screen area.
+    avail_top: int
+
+    #: Width of the available screen area.
+    avail_width: int
+
+    #: Height of the available screen area.
+    avail_height: int
+
+    #: Specifies the screen's device pixel ratio.
+    device_pixel_ratio: float
+
+    #: Specifies the screen's orientation.
+    orientation: ScreenOrientation
+
+    #: Specifies the screen's color depth in bits.
+    color_depth: int
+
+    #: Indicates whether the device has multiple screens.
+    is_extended: bool
+
+    #: Indicates whether the screen is internal to the device or external, attached to the device.
+    is_internal: bool
+
+    #: Indicates whether the screen is set as the the operating system primary screen.
+    is_primary: bool
+
+    #: Specifies the descriptive label for the screen.
+    label: str
+
+    #: Specifies the unique identifier of the screen.
+    id_: ScreenId
+
+    def to_json(self) -> T_JSON_DICT:
+        json: T_JSON_DICT = dict()
+        json["left"] = self.left
+        json["top"] = self.top
+        json["width"] = self.width
+        json["height"] = self.height
+        json["availLeft"] = self.avail_left
+        json["availTop"] = self.avail_top
+        json["availWidth"] = self.avail_width
+        json["availHeight"] = self.avail_height
+        json["devicePixelRatio"] = self.device_pixel_ratio
+        json["orientation"] = self.orientation.to_json()
+        json["colorDepth"] = self.color_depth
+        json["isExtended"] = self.is_extended
+        json["isInternal"] = self.is_internal
+        json["isPrimary"] = self.is_primary
+        json["label"] = self.label
+        json["id"] = self.id_.to_json()
+        return json
+
+    @classmethod
+    def from_json(cls, json: T_JSON_DICT) -> ScreenInfo:
+        return cls(
+            left=int(json["left"]),
+            top=int(json["top"]),
+            width=int(json["width"]),
+            height=int(json["height"]),
+            avail_left=int(json["availLeft"]),
+            avail_top=int(json["availTop"]),
+            avail_width=int(json["availWidth"]),
+            avail_height=int(json["availHeight"]),
+            device_pixel_ratio=float(json["devicePixelRatio"]),
+            orientation=ScreenOrientation.from_json(json["orientation"]),
+            color_depth=int(json["colorDepth"]),
+            is_extended=bool(json["isExtended"]),
+            is_internal=bool(json["isInternal"]),
+            is_primary=bool(json["isPrimary"]),
+            label=str(json["label"]),
+            id_=ScreenId.from_json(json["id"]),
+        )
+
+
 class DisabledImageType(enum.Enum):
     """
     Enum of image types that can be disabled.
     """
 
     AVIF = "avif"
+    JXL = "jxl"
     WEBP = "webp"
 
     def to_json(self) -> str:
@@ -682,6 +830,8 @@ def set_device_metrics_override(
     viewport: typing.Optional[page.Viewport] = None,
     display_feature: typing.Optional[DisplayFeature] = None,
     device_posture: typing.Optional[DevicePosture] = None,
+    scrollbar_type: typing.Optional[str] = None,
+    screen_orientation_lock_emulation: typing.Optional[bool] = None,
 ) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
     """
     Overrides the values of device screen dimensions (window.screen.width, window.screen.height,
@@ -702,6 +852,8 @@ def set_device_metrics_override(
     :param viewport: **(EXPERIMENTAL)** *(Optional)* If set, the visible area of the page will be overridden to this viewport. This viewport change is not observed by the page, e.g. viewport-relative elements do not change positions.
     :param display_feature: **(DEPRECATED)** **(EXPERIMENTAL)** *(Optional)* If set, the display feature of a multi-segment screen. If not set, multi-segment support is turned-off. Deprecated, use Emulation.setDisplayFeaturesOverride.
     :param device_posture: **(DEPRECATED)** **(EXPERIMENTAL)** *(Optional)* If set, the posture of a foldable device. If not set the posture is set to continuous. Deprecated, use Emulation.setDevicePostureOverride.
+    :param scrollbar_type: **(EXPERIMENTAL)** *(Optional)* Scrollbar type. Default: ```default```.
+    :param screen_orientation_lock_emulation: **(EXPERIMENTAL)** *(Optional)* If set to true, enables screen orientation lock emulation, which intercepts screen.orientation.lock() calls from the page and reports orientation changes via screenOrientationLockChanged events. This is useful for emulating mobile device orientation lock behavior in responsive design mode.
     """
     params: T_JSON_DICT = dict()
     params["width"] = width
@@ -728,6 +880,10 @@ def set_device_metrics_override(
         params["displayFeature"] = display_feature.to_json()
     if device_posture is not None:
         params["devicePosture"] = device_posture.to_json()
+    if scrollbar_type is not None:
+        params["scrollbarType"] = scrollbar_type
+    if screen_orientation_lock_emulation is not None:
+        params["screenOrientationLockEmulation"] = screen_orientation_lock_emulation
     cmd_dict: T_JSON_DICT = {
         "method": "Emulation.setDeviceMetricsOverride",
         "params": params,
@@ -1452,6 +1608,180 @@ def set_small_viewport_height_difference_override(
     json = yield cmd_dict
 
 
+def get_screen_infos() -> (
+    typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.List[ScreenInfo]]
+):
+    """
+    Returns device's screen configuration. In headful mode, the physical screens configuration is returned,
+    whereas in headless mode, a virtual headless screen configuration is provided instead.
+
+    **EXPERIMENTAL**
+
+    :returns:
+    """
+    cmd_dict: T_JSON_DICT = {
+        "method": "Emulation.getScreenInfos",
+    }
+    json = yield cmd_dict
+    return [ScreenInfo.from_json(i) for i in json["screenInfos"]]
+
+
+def add_screen(
+    left: int,
+    top: int,
+    width: int,
+    height: int,
+    work_area_insets: typing.Optional[WorkAreaInsets] = None,
+    device_pixel_ratio: typing.Optional[float] = None,
+    rotation: typing.Optional[int] = None,
+    color_depth: typing.Optional[int] = None,
+    label: typing.Optional[str] = None,
+    is_internal: typing.Optional[bool] = None,
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, ScreenInfo]:
+    """
+    Add a new screen to the device. Only supported in headless mode.
+
+    **EXPERIMENTAL**
+
+    :param left: Offset of the left edge of the screen in pixels.
+    :param top: Offset of the top edge of the screen in pixels.
+    :param width: The width of the screen in pixels.
+    :param height: The height of the screen in pixels.
+    :param work_area_insets: *(Optional)* Specifies the screen's work area. Default is entire screen.
+    :param device_pixel_ratio: *(Optional)* Specifies the screen's device pixel ratio. Default is 1.
+    :param rotation: *(Optional)* Specifies the screen's rotation angle. Available values are 0, 90, 180 and 270. Default is 0.
+    :param color_depth: *(Optional)* Specifies the screen's color depth in bits. Default is 24.
+    :param label: *(Optional)* Specifies the descriptive label for the screen. Default is none.
+    :param is_internal: *(Optional)* Indicates whether the screen is internal to the device or external, attached to the device. Default is false.
+    :returns:
+    """
+    params: T_JSON_DICT = dict()
+    params["left"] = left
+    params["top"] = top
+    params["width"] = width
+    params["height"] = height
+    if work_area_insets is not None:
+        params["workAreaInsets"] = work_area_insets.to_json()
+    if device_pixel_ratio is not None:
+        params["devicePixelRatio"] = device_pixel_ratio
+    if rotation is not None:
+        params["rotation"] = rotation
+    if color_depth is not None:
+        params["colorDepth"] = color_depth
+    if label is not None:
+        params["label"] = label
+    if is_internal is not None:
+        params["isInternal"] = is_internal
+    cmd_dict: T_JSON_DICT = {
+        "method": "Emulation.addScreen",
+        "params": params,
+    }
+    json = yield cmd_dict
+    return ScreenInfo.from_json(json["screenInfo"])
+
+
+def update_screen(
+    screen_id: ScreenId,
+    left: typing.Optional[int] = None,
+    top: typing.Optional[int] = None,
+    width: typing.Optional[int] = None,
+    height: typing.Optional[int] = None,
+    work_area_insets: typing.Optional[WorkAreaInsets] = None,
+    device_pixel_ratio: typing.Optional[float] = None,
+    rotation: typing.Optional[int] = None,
+    color_depth: typing.Optional[int] = None,
+    label: typing.Optional[str] = None,
+    is_internal: typing.Optional[bool] = None,
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, ScreenInfo]:
+    """
+    Updates specified screen parameters. Only supported in headless mode.
+
+    **EXPERIMENTAL**
+
+    :param screen_id: Target screen identifier.
+    :param left: *(Optional)* Offset of the left edge of the screen in pixels.
+    :param top: *(Optional)* Offset of the top edge of the screen in pixels.
+    :param width: *(Optional)* The width of the screen in pixels.
+    :param height: *(Optional)* The height of the screen in pixels.
+    :param work_area_insets: *(Optional)* Specifies the screen's work area.
+    :param device_pixel_ratio: *(Optional)* Specifies the screen's device pixel ratio.
+    :param rotation: *(Optional)* Specifies the screen's rotation angle. Available values are 0, 90, 180 and 270.
+    :param color_depth: *(Optional)* Specifies the screen's color depth in bits.
+    :param label: *(Optional)* Specifies the descriptive label for the screen.
+    :param is_internal: *(Optional)* Indicates whether the screen is internal to the device or external, attached to the device. Default is false.
+    :returns:
+    """
+    params: T_JSON_DICT = dict()
+    params["screenId"] = screen_id.to_json()
+    if left is not None:
+        params["left"] = left
+    if top is not None:
+        params["top"] = top
+    if width is not None:
+        params["width"] = width
+    if height is not None:
+        params["height"] = height
+    if work_area_insets is not None:
+        params["workAreaInsets"] = work_area_insets.to_json()
+    if device_pixel_ratio is not None:
+        params["devicePixelRatio"] = device_pixel_ratio
+    if rotation is not None:
+        params["rotation"] = rotation
+    if color_depth is not None:
+        params["colorDepth"] = color_depth
+    if label is not None:
+        params["label"] = label
+    if is_internal is not None:
+        params["isInternal"] = is_internal
+    cmd_dict: T_JSON_DICT = {
+        "method": "Emulation.updateScreen",
+        "params": params,
+    }
+    json = yield cmd_dict
+    return ScreenInfo.from_json(json["screenInfo"])
+
+
+def remove_screen(
+    screen_id: ScreenId,
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    """
+    Remove screen from the device. Only supported in headless mode.
+
+    **EXPERIMENTAL**
+
+    :param screen_id:
+    """
+    params: T_JSON_DICT = dict()
+    params["screenId"] = screen_id.to_json()
+    cmd_dict: T_JSON_DICT = {
+        "method": "Emulation.removeScreen",
+        "params": params,
+    }
+    json = yield cmd_dict
+
+
+def set_primary_screen(
+    screen_id: ScreenId,
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
+    """
+    Set primary screen. Only supported in headless mode.
+    Note that this changes the coordinate system origin to the top-left
+    of the new primary screen, updating the bounds and work areas
+    of all existing screens accordingly.
+
+    **EXPERIMENTAL**
+
+    :param screen_id:
+    """
+    params: T_JSON_DICT = dict()
+    params["screenId"] = screen_id.to_json()
+    cmd_dict: T_JSON_DICT = {
+        "method": "Emulation.setPrimaryScreen",
+        "params": params,
+    }
+    json = yield cmd_dict
+
+
 @event_class("Emulation.virtualTimeBudgetExpired")
 @dataclass
 class VirtualTimeBudgetExpired:
@@ -1464,3 +1794,29 @@ class VirtualTimeBudgetExpired:
     @classmethod
     def from_json(cls, json: T_JSON_DICT) -> VirtualTimeBudgetExpired:
         return cls()
+
+
+@event_class("Emulation.screenOrientationLockChanged")
+@dataclass
+class ScreenOrientationLockChanged:
+    """
+    **EXPERIMENTAL**
+
+    Fired when a page calls screen.orientation.lock() or screen.orientation.unlock()
+    while device emulation is enabled. This allows the DevTools frontend to update the
+    emulated device orientation accordingly.
+    """
+
+    #: Whether the screen orientation is currently locked.
+    locked: bool
+    #: The orientation lock type requested by the page. Only set when locked is true.
+    orientation: typing.Optional[ScreenOrientation]
+
+    @classmethod
+    def from_json(cls, json: T_JSON_DICT) -> ScreenOrientationLockChanged:
+        return cls(
+            locked=bool(json["locked"]),
+            orientation=ScreenOrientation.from_json(json["orientation"])
+            if json.get("orientation", None) is not None
+            else None,
+        )
