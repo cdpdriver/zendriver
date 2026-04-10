@@ -93,70 +93,6 @@ class AdFrameStatus:
         )
 
 
-@dataclass
-class AdScriptId:
-    """
-    Identifies the script which caused a script or frame to be labelled as an
-    ad.
-    """
-
-    #: Script Id of the script which caused a script or frame to be labelled as
-    #: an ad.
-    script_id: runtime.ScriptId
-
-    #: Id of scriptId's debugger.
-    debugger_id: runtime.UniqueDebuggerId
-
-    def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["scriptId"] = self.script_id.to_json()
-        json["debuggerId"] = self.debugger_id.to_json()
-        return json
-
-    @classmethod
-    def from_json(cls, json: T_JSON_DICT) -> AdScriptId:
-        return cls(
-            script_id=runtime.ScriptId.from_json(json["scriptId"]),
-            debugger_id=runtime.UniqueDebuggerId.from_json(json["debuggerId"]),
-        )
-
-
-@dataclass
-class AdScriptAncestry:
-    """
-    Encapsulates the script ancestry and the root script filterlist rule that
-    caused the frame to be labelled as an ad. Only created when ``ancestryChain``
-    is not empty.
-    """
-
-    #: A chain of ``AdScriptId``'s representing the ancestry of an ad script that
-    #: led to the creation of a frame. The chain is ordered from the script
-    #: itself (lower level) up to its root ancestor that was flagged by
-    #: filterlist.
-    ancestry_chain: typing.List[AdScriptId]
-
-    #: The filterlist rule that caused the root (last) script in
-    #: ``ancestryChain`` to be ad-tagged. Only populated if the rule is
-    #: available.
-    root_script_filterlist_rule: typing.Optional[str] = None
-
-    def to_json(self) -> T_JSON_DICT:
-        json: T_JSON_DICT = dict()
-        json["ancestryChain"] = [i.to_json() for i in self.ancestry_chain]
-        if self.root_script_filterlist_rule is not None:
-            json["rootScriptFilterlistRule"] = self.root_script_filterlist_rule
-        return json
-
-    @classmethod
-    def from_json(cls, json: T_JSON_DICT) -> AdScriptAncestry:
-        return cls(
-            ancestry_chain=[AdScriptId.from_json(i) for i in json["ancestryChain"]],
-            root_script_filterlist_rule=str(json["rootScriptFilterlistRule"])
-            if json.get("rootScriptFilterlistRule", None) is not None
-            else None,
-        )
-
-
 class SecureContextType(enum.Enum):
     """
     Indicates whether the frame is a secure context and why it is the case.
@@ -218,6 +154,7 @@ class PermissionsPolicyFeature(enum.Enum):
     AMBIENT_LIGHT_SENSOR = "ambient-light-sensor"
     ARIA_NOTIFY = "aria-notify"
     ATTRIBUTION_REPORTING = "attribution-reporting"
+    AUTOFILL = "autofill"
     AUTOPLAY = "autoplay"
     BLUETOOTH = "bluetooth"
     BROWSING_TOPICS = "browsing-topics"
@@ -255,15 +192,16 @@ class PermissionsPolicyFeature(enum.Enum):
     DEFERRED_FETCH = "deferred-fetch"
     DEFERRED_FETCH_MINIMAL = "deferred-fetch-minimal"
     DEVICE_ATTRIBUTES = "device-attributes"
+    DIGITAL_CREDENTIALS_CREATE = "digital-credentials-create"
     DIGITAL_CREDENTIALS_GET = "digital-credentials-get"
     DIRECT_SOCKETS = "direct-sockets"
+    DIRECT_SOCKETS_MULTICAST = "direct-sockets-multicast"
     DIRECT_SOCKETS_PRIVATE = "direct-sockets-private"
     DISPLAY_CAPTURE = "display-capture"
     DOCUMENT_DOMAIN = "document-domain"
     ENCRYPTED_MEDIA = "encrypted-media"
     EXECUTION_WHILE_OUT_OF_VIEWPORT = "execution-while-out-of-viewport"
     EXECUTION_WHILE_NOT_RENDERED = "execution-while-not-rendered"
-    FENCED_UNPARTITIONED_STORAGE_READ = "fenced-unpartitioned-storage-read"
     FOCUS_WITHOUT_USER_ACTIVATION = "focus-without-user-activation"
     FULLSCREEN = "fullscreen"
     FROBULATE = "frobulate"
@@ -279,8 +217,11 @@ class PermissionsPolicyFeature(enum.Enum):
     LANGUAGE_DETECTOR = "language-detector"
     LANGUAGE_MODEL = "language-model"
     LOCAL_FONTS = "local-fonts"
+    LOCAL_NETWORK = "local-network"
     LOCAL_NETWORK_ACCESS = "local-network-access"
+    LOOPBACK_NETWORK = "loopback-network"
     MAGNETOMETER = "magnetometer"
+    MANUAL_TEXT = "manual-text"
     MEDIA_PLAYBACK_WHILE_NOT_VISIBLE = "media-playback-while-not-visible"
     MICROPHONE = "microphone"
     MIDI = "midi"
@@ -288,7 +229,6 @@ class PermissionsPolicyFeature(enum.Enum):
     OTP_CREDENTIALS = "otp-credentials"
     PAYMENT = "payment"
     PICTURE_IN_PICTURE = "picture-in-picture"
-    POPINS = "popins"
     PRIVATE_AGGREGATION = "private-aggregation"
     PRIVATE_STATE_TOKEN_ISSUANCE = "private-state-token-issuance"
     PRIVATE_STATE_TOKEN_REDEMPTION = "private-state-token-redemption"
@@ -299,7 +239,6 @@ class PermissionsPolicyFeature(enum.Enum):
     RUN_AD_AUCTION = "run-ad-auction"
     SCREEN_WAKE_LOCK = "screen-wake-lock"
     SERIAL = "serial"
-    SHARED_AUTOFILL = "shared-autofill"
     SHARED_STORAGE = "shared-storage"
     SHARED_STORAGE_SELECT_URL = "shared-storage-select-url"
     SMART_CARD = "smart-card"
@@ -1930,6 +1869,7 @@ class BackForwardCacheNotRestoredReason(enum.Enum):
     BACK_FORWARD_CACHE_DISABLED_FOR_PRERENDER = "BackForwardCacheDisabledForPrerender"
     USER_AGENT_OVERRIDE_DIFFERS = "UserAgentOverrideDiffers"
     FOREGROUND_CACHE_LIMIT = "ForegroundCacheLimit"
+    FORWARD_CACHE_DISABLED = "ForwardCacheDisabled"
     BROWSING_INSTANCE_NOT_SWAPPED = "BrowsingInstanceNotSwapped"
     BACK_FORWARD_CACHE_DISABLED_FOR_DELEGATE = "BackForwardCacheDisabledForDelegate"
     UNLOAD_HANDLER_EXISTS_IN_MAIN_FRAME = "UnloadHandlerExistsInMainFrame"
@@ -1977,8 +1917,11 @@ class BackForwardCacheNotRestoredReason(enum.Enum):
     WEB_XR = "WebXR"
     SHARED_WORKER = "SharedWorker"
     SHARED_WORKER_MESSAGE = "SharedWorkerMessage"
+    SHARED_WORKER_WITH_NO_ACTIVE_CLIENT = "SharedWorkerWithNoActiveClient"
     WEB_LOCKS = "WebLocks"
+    WEB_LOCKS_CONTENTION = "WebLocksContention"
     WEB_HID = "WebHID"
+    WEB_BLUETOOTH = "WebBluetooth"
     WEB_SHARE = "WebShare"
     REQUESTED_STORAGE_ACCESS_GRANT = "RequestedStorageAccessGrant"
     WEB_NFC = "WebNfc"
@@ -2003,9 +1946,9 @@ class BackForwardCacheNotRestoredReason(enum.Enum):
     JS_NETWORK_REQUEST_RECEIVED_CACHE_CONTROL_NO_STORE_RESOURCE = (
         "JsNetworkRequestReceivedCacheControlNoStoreResource"
     )
-    WEB_RTC_STICKY = "WebRTCSticky"
-    WEB_TRANSPORT_STICKY = "WebTransportSticky"
-    WEB_SOCKET_STICKY = "WebSocketSticky"
+    WEB_RTC_USED_WITH_CCNS = "WebRTCUsedWithCCNS"
+    WEB_TRANSPORT_USED_WITH_CCNS = "WebTransportUsedWithCCNS"
+    WEB_SOCKET_USED_WITH_CCNS = "WebSocketUsedWithCCNS"
     SMART_CARD = "SmartCard"
     LIVE_MEDIA_STREAM_TRACK = "LiveMediaStreamTrack"
     UNLOAD_HANDLER = "UnloadHandler"
@@ -2562,7 +2505,7 @@ def get_app_id() -> (
 
 def get_ad_script_ancestry(
     frame_id: FrameId,
-) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.Optional[AdScriptAncestry]]:
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, typing.Optional[network.AdAncestry]]:
     """
 
 
@@ -2579,7 +2522,7 @@ def get_ad_script_ancestry(
     }
     json = yield cmd_dict
     return (
-        AdScriptAncestry.from_json(json["adScriptAncestry"])
+        network.AdAncestry.from_json(json["adScriptAncestry"])
         if json.get("adScriptAncestry", None) is not None
         else None
     )
@@ -2743,7 +2686,12 @@ def navigate(
 ) -> typing.Generator[
     T_JSON_DICT,
     T_JSON_DICT,
-    typing.Tuple[FrameId, typing.Optional[network.LoaderId], typing.Optional[str]],
+    typing.Tuple[
+        FrameId,
+        typing.Optional[network.LoaderId],
+        typing.Optional[str],
+        typing.Optional[bool],
+    ],
 ]:
     """
     Navigates current page to the given URL.
@@ -2758,6 +2706,7 @@ def navigate(
         0. **frameId** - Frame id that has navigated (or failed to navigate)
         1. **loaderId** - *(Optional)* Loader identifier. This is omitted in case of same-document navigation, as the previously committed loaderId would not change.
         2. **errorText** - *(Optional)* User friendly error message, present if and only if navigation has failed.
+        3. **isDownload** - *(Optional)* Whether the navigation resulted in a download.
     """
     params: T_JSON_DICT = dict()
     params["url"] = url
@@ -2780,6 +2729,7 @@ def navigate(
         if json.get("loaderId", None) is not None
         else None,
         str(json["errorText"]) if json.get("errorText", None) is not None else None,
+        bool(json["isDownload"]) if json.get("isDownload", None) is not None else None,
     )
 
 
@@ -3620,6 +3570,29 @@ def set_prerendering_allowed(
     json = yield cmd_dict
 
 
+def get_annotated_page_content(
+    include_actionable_information: typing.Optional[bool] = None,
+) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, str]:
+    """
+    Get the annotated page content for the main frame.
+    This is an experimental command that is subject to change.
+
+    **EXPERIMENTAL**
+
+    :param include_actionable_information: *(Optional)* Whether to include actionable information. Defaults to true.
+    :returns: The annotated page content as a base64 encoded protobuf. The format is defined by the ``AnnotatedPageContent`` message in components/optimization_guide/proto/features/common_quality_data.proto (Encoded as a base64 string when passed over JSON)
+    """
+    params: T_JSON_DICT = dict()
+    if include_actionable_information is not None:
+        params["includeActionableInformation"] = include_actionable_information
+    cmd_dict: T_JSON_DICT = {
+        "method": "Page.getAnnotatedPageContent",
+        "params": params,
+    }
+    json = yield cmd_dict
+    return str(json["content"])
+
+
 @event_class("Page.domContentEventFired")
 @dataclass
 class DomContentEventFired:
@@ -4229,8 +4202,7 @@ class CompilationCacheProduced:
     """
     **EXPERIMENTAL**
 
-    Issued for every compilation cache generated. Is only available
-    if Page.setGenerateCompilationCache is enabled.
+    Issued for every compilation cache generated.
     """
 
     url: str

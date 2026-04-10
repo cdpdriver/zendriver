@@ -177,16 +177,16 @@ class CdpItems:
     """Represents the type of a repeated item."""
 
     type: str
-    ref: str
+    ref: typing.Optional[str]
 
     @classmethod
     def from_json(cls, type: dict[str, str]) -> "CdpItems":
         """Generate code to instantiate an item from a JSON object."""
         type_ = type.get("type", "any")
         ref = type.get("$ref")
-        if not type_ or not ref:
+        if not type_ and not ref:
             raise ValueError(
-                "CdpItems must have a 'type' and '$ref' field: {}".format(type)
+                "CdpItems must have a 'type' or '$ref' field: {}".format(type)
             )
         return cls(type_, ref)
 

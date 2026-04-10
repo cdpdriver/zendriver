@@ -399,12 +399,12 @@ def enable() -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
 def request_data(
     database_name: str,
     object_store_name: str,
-    index_name: str,
     skip_count: int,
     page_size: int,
     security_origin: typing.Optional[str] = None,
     storage_key: typing.Optional[str] = None,
     storage_bucket: typing.Optional[storage.StorageBucket] = None,
+    index_name: typing.Optional[str] = None,
     key_range: typing.Optional[KeyRange] = None,
 ) -> typing.Generator[
     T_JSON_DICT, T_JSON_DICT, typing.Tuple[typing.List[DataEntry], bool]
@@ -417,7 +417,7 @@ def request_data(
     :param storage_bucket: *(Optional)* Storage bucket. If not specified, it uses the default bucket.
     :param database_name: Database name.
     :param object_store_name: Object store name.
-    :param index_name: Index name, empty string for object store data requests.
+    :param index_name: *(Optional)* Index name. If not specified, it performs an object store data request.
     :param skip_count: Number of records to skip.
     :param page_size: Number of records to fetch.
     :param key_range: *(Optional)* Key range.
@@ -435,7 +435,8 @@ def request_data(
         params["storageBucket"] = storage_bucket.to_json()
     params["databaseName"] = database_name
     params["objectStoreName"] = object_store_name
-    params["indexName"] = index_name
+    if index_name is not None:
+        params["indexName"] = index_name
     params["skipCount"] = skip_count
     params["pageSize"] = page_size
     if key_range is not None:

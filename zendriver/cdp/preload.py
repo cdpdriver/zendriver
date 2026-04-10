@@ -75,6 +75,10 @@ class RuleSet:
     #: TODO(https://crbug.com/1425354): Replace this property with structured error.
     error_message: typing.Optional[str] = None
 
+    #: For more details, see:
+    #: https://github.com/WICG/nav-speculation/blob/main/speculation-rules-tags.md
+    tag: typing.Optional[str] = None
+
     def to_json(self) -> T_JSON_DICT:
         json: T_JSON_DICT = dict()
         json["id"] = self.id_.to_json()
@@ -90,6 +94,8 @@ class RuleSet:
             json["errorType"] = self.error_type.to_json()
         if self.error_message is not None:
             json["errorMessage"] = self.error_message
+        if self.tag is not None:
+            json["tag"] = self.tag
         return json
 
     @classmethod
@@ -111,12 +117,14 @@ class RuleSet:
             error_message=str(json["errorMessage"])
             if json.get("errorMessage", None) is not None
             else None,
+            tag=str(json["tag"]) if json.get("tag", None) is not None else None,
         )
 
 
 class RuleSetErrorType(enum.Enum):
     SOURCE_IS_NOT_JSON_OBJECT = "SourceIsNotJsonObject"
     INVALID_RULES_SKIPPED = "InvalidRulesSkipped"
+    INVALID_RULESET_LEVEL_TAG = "InvalidRulesetLevelTag"
 
     def to_json(self) -> str:
         return self.value
@@ -135,6 +143,7 @@ class SpeculationAction(enum.Enum):
 
     PREFETCH = "Prefetch"
     PRERENDER = "Prerender"
+    PRERENDER_UNTIL_SCRIPT = "PrerenderUntilScript"
 
     def to_json(self) -> str:
         return self.value
@@ -178,6 +187,8 @@ class PreloadingAttemptKey:
 
     url: str
 
+    form_submission: typing.Optional[bool] = None
+
     target_hint: typing.Optional[SpeculationTargetHint] = None
 
     def to_json(self) -> T_JSON_DICT:
@@ -185,6 +196,8 @@ class PreloadingAttemptKey:
         json["loaderId"] = self.loader_id.to_json()
         json["action"] = self.action.to_json()
         json["url"] = self.url
+        if self.form_submission is not None:
+            json["formSubmission"] = self.form_submission
         if self.target_hint is not None:
             json["targetHint"] = self.target_hint.to_json()
         return json
@@ -195,6 +208,9 @@ class PreloadingAttemptKey:
             loader_id=network.LoaderId.from_json(json["loaderId"]),
             action=SpeculationAction.from_json(json["action"]),
             url=str(json["url"]),
+            form_submission=bool(json["formSubmission"])
+            if json.get("formSubmission", None) is not None
+            else None,
             target_hint=SpeculationTargetHint.from_json(json["targetHint"])
             if json.get("targetHint", None) is not None
             else None,
@@ -361,6 +377,8 @@ class PrerenderFinalStatus(enum.Enum):
     V8_OPTIMIZER_DISABLED = "V8OptimizerDisabled"
     PRERENDER_FAILED_DURING_PREFETCH = "PrerenderFailedDuringPrefetch"
     BROWSING_DATA_REMOVED = "BrowsingDataRemoved"
+    PRERENDER_HOST_REUSED = "PrerenderHostReused"
+    FORM_SUBMIT_WHEN_PRERENDERING = "FormSubmitWhenPrerendering"
 
     def to_json(self) -> str:
         return self.value
