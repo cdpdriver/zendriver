@@ -665,10 +665,10 @@ class Connection(metaclass=CantTouchThis):
         # manual enables/disables always overwrite auto enabled domains
         if domain_mod in self.enabled_domains:
             self.enabled_domains.remove(domain_mod)
-        if action == "enable" and domain_mod not in self.manually_enabled_domains:
-            self.manually_enabled_domains.append(domain_mod)
         if action == "disable" and domain_mod in self.manually_enabled_domains:
             self.manually_enabled_domains.remove(domain_mod)
+        elif action == "enable" and domain_mod not in self.manually_enabled_domains:
+            self.manually_enabled_domains.append(domain_mod)
 
     async def _prepare_headless(self) -> None:
         if getattr(self, "_prep_headless_done", None):
