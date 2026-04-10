@@ -17,6 +17,7 @@ from typing import (
     Callable,
     Generator,
     List,
+    Literal,
     Optional,
     TypeVar,
     Union,
@@ -569,8 +570,12 @@ class Connection(metaclass=CantTouchThis):
         self.mapper.update({tx.id: tx})
 
         if not _is_update:
+            domain_name, _, action = tx.method.partition(".")
+            if action == "enable":
+                self._update_manual_domain(domain_name, action)
             await self._register_handlers()
-            self._handle_enabled_domains(tx)
+            if action == "disable":
+                self._update_manual_domain(domain_name, action)
         await self.websocket.send(tx.message)
         try:
             return await tx  # type: ignore
@@ -635,35 +640,35 @@ class Connection(metaclass=CantTouchThis):
             # items still present at this point are unused and need removal
             self.enabled_domains.remove(ed)
 
-    def _handle_enabled_domains(self, tx: Transaction) -> None:
+    def _update_manual_domain(
+        self, domain_name: str, action: Literal["enable", "disable"]
+    ) -> None:
         """
-        update enabled domain lists accordingly for enable/disable domain transactions
+        Updates the enabled domain lists for the given domain name
 
-        :param tx:
+        :param domain_name:
+        :param action:
         :return:
         :rtype:
         """
-        is_enable = tx.method.endswith(".enable")
-        is_disable = tx.method.endswith(".disable")
-        if is_enable or is_disable:
-            domain_name, _, _ = tx.method.partition(".")
-            try:
-                domain_mod = util.cdp_get_module(domain_name.lower())
-            except ModuleNotFoundError:
-                logger.debug(
-                    "Could not find module for domain %s",
-                    domain_name,
-                )
-                return
+        if action not in ("enable", "disable"):
+            return
+        try:
+            domain_mod = util.cdp_get_module(domain_name.lower())
+        except ModuleNotFoundError:
+            logger.debug(
+                "Could not find module for domain %s",
+                domain_name,
+            )
+            return
 
-            # manual enables/disables always overwrite auto enabled domains
-            if domain_mod in self.enabled_domains:
-                self.enabled_domains.remove(domain_mod)
-
-            if is_disable and domain_mod in self.manually_enabled_domains:
-                self.manually_enabled_domains.remove(domain_mod)
-            if is_enable and domain_mod not in self.manually_enabled_domains:
-                self.manually_enabled_domains.append(domain_mod)
+        # manual enables/disables always overwrite auto enabled domains
+        if domain_mod in self.enabled_domains:
+            self.enabled_domains.remove(domain_mod)
+        if action == "enable" and domain_mod not in self.manually_enabled_domains:
+            self.manually_enabled_domains.append(domain_mod)
+        if action == "disable" and domain_mod in self.manually_enabled_domains:
+            self.manually_enabled_domains.remove(domain_mod)
 
     async def _prepare_headless(self) -> None:
         if getattr(self, "_prep_headless_done", None):

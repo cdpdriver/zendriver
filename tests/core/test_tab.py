@@ -305,6 +305,7 @@ async def test_handler_wont_reenable_without_params(browser: zd.Browser) -> None
     tab = browser.main_tab
     assert tab is not None
 
+    tab.add_handler(zd.cdp.fetch.RequestPaused, lambda _: None)
     # enable fetch with custom pattern
     await tab.send(
         zd.cdp.fetch.enable(
@@ -319,7 +320,6 @@ async def test_handler_wont_reenable_without_params(browser: zd.Browser) -> None
     )
     assert zd.cdp.fetch in tab.manually_enabled_domains
 
-    tab.add_handler(zd.cdp.fetch.RequestPaused, lambda _: None)
     async with tab.expect_response(sample_file("profile.html")) as response_info:
         # This will hang if _register_handlers reenables fetch without params
         await tab.get(sample_file("profile.html"))
