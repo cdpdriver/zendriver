@@ -15,6 +15,7 @@ from . import (
     cache_storage,
     cast,
     console,
+    crash_report_context,
     dom,
     dom_debugger,
     dom_snapshot,
@@ -50,6 +51,7 @@ from . import (
     schema,
     security,
     service_worker,
+    smart_card_emulation,
     storage,
     system_info,
     target,
@@ -57,4 +59,5 @@ from . import (
     tracing,
     web_audio,
     web_authn,
+    web_mcp,
 )

@@ -13,6 +13,7 @@ from .util import event_class, T_JSON_DICT
 
 from . import page
 from . import target
+from deprecated.sphinx import deprecated  # type: ignore
 
 
 class BrowserContextID(str):
@@ -124,7 +125,9 @@ class PermissionType(enum.Enum):
     IDLE_DETECTION = "idleDetection"
     KEYBOARD_LOCK = "keyboardLock"
     LOCAL_FONTS = "localFonts"
+    LOCAL_NETWORK = "localNetwork"
     LOCAL_NETWORK_ACCESS = "localNetworkAccess"
+    LOOPBACK_NETWORK = "loopbackNetwork"
     MIDI = "midi"
     MIDI_SYSEX = "midiSysex"
     NFC = "nfc"
@@ -329,16 +332,18 @@ def set_permission(
     permission: PermissionDescriptor,
     setting: PermissionSetting,
     origin: typing.Optional[str] = None,
+    embedded_origin: typing.Optional[str] = None,
     browser_context_id: typing.Optional[BrowserContextID] = None,
 ) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
     """
-    Set permission settings for given origin.
+    Set permission settings for given embedding and embedded origins.
 
     **EXPERIMENTAL**
 
     :param permission: Descriptor of permission to override.
     :param setting: Setting of the permission.
-    :param origin: *(Optional)* Origin the permission applies to, all origins if not specified.
+    :param origin: *(Optional)* Embedding origin the permission applies to, all origins if not specified.
+    :param embedded_origin: *(Optional)* Embedded origin the permission applies to. It is ignored unless the embedding origin is present and valid. If the embedding origin is provided but the embedded origin isn't, the embedding origin is used as the embedded origin.
     :param browser_context_id: *(Optional)* Context to override. When omitted, default browser context is used.
     """
     params: T_JSON_DICT = dict()
@@ -346,6 +351,8 @@ def set_permission(
     params["setting"] = setting.to_json()
     if origin is not None:
         params["origin"] = origin
+    if embedded_origin is not None:
+        params["embeddedOrigin"] = embedded_origin
     if browser_context_id is not None:
         params["browserContextId"] = browser_context_id.to_json()
     cmd_dict: T_JSON_DICT = {
@@ -355,13 +362,17 @@ def set_permission(
     json = yield cmd_dict
 
 
+@deprecated(version="1.3")
 def grant_permissions(
     permissions: typing.List[PermissionType],
     origin: typing.Optional[str] = None,
     browser_context_id: typing.Optional[BrowserContextID] = None,
 ) -> typing.Generator[T_JSON_DICT, T_JSON_DICT, None]:
     """
-    Grant specific permissions to the given origin and reject all others.
+    Grant specific permissions to the given origin and reject all others. Deprecated. Use
+    setPermission instead.
+
+    .. deprecated:: 1.3
 
     **EXPERIMENTAL**
 
