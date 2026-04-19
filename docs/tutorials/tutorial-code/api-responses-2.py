@@ -13,11 +13,8 @@ async def main() -> None:
         await page.get(
             "https://cdpdriver.github.io/examples/api-request.html",
         )
-        response = await response_expectation.value
-
-    request_id = response.request_id
-    body, _ = await page.send(get_response_body(request_id=request_id))
-    user_data = json.loads(body)
+        body, _ = await response_expectation.response_body
+        user_data = json.loads(body)
 
     print("Successfully read user data response for user:", user_data["name"])
     print(json.dumps(user_data, indent=2))
