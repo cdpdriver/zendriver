@@ -16,10 +16,11 @@ from typing import (
     Awaitable,
     Callable,
     Generator,
+    List,
+    Literal,
     Optional,
     TypeVar,
     Union,
-    List,
 )
 
 import websockets
@@ -210,6 +211,7 @@ class Connection(metaclass=CantTouchThis):
         )
         self.recv_task = None
         self.enabled_domains: list[Any] = []
+        self.manually_enabled_domains: list[Any] = []
         self._last_result: list[Any] = []
         self.listener: Listener | None = None
         self.__dict__.update(**kwargs)
@@ -448,6 +450,7 @@ class Connection(metaclass=CantTouchThis):
             if self.listener and self.listener.running:
                 self.listener.cancel()
                 self.enabled_domains.clear()
+                self.manually_enabled_domains.clear()
             await self.websocket.close()
             self.websocket = None
             logger.debug("\n❌ closed websocket connection to %s", self.websocket_url)
@@ -565,8 +568,14 @@ class Connection(metaclass=CantTouchThis):
         async with self._current_id_mutex:
             tx.id = next(self.__count__)
         self.mapper.update({tx.id: tx})
+
         if not _is_update:
+            domain_name, _, action = tx.method.partition(".")
+            if action == "enable":
+                self._update_manual_domain(domain_name, action)
             await self._register_handlers()
+            if action == "disable":
+                self._update_manual_domain(domain_name, action)
         await self.websocket.send(tx.message)
         try:
             return await tx  # type: ignore
@@ -601,7 +610,10 @@ class Connection(metaclass=CantTouchThis):
                 if domain_mod in enabled_domains:
                     enabled_domains.remove(domain_mod)
                 continue
-            elif domain_mod not in self.enabled_domains:
+            elif (
+                domain_mod not in self.enabled_domains
+                and domain_mod not in self.manually_enabled_domains
+            ):
                 if domain_mod in (cdp.target, cdp.storage):
                     # by default enabled
                     continue
@@ -627,6 +639,36 @@ class Connection(metaclass=CantTouchThis):
             # temp variable when we registered it or saw handlers for it.
             # items still present at this point are unused and need removal
             self.enabled_domains.remove(ed)
+
+    def _update_manual_domain(
+        self, domain_name: str, action: Literal["enable", "disable"]
+    ) -> None:
+        """
+        Updates the enabled domain lists for the given domain name
+
+        :param domain_name:
+        :param action:
+        :return:
+        :rtype:
+        """
+        if action not in ("enable", "disable"):
+            return
+        try:
+            domain_mod = util.cdp_get_module(domain_name.lower())
+        except ModuleNotFoundError:
+            logger.debug(
+                "Could not find module for domain %s",
+                domain_name,
+            )
+            return
+
+        # manual enables/disables always overwrite auto enabled domains
+        if domain_mod in self.enabled_domains:
+            self.enabled_domains.remove(domain_mod)
+        if action == "disable" and domain_mod in self.manually_enabled_domains:
+            self.manually_enabled_domains.remove(domain_mod)
+        elif action == "enable" and domain_mod not in self.manually_enabled_domains:
+            self.manually_enabled_domains.append(domain_mod)
 
     async def _prepare_headless(self) -> None:
         if getattr(self, "_prep_headless_done", None):
