@@ -1,4 +1,5 @@
 import asyncio
+from collections.abc import Generator
 from typing import Any
 
 import pytest
@@ -8,6 +9,30 @@ from tests.sample_data import sample_file
 from zendriver.cdp.fetch import RequestStage
 from zendriver.cdp.network import ResourceType
 from zendriver.core.connection import ProtocolException
+
+
+def make_node(
+    node_id: int,
+    node_name: str,
+    *,
+    children: list[zd.cdp.dom.Node] | None = None,
+    content_document: zd.cdp.dom.Node | None = None,
+    attributes: list[str] | None = None,
+    parent_id: int | None = None,
+) -> zd.cdp.dom.Node:
+    return zd.cdp.dom.Node(
+        node_id=zd.cdp.dom.NodeId(node_id),
+        backend_node_id=zd.cdp.dom.BackendNodeId(node_id),
+        node_type=9 if node_name == "#document" else 1,
+        node_name=node_name,
+        local_name="" if node_name == "#document" else node_name.lower(),
+        node_value="",
+        parent_id=zd.cdp.dom.NodeId(parent_id) if parent_id is not None else None,
+        child_node_count=len(children) if children is not None else None,
+        children=children,
+        attributes=attributes,
+        content_document=content_document,
+    )
 
 
 async def test_set_user_agent_sets_navigator_values(browser: zd.Browser) -> None:
@@ -65,6 +90,100 @@ async def test_select(browser: zd.Browser) -> None:
     assert result is not None
     assert result.tag == "li"
     assert result.text == "Apples"
+
+
+async def test_query_selector_all_include_frames_queries_nested_iframe_documents(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    top_match = make_node(
+        3,
+        "SPAN",
+        attributes=["class", "match", "data-location", "top"],
+        parent_id=2,
+    )
+    inner_match = make_node(
+        9,
+        "SPAN",
+        attributes=["class", "match", "data-location", "inner"],
+        parent_id=8,
+    )
+    inner_doc = make_node(
+        8,
+        "#document",
+        children=[inner_match],
+    )
+    inner_iframe = make_node(
+        7,
+        "IFRAME",
+        content_document=inner_doc,
+        parent_id=5,
+    )
+    outer_match = make_node(
+        6,
+        "SPAN",
+        attributes=["class", "match", "data-location", "outer"],
+        parent_id=5,
+    )
+    outer_doc = make_node(
+        5,
+        "#document",
+        children=[outer_match, inner_iframe],
+    )
+    outer_iframe = make_node(
+        4,
+        "IFRAME",
+        content_document=outer_doc,
+        parent_id=2,
+    )
+    cross_origin_iframe = make_node(
+        10,
+        "IFRAME",
+        content_document=None,
+        parent_id=2,
+    )
+    body = make_node(
+        2,
+        "BODY",
+        children=[top_match, outer_iframe, cross_origin_iframe],
+        parent_id=1,
+    )
+    doc = make_node(1, "#document", children=[body])
+
+    matches_by_document_id = {
+        doc.node_id: [top_match.node_id],
+        outer_doc.node_id: [outer_match.node_id],
+        inner_doc.node_id: [inner_match.node_id],
+    }
+    queried_document_ids: list[zd.cdp.dom.NodeId] = []
+
+    async def send(
+        cdp_obj: Generator[dict[str, Any], dict[str, Any], Any],
+        _is_update: bool = False,
+    ) -> Any:
+        command = next(cdp_obj)
+        if command["method"] == "DOM.getDocument":
+            return doc
+        if command["method"] == "DOM.querySelectorAll":
+            node_id = zd.cdp.dom.NodeId(command["params"]["nodeId"])
+            queried_document_ids.append(node_id)
+            return matches_by_document_id[node_id]
+        raise AssertionError(f"Unexpected CDP command: {command['method']}")
+
+    tab = zd.Tab.__new__(zd.Tab)
+    monkeypatch.setattr(tab, "send", send)
+
+    results = await tab.query_selector_all(".match", _include_frames=True)
+
+    assert {result.attrs["data-location"] for result in results} == {
+        "top",
+        "outer",
+        "inner",
+    }
+    assert set(queried_document_ids) == {
+        doc.node_id,
+        outer_doc.node_id,
+        inner_doc.node_id,
+    }
 
 
 async def test_xpath(browser: zd.Browser) -> None:
