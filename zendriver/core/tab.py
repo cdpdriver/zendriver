@@ -325,12 +325,9 @@ class Tab(Connection):
 
         while True:
             items = []
-            if include_frames:
-                frames = await self.query_selector_all("iframe")
-                for fr in frames:
-                    items.extend(await fr.query_selector_all(selector))
-
-            items.extend(await self.query_selector_all(selector))
+            items.extend(
+                await self.query_selector_all(selector, _include_frames=include_frames)
+            )
 
             if items:
                 return items
@@ -412,6 +409,7 @@ class Tab(Connection):
         self,
         selector: str,
         _node: cdp.dom.Node | Element | None = None,
+        _include_frames: bool = False,
     ) -> List[Element]:
         """
         equivalent of javascripts document.querySelectorAll.
@@ -425,18 +423,47 @@ class Tab(Connection):
         :rtype:
         """
         doc: Any
+        content_doc_nodes = []
         if not _node:
+            # Returns all document node ids here
             doc = await self.send(cdp.dom.get_document(-1, True))
+            if _include_frames:
+                # Collect all iframe content_document nodes
+                stack = [doc]
+                while stack:
+                    # pop off items to grab the nodes
+                    node = stack.pop()
+                    if node.content_document:
+                        # save the nodes
+                        content_doc_nodes.append(node.content_document)
+                        stack.append(node.content_document)
+                    if node.children:
+                        #  add back child nodes to pop later on
+                        stack.extend(node.children)
+
         else:
             doc = _node
             if _node.node_name == "IFRAME":
                 doc = _node.content_document
+                if doc is None:
+                    return []  # cross-origin iframes block access to content_document, skip gracefully
         node_ids = []
 
         try:
             node_ids = await self.send(
                 cdp.dom.query_selector_all(doc.node_id, selector)
             )
+            if _include_frames:
+                for cd_node in content_doc_nodes:
+                    try:
+                        node_ids.extend(
+                            await self.send(
+                                cdp.dom.query_selector_all(cd_node.node_id, selector)
+                            )
+                        )
+                    except Exception as e:
+                        print(f"Exception in new content doc ids loop {e}")
+
         except ProtocolException as e:
             if _node is not None:
                 if e.message is not None and "could not find node" in e.message.lower():
@@ -449,14 +476,18 @@ class Tab(Connection):
                         await _node.update()
                     # make sure this isn't turned into infinite loop
                     setattr(_node, "__last", True)
-                    return await self.query_selector_all(selector, _node)
+                    return await self.query_selector_all(
+                        selector, _node, _include_frames=_include_frames
+                    )
             else:
                 if e.message is not None and "could not find node" in e.message.lower():
                     # The document node is stale; refetch and retry once
                     doc = await self.send(cdp.dom.get_document(-1, True))
                     # Prevent double-retry by marking this node as 'last attempt'
                     setattr(doc, "__last", True)
-                    return await self.query_selector_all(selector, doc)
+                    return await self.query_selector_all(
+                        selector, doc, _include_frames=_include_frames
+                    )
 
                 await self.disable_dom_agent()
                 raise
@@ -466,6 +497,11 @@ class Tab(Connection):
 
         for nid in node_ids:
             node = util.filter_recurse(doc, lambda n: n.node_id == nid)
+            if not node:
+                for cd_node in content_doc_nodes:
+                    node = util.filter_recurse(cd_node, lambda n: n.node_id == nid)
+                    if node:
+                        break
             # we pass along the retrieved document tree,
             # to improve performance
             if not node:
@@ -608,8 +644,10 @@ class Tab(Connection):
                 if iframe_elem.content_document:
                     iframe_text_nodes = util.filter_recurse_all(
                         iframe_elem,
-                        lambda node: node.node_type == 3  # noqa
-                        and text.lower() in node.node_value.lower(),
+                        lambda node: (
+                            node.node_type == 3  # noqa
+                            and text.lower() in node.node_value.lower()
+                        ),
                     )
                     if iframe_text_nodes:
                         iframe_text_elems = [
@@ -970,7 +1008,7 @@ class Tab(Connection):
 
     async def fullscreen(self) -> None:
         """
-        minimize page/tab/window
+        fullscreen page/tab/window
         """
         return await self.set_window_state(state="fullscreen")
 
