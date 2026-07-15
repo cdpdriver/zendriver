@@ -9,13 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fix `SyntaxError` on Python 3.14 in `Connection._register_handlers`. PEP 765 makes `continue`/`break`/`return` that exits a `finally` block a `SyntaxError` (was a `SyntaxWarning` in 3.13), so `zendriver/core/connection.py` failed to import under 3.14. Removed the no-op `finally: continue` (the loop already falls through to the next iteration, and the enclosing bare `except:` catches everything, so nothing changed behaviorally). Fixes #252
-
 ### Added
 
 ### Changed
 
 ### Removed
+
+## [0.15.5] - 2026-07-15
+
+### Fixed
+
+- Fix `SyntaxError` on Python 3.14 in `Connection._register_handlers`. PEP 765 makes `continue`/`break`/`return` that exits a `finally` block a `SyntaxError` (was a `SyntaxWarning` in 3.13), so `zendriver/core/connection.py` failed to import under 3.14. Removed the no-op `finally: continue` (the loop already falls through to the next iteration, and the enclosing bare `except:` catches everything, so nothing changed behaviorally). Fixes #252
 
 ## [0.15.4] - 2026-06-27
 
