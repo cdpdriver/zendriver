@@ -632,8 +632,6 @@ class Connection(metaclass=CantTouchThis):
                     except:  # noqa
                         logger.debug("NOT GOOD", exc_info=True)
                         continue
-                finally:
-                    continue
         for ed in enabled_domains:
             # we started with a copy of self.enabled_domains and removed a domain from this
             # temp variable when we registered it or saw handlers for it.
