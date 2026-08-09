@@ -1,3 +1,5 @@
+import pathlib
+import pickle
 import subprocess
 
 import psutil
@@ -110,3 +112,51 @@ async def test_browser_stopped_is_true_when_stopped_externally(
     assert browser.stopped
 
     await browser.stop()
+
+
+async def test_cookies_save_writes_only_the_cookies_matching_the_pattern(
+    browser: zd.Browser,
+    tmp_path: pathlib.Path,
+) -> None:
+    await browser.cookies.set_all(
+        [
+            cdp.network.CookieParam(
+                name="wanted", value="nowsecure", domain="example.com", path="/"
+            ),
+            cdp.network.CookieParam(
+                name="ignored", value="somethingelse", domain="example.com", path="/"
+            ),
+        ]
+    )
+
+    save_file = tmp_path / "cookies.dat"
+    await browser.cookies.save(save_file, pattern="nowsecure")
+
+    with save_file.open("rb") as f:
+        saved = pickle.load(f)
+
+    assert [cookie.name for cookie in saved] == ["wanted"]
+
+
+async def test_cookies_save_and_load_round_trip(
+    browser: zd.Browser,
+    tmp_path: pathlib.Path,
+) -> None:
+    await browser.cookies.set_all(
+        [
+            cdp.network.CookieParam(
+                name="kept", value="yes", domain="example.com", path="/"
+            )
+        ]
+    )
+
+    save_file = tmp_path / "cookies.dat"
+    await browser.cookies.save(save_file)
+
+    await browser.cookies.clear()
+    assert await browser.cookies.get_all() == []
+
+    await browser.cookies.load(save_file)
+
+    restored = {cookie.name: cookie.value for cookie in await browser.cookies.get_all()}
+    assert restored.get("kept") == "yes"

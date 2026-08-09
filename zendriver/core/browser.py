@@ -756,26 +756,7 @@ class CookieJar:
         """
         compiled_pattern = re.compile(pattern)
         save_path = pathlib.Path(file).resolve()
-        connection: Connection | None = None
-        for tab_ in self._browser.tabs:
-            if tab_.closed:
-                continue
-            connection = tab_
-            break
-        else:
-            connection = self._browser.connection
-        if not connection:
-            raise RuntimeError("Browser not yet started. use await browser.start()")
 
-        cookies: (
-            list[cdp.network.Cookie] | list[http.cookiejar.Cookie]
-        ) = await connection.send(cdp.storage.get_cookies())
-        # if not connection:
-        #     return
-        # if not connection.websocket:
-        #     return
-        # if connection.websocket.closed:
-        #     return
         cookies = await self.get_all(requests_cookie_format=False)
         included_cookies = []
         for cookie in cookies:
@@ -788,7 +769,8 @@ class CookieJar:
                 )
                 included_cookies.append(cookie)
                 break
-        pickle.dump(cookies, save_path.open("w+b"))
+        with save_path.open("w+b") as save_file:
+            pickle.dump(included_cookies, save_file)
 
     async def load(self, file: PathLike = ".session.dat", pattern: str = ".*") -> None:
         """
@@ -810,7 +792,8 @@ class CookieJar:
 
         compiled_pattern = re.compile(pattern)
         save_path = pathlib.Path(file).resolve()
-        cookies = pickle.load(save_path.open("r+b"))
+        with save_path.open("r+b") as save_file:
+            cookies = pickle.load(save_file)
         included_cookies = []
         for cookie in cookies:
             for match in compiled_pattern.finditer(str(cookie.__dict__)):
