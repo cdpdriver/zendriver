@@ -118,7 +118,6 @@ async def test_cookies_save_writes_only_the_cookies_matching_the_pattern(
     browser: zd.Browser,
     tmp_path: pathlib.Path,
 ) -> None:
-    await browser.get("https://example.com")
     await browser.cookies.set_all(
         [
             cdp.network.CookieParam(
@@ -143,7 +142,6 @@ async def test_cookies_save_and_load_round_trip(
     browser: zd.Browser,
     tmp_path: pathlib.Path,
 ) -> None:
-    await browser.get("https://example.com")
     await browser.cookies.set_all(
         [
             cdp.network.CookieParam(
