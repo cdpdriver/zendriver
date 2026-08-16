@@ -23,7 +23,7 @@ is_posix = sys.platform.startswith(("darwin", "cygwin", "linux", "linux2"))
 PathLike = Union[str, pathlib.Path]
 AUTO = None
 
-BrowserType = Literal["chrome", "brave", "auto"]
+BrowserType = Literal["chrome", "brave", "msedge", "auto"]
 
 
 class Config:
@@ -311,16 +311,17 @@ def find_binary(candidates: list[str]) -> str | None:
 def find_executable(browser: BrowserType = "auto") -> PathLike:
     """
     Finds the executable for the specified browser and returns its disk path.
-    :param browser: The browser to find. Can be "chrome", "brave" or "auto".
+    :param browser: The browser to find. Can be "chrome", "brave", "msedge" or "auto".
+
     :return: The path to the browser executable.
     """
     browsers_to_try = []
     if browser == "auto":
-        browsers_to_try = ["chrome", "brave"]
-    elif browser in ["chrome", "brave"]:
+        browsers_to_try = ["chrome", "brave", "msedge"]
+    elif browser in ["chrome", "brave", "msedge"]:
         browsers_to_try = [browser]
     else:
-        raise ValueError("browser must be 'chrome', 'brave' or 'auto'")
+        raise ValueError("browser must be 'chrome', 'brave', 'msedge' or 'auto'")
 
     for browser_name in browsers_to_try:
         candidates = []
@@ -359,6 +360,51 @@ def find_executable(browser: BrowserType = "auto") -> PathLike:
                         ):
                             candidates.append(
                                 os.sep.join((item2, subitem, "chrome.exe"))
+                            )
+        elif browser_name == "msedge":
+            if is_posix:
+                # Wrappers in PATH may respect user flags, e.g.
+                for item in os.environ["PATH"].split(os.pathsep):
+                    for subitem in (
+                        "microsoft-edge-stable",
+                        "microsoft-edge-beta",
+                        "microsoft-edge-canary",
+                        "microsoft-edge",
+                        "msedge",
+                    ):
+                        candidates.append(os.sep.join((item, subitem)))
+
+                match sys.platform:
+                    case "linux":
+                        # Pick the wrapper scripts first to solve problems
+                        candidates += [
+                            "/opt/microsoft/msedge/microsoft-edge",
+                            "/opt/microsoft/msedge/msedge",
+                            "/opt/microsoft/msedge-beta/microsoft-edge-beta",
+                            "/opt/microsoft/msedge-beta/msedge",
+                            "/opt/microsoft/msedge-dev/microsoft-edge-dev",
+                            "/opt/microsoft/msedge-dev/msedge",
+                            "/opt/microsoft/msedge-canary/microsoft-edge-canary",
+                            "/opt/microsoft/msedge-canary/msedge",
+                        ]
+                    case "darwin":
+                        candidates += [
+                            "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+                        ]
+            else:
+                for item2 in map(
+                    os.environ.get,
+                    (
+                        "PROGRAMFILES",
+                        "PROGRAMFILES(X86)",
+                        "LOCALAPPDATA",
+                        "PROGRAMW6432",
+                    ),
+                ):
+                    if item2 is not None:
+                        for subitem in ("Microsoft/Edge/Application",):
+                            candidates.append(
+                                os.sep.join((item2, subitem, "msedge.exe"))
                             )
         elif browser_name == "brave":
             if is_posix:
