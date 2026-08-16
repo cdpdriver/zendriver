@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix `pattern` argument in `CookieJar.save` @Lyesbcb
+
 ### Added
 
 - Add support for Microsoft Edge browser @mokurin000
