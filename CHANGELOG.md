@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Correct CDP mouse pressure and button state for clicks and drags, and stop mouse movement from emitting synthetic release events. @TheKevinWang
+
 ### Added
 
 ### Changed

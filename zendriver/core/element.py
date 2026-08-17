@@ -561,6 +561,7 @@ class Element:
                     button=cdp.input_.MouseButton(button),
                     buttons=buttons,
                     click_count=1,
+                    force=0.5 if buttons else 0.0,
                 )
             ),
             self._tab.send(
@@ -570,8 +571,9 @@ class Element:
                     y=center[1],
                     modifiers=modifiers,
                     button=cdp.input_.MouseButton(button),
-                    buttons=buttons,
+                    buttons=0,
                     click_count=1,
+                    force=0.0,
                 )
             ),
         )
@@ -595,9 +597,6 @@ class Element:
             cdp.input_.dispatch_mouse_event("mouseMoved", x=center[0], y=center[1])
         )
         await self._tab.sleep(0.05)
-        await self._tab.send(
-            cdp.input_.dispatch_mouse_event("mouseReleased", x=center[0], y=center[1])
-        )
 
     async def mouse_drag(
         self,
@@ -646,6 +645,8 @@ class Element:
                 x=start_point[0],
                 y=start_point[1],
                 button=cdp.input_.MouseButton("left"),
+                buttons=1,
+                force=0.5,
             )
         )
 
@@ -656,6 +657,8 @@ class Element:
                     "mouseMoved",
                     x=end_point[0],
                     y=end_point[1],
+                    buttons=1,
+                    force=0.5,
                 )
             )
         elif steps > 1:
@@ -673,6 +676,8 @@ class Element:
                         "mouseMoved",
                         x=point[0],
                         y=point[1],
+                        buttons=1,
+                        force=0.5,
                     )
                 )
                 await asyncio.sleep(0)
@@ -683,6 +688,8 @@ class Element:
                 x=end_point[0],
                 y=end_point[1],
                 button=cdp.input_.MouseButton("left"),
+                buttons=0,
+                force=0.0,
             )
         )
 
