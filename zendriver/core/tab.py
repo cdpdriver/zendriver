@@ -1554,7 +1554,6 @@ class Tab(Connection):
             await self.flash_point(x, y)
         else:
             await self.sleep(0.05)
-        await self.send(cdp.input_.dispatch_mouse_event("mouseReleased", x=x, y=y))
         if flash:
             await self.flash_point(x, y)
 
@@ -1588,6 +1587,7 @@ class Tab(Connection):
                 button=cdp.input_.MouseButton(button),
                 buttons=buttons,
                 click_count=1,
+                force=0.5 if buttons else 0.0,
             )
         )
 
@@ -1598,8 +1598,9 @@ class Tab(Connection):
                 y=y,
                 modifiers=modifiers,
                 button=cdp.input_.MouseButton(button),
-                buttons=buttons,
+                buttons=0,
                 click_count=1,
+                force=0.0,
             )
         )
         if flash:
