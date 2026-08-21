@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix `ValueError` on startup when the `lang` option is set @bercedev
+
 ### Added
 
 ### Changed
