@@ -358,9 +358,6 @@ class Browser:
                 % ",".join(str(_) for _ in self.config._extensions)
             )  # noqa
 
-        if self.config.lang is not None:
-            self.config.add_argument(f"--lang={self.config.lang}")
-
         exe = self.config.browser_executable_path
         params = self.config()
         params.append("about:blank")

@@ -212,6 +212,8 @@ class Config:
             args.append("--headless=new")
         if self.user_agent:
             args.append(f"--user-agent={self.user_agent}")
+        if self.lang:
+            args.append(f"--lang={self.lang}")
         if not self.sandbox:
             args.append("--no-sandbox")
         if self.host:
