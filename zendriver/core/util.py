@@ -322,7 +322,10 @@ def cdp_get_module(domain: Union[str, types.ModuleType]) -> Any:
 
 
 def _start_process(
-    exe: str | Path, params: List[str], is_posix: bool
+    exe: str | Path,
+    params: List[str],
+    is_posix: bool,
+    env: Optional[typing.Mapping[str, str]] = None,
 ) -> subprocess.Popen[bytes]:
     """
     Start a subprocess with the given executable and parameters.
@@ -330,6 +333,7 @@ def _start_process(
     :param exe: The executable to run.
     :param params: List of parameters to pass to the executable.
     :param is_posix: Boolean indicating if the system is POSIX compliant.
+    :param env: Environment for the browser process; the current one when None.
 
     :return: An instance of `subprocess.Popen`.
     """
@@ -339,6 +343,7 @@ def _start_process(
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         close_fds=is_posix,
+        env=None if env is None else dict(env),
     )
 
 

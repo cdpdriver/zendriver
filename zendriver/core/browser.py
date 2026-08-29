@@ -369,7 +369,9 @@ class Browser:
             "starting\n\texecutable :%s\n\narguments:\n%s", exe, "\n\t".join(params)
         )
         if not connect_existing:
-            self._process = util._start_process(exe, params, is_posix)
+            self._process = util._start_process(
+                exe, params, is_posix, env=getattr(self.config, "env", None)
+            )
             self._process_pid = self._process.pid
 
         self._http = HTTPApi((self.config.host, self.config.port))
