@@ -1,9 +1,11 @@
 import asyncio
+import gc
 import http.server
 import pathlib
 import pickle
 import subprocess
 import threading
+import weakref
 from typing import Iterator
 
 import psutil
@@ -92,6 +94,20 @@ async def test_browser_stop_exits_gracefully_without_kill(
     assert browser.stopped
     kill.assert_not_called()
     assert elapsed < 2
+
+
+async def test_browser_is_garbage_collected_after_stop(
+    create_browser: type[CreateBrowser],
+) -> None:
+    browser = await zd.start(create_browser().config)
+    await browser.get(sample_file("groceries.html"))
+    await browser.stop()
+
+    browser_ref = weakref.ref(browser)
+    del browser
+    gc.collect()
+
+    assert browser_ref() is None
 
 
 async def test_browser_stopped_is_true_after_calling_stop(browser: zd.Browser) -> None:

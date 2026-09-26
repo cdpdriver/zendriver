@@ -100,15 +100,14 @@ class Browser:
             )
         instance = cls(config)
         await instance.start()
-
-        async def browser_atexit() -> None:
-            if not instance.stopped:
-                await instance.stop()
-            await instance._cleanup_temporary_profile()
-
-        asyncio_atexit.register(browser_atexit)
-
+        asyncio_atexit.register(instance._atexit_cleanup)
         return instance
+
+    async def _atexit_cleanup(self) -> None:
+        # stop() unregisters atexit callbacks, which would mutate the list asyncio_atexit is iterating
+        if not self.stopped:
+            await self._stop()
+        await self._cleanup_temporary_profile()
 
     def __init__(self, config: Config):
         """
@@ -606,8 +605,16 @@ class Browser:
                     del self._i
 
     async def stop(self) -> None:
+        asyncio_atexit.unregister(self._atexit_cleanup)
+        util.get_registered_instances().discard(self)
+        await self._stop()
+
+    async def _stop(self) -> None:
         if not self.connection and not self._process:
             return
+
+        for target in self.targets:
+            await target.aclose()
 
         if self.connection and not self.connection.closed:
             try:
