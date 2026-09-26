@@ -1,6 +1,10 @@
+import asyncio
+import http.server
 import pathlib
 import pickle
 import subprocess
+import threading
+from typing import Iterator
 
 import psutil
 import pytest
@@ -170,3 +174,71 @@ async def test_browser_starts_with_lang_option(
         assert "--lang=de-DE" in browser.config()
         page = await browser.get("about:blank")
         assert await page.evaluate("1 + 1") == 2
+
+
+@pytest.fixture
+def cross_site_iframe_url() -> Iterator[str]:
+    """Serve a page on 127.0.0.1 embedding an iframe from localhost.
+
+    The two hosts are different sites, so Chrome's site isolation puts the
+    iframe in its own process and exposes it as a separate "iframe" target.
+    """
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            port = server.server_address[1]
+            if self.path == "/child":
+                body = "<html><body><p id='child'>hello from iframe</p></body></html>"
+            else:
+                body = (
+                    "<html><body>"
+                    f"<iframe src='http://localhost:{port}/child'></iframe>"
+                    "</body></html>"
+                )
+            data = body.encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+        def log_message(self, format: str, *args: object) -> None:
+            pass
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_address[1]}/"
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+async def test_iframe_target_can_be_connected_to(
+    browser: zd.Browser, cross_site_iframe_url: str
+) -> None:
+    """Connecting to iframe targets used to fail with a 404 (#275)."""
+    await browser.get(cross_site_iframe_url)
+
+    iframe_target = None
+    for _ in range(50):
+        iframe_target = next(
+            (
+                t
+                for t in browser.targets
+                if isinstance(t, zd.Tab) and t.type_ == "iframe"
+            ),
+            None,
+        )
+        if iframe_target is not None:
+            break
+        await asyncio.sleep(0.1)
+
+    assert iframe_target is not None, "no iframe target was discovered"
+    assert iframe_target.websocket_url.endswith(
+        f"/devtools/page/{iframe_target.target_id}"
+    )
+
+    text = await iframe_target.evaluate("document.getElementById('child').innerText")
+    assert text == "hello from iframe"
