@@ -1,13 +1,15 @@
 import asyncio
 import logging
 import os
+import re
 import signal
 import sys
 from contextlib import AbstractAsyncContextManager
 from enum import Enum
+from pathlib import Path
 from threading import Event
 from types import FrameType
-from typing import AsyncGenerator, Any
+from typing import AsyncGenerator, Any, Generator
 
 import pytest
 
@@ -40,6 +42,7 @@ class TestConfig:
     PAUSE_AFTER_TEST = os.getenv("ZENDRIVER_PAUSE_AFTER_TEST", "false") == "true"
     SANDBOX = os.getenv("ZENDRIVER_TEST_SANDBOX", "false") == "true"
     USE_WAYLAND = os.getenv("WAYLAND_DISPLAY") is not None
+    ARTIFACTS_DIR = Path(os.getenv("ZENDRIVER_TEST_ARTIFACTS_DIR", "test-artifacts"))
 
 
 class CreateBrowser(AbstractAsyncContextManager):  # type: ignore
@@ -128,6 +131,42 @@ async def _get_shared_browser(
     return browser
 
 
+TEST_REPORTS_KEY = pytest.StashKey[dict[str, pytest.TestReport]]()
+
+
+@pytest.hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_makereport(
+    item: pytest.Item, call: pytest.CallInfo[None]
+) -> Generator[None, pytest.TestReport, pytest.TestReport]:
+    report = yield
+    item.stash.setdefault(TEST_REPORTS_KEY, {})[report.when] = report
+    return report
+
+
+async def save_page_artifacts(
+    request: pytest.FixtureRequest, browser: zd.Browser
+) -> None:
+    if not request.node.get_closest_marker("external") or browser.stopped:
+        return
+    report = request.node.stash.get(TEST_REPORTS_KEY, {}).get("call")
+    if report is None or not report.failed:
+        return
+
+    directory = TestConfig.ARTIFACTS_DIR / re.sub(r"[^\w.-]", "_", request.node.nodeid)
+    directory.mkdir(parents=True, exist_ok=True)
+    for index, tab in enumerate(browser.tabs):
+        try:
+            (directory / f"tab-{index}.html").write_text(
+                await tab.get_content(), encoding="utf-8"
+            )
+            await tab.save_screenshot(directory / f"tab-{index}.png", format="png")
+            logger.info(
+                "Saved artifacts for tab %d (%s) to %s", index, tab.url, directory
+            )
+        except Exception:
+            logger.exception("Failed to save artifacts for tab %d (%s)", index, tab.url)
+
+
 @pytest.fixture
 async def browser(
     request: pytest.FixtureRequest,
@@ -140,8 +179,11 @@ async def browser(
     if request.node.get_closest_marker("fresh_browser"):
         async with create_browser(headless=headless) as browser:
             yield browser
+            await save_page_artifacts(request, browser)
     else:
-        yield await _get_shared_browser(shared_browsers, headless)
+        browser = await _get_shared_browser(shared_browsers, headless)
+        yield browser
+        await save_page_artifacts(request, browser)
 
     if TestConfig.PAUSE_AFTER_TEST:
         logger.info(

@@ -33,6 +33,13 @@ jobs:
           ZENDRIVER_TEST_WORKERS: "3"
         shell: bash
         run: ./scripts/test.sh
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts-${{ matrix.os }}
+          path: test-artifacts/
+          if-no-files-found: ignore
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         env:

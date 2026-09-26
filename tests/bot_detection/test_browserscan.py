@@ -1,4 +1,8 @@
+import pytest
+
 import zendriver as zd
+
+pytestmark = pytest.mark.external
 
 
 async def test_browserscan(browser: zd.Browser) -> None:

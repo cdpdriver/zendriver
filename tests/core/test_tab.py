@@ -378,6 +378,7 @@ async def test_expect_download(browser: zd.Browser) -> None:
         assert download.url is not None
 
 
+@pytest.mark.external
 async def test_intercept(browser: zd.Browser) -> None:
     tab = browser.main_tab
     assert tab is not None
@@ -396,6 +397,7 @@ async def test_intercept(browser: zd.Browser) -> None:
         # assert original_response["name"] == "Zendriver"
 
 
+@pytest.mark.external
 async def test_intercept_with_reload(browser: zd.Browser) -> None:
     tab = browser.main_tab
     assert tab is not None
@@ -419,6 +421,7 @@ async def test_intercept_with_reload(browser: zd.Browser) -> None:
         # assert original_response["name"] == "Zendriver"
 
 
+@pytest.mark.external
 async def test_handler_wont_reenable_without_params(browser: zd.Browser) -> None:
     # Test the custom enabled domains are not reenabled without params after handler is added
     tab = browser.main_tab
@@ -457,6 +460,7 @@ async def test_manual_disable_send(browser: zd.Browser) -> None:
     assert zd.cdp.network not in tab.enabled_domains
 
 
+@pytest.mark.external
 async def test_auto_enable_domain(browser: zd.Browser) -> None:
     tab = browser.main_tab
     assert tab is not None
