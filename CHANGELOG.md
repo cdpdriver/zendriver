@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Tabs and other targets now share the browser's websocket connection using flat CDP sessions (`Target.attachToTarget` with `flatten=True`) instead of opening a separate websocket per target. This fixes `HTTP 500` errors when connecting to iframe targets. @stephanlensky
+
 ### Removed
 
 ## [0.16.0] - 2026-08-16

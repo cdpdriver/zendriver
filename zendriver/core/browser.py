@@ -224,17 +224,9 @@ class Browser:
 
             elif isinstance(event, cdp.target.TargetCreated):
                 target_info = event.target_info
-                from .tab import Tab
-
-                new_target = Tab(
-                    (
-                        f"ws://{self.config.host}:{self.config.port}"
-                        f"/devtools/page"  # all types are 'page' internally in chrome apparently
-                        f"/{target_info.target_id}"
-                    ),
-                    target=target_info,
-                    browser=self,
-                )
+                if any(t.target_id == target_info.target_id for t in self.targets):
+                    return
+                new_target = self._create_tab(target_info)
 
                 self.targets.append(new_target)
 
@@ -546,6 +538,17 @@ class Browser:
         info = await self.connection.send(cdp.target.get_targets(), _is_update=True)
         return info
 
+    def _create_tab(self, target_info: cdp.target.TargetInfo) -> tab.Tab:
+        return tab.Tab(
+            (
+                f"ws://{self.config.host}:{self.config.port}"
+                f"/devtools/page"  # all types are 'page' internally in chrome apparently
+                f"/{target_info.target_id}"
+            ),
+            target=target_info,
+            browser=self,
+        )
+
     async def update_targets(self) -> None:
         targets: List[cdp.target.TargetInfo]
         targets = await self._get_targets()
@@ -555,17 +558,7 @@ class Browser:
                     existing_tab.target.__dict__.update(t.__dict__)
                     break
             else:
-                self.targets.append(
-                    Connection(
-                        (
-                            f"ws://{self.config.host}:{self.config.port}"
-                            f"/devtools/page"  # all types are 'page' somehow
-                            f"/{t.target_id}"
-                        ),
-                        target=t,
-                        _owner=self,
-                    )
-                )
+                self.targets.append(self._create_tab(t))
 
         await asyncio.sleep(0)
 

@@ -88,6 +88,7 @@ class Transaction(asyncio.Future[Any]):
         self.__cdp_obj__ = cdp_obj
         self.connection: Connection | None = None
         self.id: int | None = None
+        self.session_id: str | None = None
 
         self.method, *params = next(self.__cdp_obj__).values()
         if params:
@@ -96,7 +97,10 @@ class Transaction(asyncio.Future[Any]):
 
     @property
     def message(self) -> str:
-        return json.dumps({"method": self.method, "params": self.params, "id": self.id})
+        message = {"method": self.method, "params": self.params, "id": self.id}
+        if self.session_id is not None:
+            message["sessionId"] = self.session_id
+        return json.dumps(message)
 
     @property
     def has_exception(self) -> bool:
@@ -214,6 +218,11 @@ class Connection(metaclass=CantTouchThis):
         self.manually_enabled_domains: list[Any] = []
         self._last_result: list[Any] = []
         self.listener: Listener | None = None
+        self.session_id: str | None = None
+        self._session_parent: Connection | None = None
+        self._sessions: dict[str, Connection] = {}
+        self._inbox: asyncio.Queue[dict[str, Any]] | None = None
+        self._attach_lock = asyncio.Lock()
         self.__dict__.update(**kwargs)
 
     @property
@@ -333,6 +342,19 @@ class Connection(metaclass=CantTouchThis):
     def closed(self) -> bool:
         return self.websocket is None
 
+    @property
+    def _browser_connection(self) -> Connection | None:
+        """
+        the browser level connection which carries this target's flat session,
+        or None if this connection owns its websocket
+        """
+        if self._owner is None or self.target is None:
+            return None
+        browser_connection = self._owner.connection
+        if browser_connection is None or browser_connection is self:
+            return None
+        return browser_connection
+
     def add_handler(
         self,
         event_type_or_domain: Union[type, types.ModuleType],
@@ -419,8 +441,10 @@ class Connection(metaclass=CantTouchThis):
         opens the websocket connection. should not be called manually by users
         :return:
         """
-
-        if self.websocket is None:
+        browser_connection = self._browser_connection
+        if browser_connection is not None:
+            await self._attach_session(browser_connection)
+        elif self.websocket is None:
             try:
                 self.websocket = await websockets.connect(
                     self.websocket_url,
@@ -442,11 +466,67 @@ class Connection(metaclass=CantTouchThis):
         # registered again, so the browser sends those events
         await self._register_handlers()
 
+    async def _attach_session(self, browser_connection: Connection) -> None:
+        async with self._attach_lock:
+            if self.session_id is not None:
+                return
+            await browser_connection.aopen()
+            session_id = await browser_connection.send(
+                cdp.target.attach_to_target(self.target_id, flatten=True),  # type: ignore
+                _is_update=True,
+            )
+            self.session_id = session_id
+            self._session_parent = browser_connection
+            self._inbox = asyncio.Queue()
+            browser_connection._sessions[session_id] = self
+            self.websocket = browser_connection.websocket
+            self.listener = Listener(self)
+            logger.debug(
+                "attached to target %s (session %s)", self.target_id, session_id
+            )
+
+    def _detach_session(self) -> None:
+        """
+        forgets the flat session locally. the browser side session is not touched.
+        """
+        if self._session_parent is not None and self.session_id is not None:
+            self._session_parent._sessions.pop(self.session_id, None)
+        self.session_id = None
+        self._session_parent = None
+        self._inbox = None
+        self.websocket = None
+        if self.listener:
+            self.listener.cancel()
+        self.enabled_domains.clear()
+        self.manually_enabled_domains.clear()
+        self.__dict__.pop("_prep_headless_done", None)
+        self.__dict__.pop("_prep_expert_done", None)
+        for tx in self.mapper.values():
+            if not tx.done():
+                tx.set_exception(ProtocolException("target session was detached"))
+        self.mapper.clear()
+
     async def aclose(self) -> None:
         """
         closes the websocket connection. should not be called manually by users.
         """
+        if self._session_parent is not None:
+            browser_connection = self._session_parent
+            session_id = self.session_id
+            self._detach_session()
+            if not browser_connection.closed:
+                try:
+                    await browser_connection.send(
+                        cdp.target.detach_from_target(session_id=session_id),  # type: ignore
+                        _is_update=True,
+                    )
+                except ProtocolException:
+                    logger.debug("could not detach session %s", session_id)
+            logger.debug("\n❌ detached from target %s", self.target_id)
+            return
         if self.websocket is not None:
+            for session in list(self._sessions.values()):
+                session._detach_session()
             if self.listener and self.listener.running:
                 self.listener.cancel()
                 self.enabled_domains.clear()
@@ -576,6 +656,9 @@ class Connection(metaclass=CantTouchThis):
             await self._register_handlers()
             if action == "disable":
                 self._update_manual_domain(domain_name, action)
+        if self.websocket is None:
+            raise ProtocolException("target session was detached")
+        tx.session_id = self.session_id
         await self.websocket.send(tx.message)
         try:
             return await tx  # type: ignore
@@ -707,6 +790,30 @@ class Connection(metaclass=CantTouchThis):
             await self._send_oneshot(cdp.page.enable())
         setattr(self, "_prep_expert_done", True)
 
+    async def _receive_message(self) -> dict[str, Any] | None:
+        """
+        returns the next message addressed to this connection, or None when
+        the received message was routed to one of the flat sessions instead
+        """
+        if self._inbox is not None:
+            return await self._inbox.get()
+        if self.websocket is None:
+            raise ValueError("no websocket connection")
+
+        message: dict[str, Any] = json.loads(await self.websocket.recv())
+        session_id = message.get("sessionId")
+        if session_id is not None:
+            session = self._sessions.get(session_id)
+            if session is not None and session._inbox is not None:
+                session._inbox.put_nowait(message)
+            return None
+
+        if message.get("method") == "Target.detachedFromTarget":
+            session = self._sessions.get(message["params"]["sessionId"])
+            if session is not None:
+                session._detach_session()
+        return message
+
     async def _send_oneshot(self, cdp_obj: Any) -> Any:
         if self.websocket is None:
             raise ValueError("no websocket connection")
@@ -714,6 +821,7 @@ class Connection(metaclass=CantTouchThis):
         tx = Transaction(cdp_obj)
         tx.connection = self
         tx.id = -2
+        tx.session_id = self.session_id
         self.mapper.update({tx.id: tx})
         await self.websocket.send(tx.message)
         try:
@@ -772,12 +880,10 @@ class Listener:
 
     async def listener_loop(self) -> None:
         while True:
-            if self.connection.websocket is None:
-                raise ValueError("no websocket connection")
-
             try:
-                msg = await asyncio.wait_for(
-                    self.connection.websocket.recv(), self.time_before_considered_idle
+                message = await asyncio.wait_for(
+                    self.connection._receive_message(),
+                    self.time_before_considered_idle,
                 )
             except asyncio.TimeoutError:
                 self.idle.set()
@@ -789,11 +895,13 @@ class Listener:
                     "task was cancelled while reading websocket, breaking loop"
                 )
                 break
-            except websockets.exceptions.ConnectionClosedError as e:
+            except websockets.exceptions.ConnectionClosed as e:
                 # break on connection closed
                 logger.debug(
                     "connection listener exception while reading websocket:\n%s", e
                 )
+                for session in list(self.connection._sessions.values()):
+                    session._detach_session()
                 break
 
             if not self.running:
@@ -801,10 +909,12 @@ class Listener:
                 # break this loop
                 break
 
+            if message is None:
+                continue
+
             # since we are at this point, we are not "idle" anymore.
             self.idle.clear()
 
-            message = json.loads(msg)
             if "id" in message:
                 # response to our command
                 if message["id"] in self.connection.mapper:
