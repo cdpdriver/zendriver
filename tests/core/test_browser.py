@@ -160,3 +160,13 @@ async def test_cookies_save_and_load_round_trip(
 
     restored = {cookie.name: cookie.value for cookie in await browser.cookies.get_all()}
     assert restored.get("kept") == "yes"
+
+
+async def test_browser_starts_with_lang_option(
+    create_browser: type[CreateBrowser],
+) -> None:
+    """Setting `lang` used to raise ValueError from Browser.start (#262)."""
+    async with create_browser(lang="de-DE") as browser:
+        assert "--lang=de-DE" in browser.config()
+        page = await browser.get("about:blank")
+        assert await page.evaluate("1 + 1") == 2
