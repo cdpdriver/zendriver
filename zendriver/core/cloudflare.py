@@ -217,11 +217,12 @@ async def verify_cf(
         if challenge_selector
         else "input[name=cf-turnstile-response]"
     )
-    input_element = await host_element.query_selector(current_selector)
+
+    input_element = await tab.query_selector(current_selector)
 
     if not input_element and not challenge_selector:
         current_selector = "input[name=cf_challenge_response]"
-        input_element = await host_element.query_selector(current_selector)
+        input_element = await tab.query_selector(current_selector)
 
     if not input_element:
         return
@@ -229,14 +230,14 @@ async def verify_cf(
     checkbox_clicked = False
 
     async def check_input(
-        input_el: Element, current_sltr: str, host_el: Element, ckbx_clckd: bool
+        input_el: Element, current_sltr: str, ckbx_clckd: bool
     ) -> bool:
         """Checks if the input element is still present and without a value."""
         if not input_el:
             return False
         try:
             await input_el
-            fresh_input = await host_el.query_selector(current_sltr)
+            fresh_input = await tab.query_selector(current_sltr)
         except Exception as e:
             raise Exception(f"Error checking input element: {e}.")
         if (input_el.attrs.get("value") or not fresh_input) and ckbx_clckd:
@@ -248,7 +249,6 @@ async def verify_cf(
     while await check_input(
         input_el=input_element,
         current_sltr=current_selector,
-        host_el=host_element,
         ckbx_clckd=checkbox_clicked,
     ):
         if loop.time() - start_time >= timeout:
