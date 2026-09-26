@@ -6,7 +6,7 @@ from pytest_mock import MockerFixture
 from tests.docs import import_from_path
 
 # the tutorial code stops the browser when it is done
-pytestmark = pytest.mark.fresh_browser
+pytestmark = [pytest.mark.fresh_browser, pytest.mark.external]
 
 
 async def test_cdp_tutorial_1(

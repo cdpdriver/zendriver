@@ -56,6 +56,7 @@ asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
 markers = [
     "fresh_browser: start a new browser for this test instead of reusing the shared one",
+    "external: loads pages from external websites; saves page artifacts on failure",
 ]
 log_level = "INFO"
 
