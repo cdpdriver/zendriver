@@ -30,8 +30,8 @@ dependencies = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "mkdocs-material>=9.5.42",
     "mkdocstrings[python]>=0.26.2",
     "mypy>=1.12.0",
