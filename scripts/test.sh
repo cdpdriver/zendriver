@@ -2,9 +2,15 @@
 
 set -e
 
+workers="${ZENDRIVER_TEST_WORKERS:-auto}"
+if [ "$ZENDRIVER_PAUSE_AFTER_TEST" = "true" ]; then
+  # pausing between tests only works when running in a single process
+  workers=0
+fi
+
 command=( "$@" )
 if [ "${#command[@]}" -eq 0 ]; then
-  command=( "pytest --cov=zendriver --cov-report=xml" )
+  command=( pytest -n "$workers" --cov=zendriver --cov-report=xml )
 fi
 
 chrome_executable=$(uv run python -c "from zendriver.core.config import find_executable;print(find_executable())")

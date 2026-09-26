@@ -35,7 +35,7 @@ dev = [
     "mkdocs-material>=9.5.42",
     "mkdocstrings[python]>=0.26.2",
     "mypy>=1.12.0",
-    "pytest-asyncio>=0.24.0",
+    "pytest-asyncio>=1.4.0",
     "pytest-cov>=6.1.1",
     "pytest>=8.3.3",
     "pyyaml>=6.0.2",
@@ -47,11 +47,16 @@ dev = [
     "inflection>=0.5.1",
     "psutil>=7.1.0",
     "types-psutil>=7.0.0.20251001",
+    "pytest-xdist>=3.8.0",
 ]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+markers = [
+    "fresh_browser: start a new browser for this test instead of reusing the shared one",
+]
 log_level = "INFO"
 
 [tool.ruff]

@@ -79,7 +79,7 @@ async def test_find_times_out_if_element_not_found(browser: zd.Browser) -> None:
     tab = await browser.get(sample_file("groceries.html"))
 
     with pytest.raises(asyncio.TimeoutError):
-        await tab.find("Clothes", timeout=1)
+        await tab.find("Clothes", timeout=0.2)
 
 
 async def test_select(browser: zd.Browser) -> None:
@@ -202,7 +202,7 @@ async def test_xpath(browser: zd.Browser) -> None:
 async def test_xpath_no_results(browser: zd.Browser) -> None:
     tab = await browser.get(sample_file("groceries.html"))
 
-    results = await tab.xpath('//li[@aria-label="Nonexistent Item"]')
+    results = await tab.xpath('//li[@aria-label="Nonexistent Item"]', timeout=0.5)
 
     assert len(results) == 0
 

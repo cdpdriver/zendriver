@@ -49,8 +49,8 @@ class CreateBrowser(AbstractAsyncContextManager):  # type: ignore
         headless: bool = True,
         sandbox: bool = TestConfig.SANDBOX,
         browser_args: list[str] | None = None,
-        browser_connection_max_tries: int = 15,
-        browser_connection_timeout: float = 3.0,
+        browser_connection_max_tries: int = 180,
+        browser_connection_timeout: float = 0.25,
         lang: str | None = None,
     ):
         args = []
@@ -101,14 +101,47 @@ def headless(request: pytest.FixtureRequest) -> bool:
     return request.param["headless"]  # type: ignore
 
 
+@pytest.fixture(scope="session")
+async def shared_browsers() -> AsyncGenerator[dict[bool, zd.Browser], None]:
+    browsers: dict[bool, zd.Browser] = {}
+    yield browsers
+    for browser in browsers.values():
+        await browser.stop()
+
+
+async def _get_shared_browser(
+    browsers: dict[bool, zd.Browser], headless: bool
+) -> zd.Browser:
+    browser = browsers.get(headless)
+    if browser is None or browser.stopped:
+        browser = await CreateBrowser(headless=headless).__aenter__()
+        browsers[headless] = browser
+        return browser
+
+    # closing the previous tabs also drops any handlers or overrides tests added to them
+    new_tab = await browser.get("about:blank", new_tab=True)
+    for tab in browser.tabs:
+        if tab is not new_tab:
+            await tab.close()
+    await browser.cookies.clear()
+    assert browser.tabs == [new_tab]
+    return browser
+
+
 @pytest.fixture
 async def browser(
-    headless: bool, create_browser: type[CreateBrowser]
+    request: pytest.FixtureRequest,
+    headless: bool,
+    create_browser: type[CreateBrowser],
+    shared_browsers: dict[bool, zd.Browser],
 ) -> AsyncGenerator[zd.Browser, None]:
     NEXT_TEST_EVENT.clear()
 
-    async with create_browser(headless=headless) as browser:
-        yield browser
+    if request.node.get_closest_marker("fresh_browser"):
+        async with create_browser(headless=headless) as browser:
+            yield browser
+    else:
+        yield await _get_shared_browser(shared_browsers, headless)
 
     if TestConfig.PAUSE_AFTER_TEST:
         logger.info(

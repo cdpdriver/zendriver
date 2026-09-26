@@ -319,7 +319,7 @@ class Browser:
             )
 
         if self._process or self._process_pid:
-            if self._process and self._process.returncode is not None:
+            if self._process and self._process.poll() is not None:
                 return await self.create(config=self.config)
             warnings.warn("ignored! this call has no effect when already running.")
             return self
@@ -371,12 +371,13 @@ class Browser:
 
         self._http = HTTPApi((self.config.host, self.config.port))
         util.get_registered_instances().add(self)
-        await asyncio.sleep(self.config.browser_connection_timeout)
+        # try to connect immediately, then retry at the configured interval
+        connected = await self.test_connection()
         for _ in range(self.config.browser_connection_max_tries):
-            if await self.test_connection():
+            if connected:
                 break
-
             await asyncio.sleep(self.config.browser_connection_timeout)
+            connected = await self.test_connection()
 
         if not self.info:
             if self._process is not None:
@@ -624,7 +625,7 @@ class Browser:
                 logger.debug("gracefully stopping browser process")
                 # wait 3 seconds for the browser to stop
                 for _ in range(12):
-                    if self._process.returncode is not None:
+                    if self._process.poll() is not None:
                         break
                     await asyncio.sleep(0.25)
                 else:
