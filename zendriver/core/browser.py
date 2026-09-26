@@ -230,7 +230,7 @@ class Browser:
                 new_target = Tab(
                     (
                         f"ws://{self.config.host}:{self.config.port}"
-                        f"/devtools/{target_info.type_ or 'page'}"  # all types are 'page' internally in chrome apparently
+                        f"/devtools/page"  # all types are 'page' internally in chrome apparently
                         f"/{target_info.target_id}"
                     ),
                     target=target_info,
