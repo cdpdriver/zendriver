@@ -51,6 +51,7 @@ class CreateBrowser(AbstractAsyncContextManager):  # type: ignore
         browser_args: list[str] | None = None,
         browser_connection_max_tries: int = 15,
         browser_connection_timeout: float = 3.0,
+        lang: str | None = None,
     ):
         args = []
         if not headless and TestConfig.USE_WAYLAND:
@@ -67,6 +68,7 @@ class CreateBrowser(AbstractAsyncContextManager):  # type: ignore
             browser_args=args,
             browser_connection_max_tries=browser_connection_max_tries,
             browser_connection_timeout=browser_connection_timeout,
+            lang=lang,
         )
 
         self.browser: zd.Browser | None = None
