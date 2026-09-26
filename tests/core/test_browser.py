@@ -15,6 +15,9 @@ import zendriver as zd
 from tests.conftest import CreateBrowser
 from zendriver import cdp
 
+# these tests exercise the browser lifecycle (e.g. stopping it)
+pytestmark = pytest.mark.fresh_browser
+
 
 async def test_connection_error_raises_exception_and_logs_stderr(
     create_browser: type[CreateBrowser],
