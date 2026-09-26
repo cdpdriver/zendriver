@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix `verify_cf()` never clicking the Turnstile checkbox on Turnstile markup where the `cf-turnstile-response`/`cf_challenge_response` input is rendered as a document-level sibling of the challenge's shadow-DOM host rather than nested inside it. The lookup was scoped to `host_element`, always found nothing, and `verify_cf()` returned before ever calling `mouse_click`. Now queries the input from the document (`tab.query_selector`) instead. @A-Nolan
+
 ### Added
 
 ### Changed
