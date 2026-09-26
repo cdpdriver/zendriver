@@ -11,7 +11,18 @@ import typing
 import urllib.parse
 import warnings
 import webbrowser
-from typing import TYPE_CHECKING, Any, List, Literal, Optional, Tuple, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Awaitable,
+    Callable,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from .intercept import BaseFetchInterception
 from .. import cdp
@@ -188,12 +199,58 @@ class Tab(Connection):
 
         webbrowser.open(self.inspector_url)
 
+    async def get_frames(self) -> List[Tab]:
+        """
+        get the out-of-process iframes (for example cross-origin iframes) inside this tab,
+        including nested ones.
+
+        each frame is returned as a :py:obj:`Tab`, so it can be used like any other tab
+        (``select``, ``find``, ``evaluate``, ...).
+
+        iframes rendered in the same process as their parent are not returned, since
+        their elements are already reachable from the parent tab, for example using
+        ``select_all(selector, include_frames=True)``.
+        """
+        if not self.browser:
+            raise RuntimeError("Browser not yet started. use await browser.start()")
+
+        await self.browser.update_targets()
+        frame_tree = await self.send(cdp.page.get_frame_tree())
+        frame_ids = {tree.frame.id_ for tree in util.flatten_frame_tree(frame_tree)}
+
+        frames: List[Tab] = []
+        for target in self.browser.targets:
+            if (
+                isinstance(target, Tab)
+                and target.type_ == "iframe"
+                and target.target is not None
+                and target.target.parent_frame_id in frame_ids
+            ):
+                frames.append(target)
+                try:
+                    frames.extend(await target.get_frames())
+                except ProtocolException:
+                    logger.debug("could not get frames of %s", target, exc_info=True)
+        return list({frame.target_id: frame for frame in frames}.values())
+
+    async def _search_frames(
+        self, search: Callable[[Tab], Awaitable[List[Element]]]
+    ) -> List[Element]:
+        items: List[Element] = []
+        for frame in await self.get_frames():
+            try:
+                items.extend(await search(frame))
+            except ProtocolException:
+                logger.debug("could not search frame %s", frame, exc_info=True)
+        return items
+
     async def find(
         self,
         text: str,
         best_match: bool = True,
         return_enclosing_element: bool = True,
         timeout: Union[int, float] = 10,
+        include_frames: bool = False,
     ) -> Element:
         """
         find single element by text
@@ -222,11 +279,18 @@ class Tab(Connection):
                  # ignore the return_enclosing_element flag if the found node is NOT a text node but a
                  # regular element (one having a tag) in which case that is exactly what we need.
         :param timeout: raise timeout exception when after this many seconds nothing is found.
+        :param include_frames: whether to also search out-of-process iframes (see :py:meth:`get_frames`).
         """
         loop = asyncio.get_running_loop()
         start_time = loop.time()
 
         text = text.strip()
+
+        async def find_in_frame(frame: Tab) -> List[Element]:
+            item = await frame.find_element_by_text(
+                text, best_match, return_enclosing_element
+            )
+            return [item] if item else []
 
         while True:
             item = await self.find_element_by_text(
@@ -234,6 +298,11 @@ class Tab(Connection):
             )
             if item:
                 return item
+
+            if include_frames:
+                items = await self._search_frames(find_in_frame)
+                if items:
+                    return items[0]
 
             if loop.time() - start_time > timeout:
                 raise asyncio.TimeoutError(
@@ -246,6 +315,7 @@ class Tab(Connection):
         self,
         selector: str,
         timeout: Union[int, float] = 10,
+        include_frames: bool = False,
     ) -> Element:
         """
         find single element by css selector.
@@ -253,6 +323,7 @@ class Tab(Connection):
 
         :param selector: css selector, eg a[href], button[class*=close], a > img[src]
         :param timeout: raise timeout exception when after this many seconds nothing is found.
+        :param include_frames: whether to also search iframes, including out-of-process iframes (see :py:meth:`get_frames`).
         """
         loop = asyncio.get_running_loop()
         start_time = loop.time()
@@ -260,12 +331,14 @@ class Tab(Connection):
         selector = selector.strip()
 
         while True:
-            item = await self.query_selector(selector)
-            if isinstance(item, list):
+            if include_frames:
+                items = await self._query_selector_all_with_frames(selector)
+                if items:
+                    return items[0]
+            else:
+                item = await self.query_selector(selector)
                 if item:
-                    return item[0]
-            elif item:
-                return item
+                    return item
 
             if loop.time() - start_time > timeout:
                 raise asyncio.TimeoutError(
@@ -278,6 +351,7 @@ class Tab(Connection):
         self,
         text: str,
         timeout: Union[int, float] = 10,
+        include_frames: bool = False,
     ) -> List[Element]:
         """
         find multiple elements by text
@@ -285,6 +359,7 @@ class Tab(Connection):
 
         :param text: text to search for. note: script contents are also considered text
         :param timeout: raise timeout exception when after this many seconds nothing is found.
+        :param include_frames: whether to also search out-of-process iframes (see :py:meth:`get_frames`).
         """
         loop = asyncio.get_running_loop()
         now = loop.time()
@@ -293,6 +368,12 @@ class Tab(Connection):
 
         while True:
             items = await self.find_elements_by_text(text)
+            if include_frames:
+                items.extend(
+                    await self._search_frames(
+                        lambda frame: frame.find_elements_by_text(text)
+                    )
+                )
             if items:
                 return items
 
@@ -316,7 +397,7 @@ class Tab(Connection):
 
         :param selector: css selector, eg a[href], button[class*=close], a > img[src]
         :param timeout: raise timeout exception when after this many seconds nothing is found.
-        :param include_frames: whether to include results in iframes.
+        :param include_frames: whether to include results in iframes, including out-of-process iframes (see :py:meth:`get_frames`).
         """
 
         loop = asyncio.get_running_loop()
@@ -324,10 +405,10 @@ class Tab(Connection):
         selector = selector.strip()
 
         while True:
-            items = []
-            items.extend(
-                await self.query_selector_all(selector, _include_frames=include_frames)
-            )
+            if include_frames:
+                items = await self._query_selector_all_with_frames(selector)
+            else:
+                items = await self.query_selector_all(selector)
 
             if items:
                 return items
@@ -338,6 +419,15 @@ class Tab(Connection):
                 )
 
             await self.sleep(0.5)
+
+    async def _query_selector_all_with_frames(self, selector: str) -> List[Element]:
+        items = await self.query_selector_all(selector, _include_frames=True)
+        items.extend(
+            await self._search_frames(
+                lambda frame: frame.query_selector_all(selector, _include_frames=True)
+            )
+        )
+        return items
 
     async def xpath(self, xpath: str, timeout: float = 2.5) -> List[Element]:  # noqa
         """

@@ -1,15 +1,17 @@
 import asyncio
+import http.server
 import logging
 import os
 import re
 import signal
 import sys
+import threading
 from contextlib import AbstractAsyncContextManager
 from enum import Enum
 from pathlib import Path
 from threading import Event
 from types import FrameType
-from typing import AsyncGenerator, Any, Generator
+from typing import AsyncGenerator, Any, Generator, Iterator
 
 import pytest
 
@@ -165,6 +167,58 @@ async def save_page_artifacts(
             )
         except Exception:
             logger.exception("Failed to save artifacts for tab %d (%s)", index, tab.url)
+
+
+@pytest.fixture
+def cross_site_iframe_url() -> Iterator[str]:
+    """Serve a page on 127.0.0.1 embedding an iframe from localhost, which in turn
+    embeds an iframe from 127.0.0.1 again.
+
+    Each iframe is a different site than its parent, so Chrome's site isolation
+    puts it in another process and exposes it as a separate "iframe" target.
+    """
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            port = server.server_address[1]
+            if self.path == "/child":
+                body = (
+                    "<html><body>"
+                    "<p id='child'>hello from iframe</p>"
+                    "<button id='button' onclick=\"this.innerText='clicked'\">"
+                    "click me</button>"
+                    f"<iframe id='grandchild-frame' src='http://127.0.0.1:{port}/grandchild'></iframe>"
+                    "</body></html>"
+                )
+            elif self.path == "/grandchild":
+                body = (
+                    "<html><body><p id='grandchild'>hello from nested iframe</p>"
+                    "</body></html>"
+                )
+            else:
+                body = (
+                    "<html><body>"
+                    f"<iframe id='child-frame' src='http://localhost:{port}/child'></iframe>"
+                    "</body></html>"
+                )
+            data = body.encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+        def log_message(self, format: str, *args: object) -> None:
+            pass
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_address[1]}/"
+    finally:
+        server.shutdown()
+        server.server_close()
 
 
 @pytest.fixture

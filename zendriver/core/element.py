@@ -190,6 +190,21 @@ class Element:
     def tab(self) -> Tab:
         return self._tab
 
+    async def get_frame(self) -> Tab | None:
+        """
+        get the frame of this iframe element as a :py:obj:`Tab`, when the iframe runs
+        in its own process (for example cross-origin iframes) and therefore has no
+        :py:obj:`content_document`.
+
+        returns None if this element is not such an iframe.
+        """
+        if self.frame_id is None:
+            return None
+        for frame in await self._tab.get_frames():
+            if str(frame.target_id) == str(self.frame_id):
+                return frame
+        return None
+
     @deprecated(reason="Use get() instead")
     def __getattr__(self, item: str) -> str | None:
         # if attribute is not found on the element python object

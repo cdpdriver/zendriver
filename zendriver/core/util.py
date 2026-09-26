@@ -162,6 +162,14 @@ def filter_recurse_all(
     return out
 
 
+def flatten_frame_tree(
+    tree: cdp.page.FrameTree,
+) -> typing.Generator[cdp.page.FrameTree, None, None]:
+    yield tree
+    for child in tree.child_frames or []:
+        yield from flatten_frame_tree(child)
+
+
 def filter_recurse(
     doc: cdp.dom.Node, predicate: Callable[[cdp.dom.Node], bool]
 ) -> cdp.dom.Node | None:

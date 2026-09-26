@@ -1,12 +1,9 @@
 import asyncio
 import gc
-import http.server
 import pathlib
 import pickle
 import subprocess
-import threading
 import weakref
-from typing import Iterator
 
 import psutil
 import pytest
@@ -210,45 +207,6 @@ async def test_browser_starts_with_lang_option(
         assert "--lang=de-DE" in browser.config()
         page = await browser.get("about:blank")
         assert await page.evaluate("1 + 1") == 2
-
-
-@pytest.fixture
-def cross_site_iframe_url() -> Iterator[str]:
-    """Serve a page on 127.0.0.1 embedding an iframe from localhost.
-
-    The two hosts are different sites, so Chrome's site isolation puts the
-    iframe in its own process and exposes it as a separate "iframe" target.
-    """
-
-    class Handler(http.server.BaseHTTPRequestHandler):
-        def do_GET(self) -> None:
-            port = server.server_address[1]
-            if self.path == "/child":
-                body = "<html><body><p id='child'>hello from iframe</p></body></html>"
-            else:
-                body = (
-                    "<html><body>"
-                    f"<iframe src='http://localhost:{port}/child'></iframe>"
-                    "</body></html>"
-                )
-            data = body.encode()
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html")
-            self.send_header("Content-Length", str(len(data)))
-            self.end_headers()
-            self.wfile.write(data)
-
-        def log_message(self, format: str, *args: object) -> None:
-            pass
-
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    try:
-        yield f"http://127.0.0.1:{server.server_address[1]}/"
-    finally:
-        server.shutdown()
-        server.server_close()
 
 
 async def test_iframe_target_can_be_connected_to(
