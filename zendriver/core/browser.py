@@ -358,9 +358,6 @@ class Browser:
                 % ",".join(str(_) for _ in self.config._extensions)
             )  # noqa
 
-        if self.config.lang is not None:
-            self.config.add_argument(f"--lang={self.config.lang}")
-
         exe = self.config.browser_executable_path
         params = self.config()
         params.append("about:blank")
@@ -839,10 +836,10 @@ class HTTPApi:
         return await self._request(endpoint)
 
     async def post(self, endpoint: str, data: dict[str, str]) -> Any:
-        return await self._request(endpoint, method="post", data=data)
+        return await self._request(endpoint, method="POST", data=data)
 
     async def _request(
-        self, endpoint: str, method: str = "get", data: dict[str, str] | None = None
+        self, endpoint: str, method: str = "GET", data: dict[str, str] | None = None
     ) -> Any:
         url = urllib.parse.urljoin(
             self.api, f"json/{endpoint}" if endpoint else "/json"
