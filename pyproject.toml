@@ -47,6 +47,7 @@ dev = [
     "inflection>=0.5.1",
     "psutil>=7.1.0",
     "types-psutil>=7.0.0.20251001",
+    "pytest-xdist>=3.8.0",
 ]
 
 [tool.pytest.ini_options]
