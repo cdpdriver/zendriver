@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix HTTP method casing to resolve CDP connection issues on some Windows installations @fitudao3788
 - Fix `404 Not Found` WebSocket connection error for `iframe` targets by routing all target connections to `/devtools/page/<target_id>` in `Browser._handle_target_update`.
 - Fix `Browser.stop()` always waiting 3 seconds and then force-killing the browser process, even when the browser had already exited gracefully. The exit check read `Popen.returncode`, which is only updated by `poll()`/`wait()`. @stephanlensky
+- Fix `Browser.start()` always sleeping for `browser_connection_timeout` before the first connection attempt. It now tries to connect immediately and only waits between retries. @stephanlensky
 
 ### Added
 

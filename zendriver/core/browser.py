@@ -371,12 +371,13 @@ class Browser:
 
         self._http = HTTPApi((self.config.host, self.config.port))
         util.get_registered_instances().add(self)
-        await asyncio.sleep(self.config.browser_connection_timeout)
+        # try to connect immediately, then retry at the configured interval
+        connected = await self.test_connection()
         for _ in range(self.config.browser_connection_max_tries):
-            if await self.test_connection():
+            if connected:
                 break
-
             await asyncio.sleep(self.config.browser_connection_timeout)
+            connected = await self.test_connection()
 
         if not self.info:
             if self._process is not None:
