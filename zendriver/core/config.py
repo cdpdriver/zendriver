@@ -392,6 +392,9 @@ def find_executable(browser: BrowserType = "auto") -> PathLike:
                     case "darwin":
                         candidates += [
                             "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+                            "/Applications/Microsoft Edge Beta.app/Contents/MacOS/Microsoft Edge Beta",
+                            "/Applications/Microsoft Edge Dev.app/Contents/MacOS/Microsoft Edge Dev",
+                            "/Applications/Microsoft Edge Canary.app/Contents/MacOS/Microsoft Edge Canary",
                         ]
             else:
                 for item2 in map(
