@@ -12,7 +12,10 @@ async def test_visible_events(browser: zd.Browser) -> None:
     text_part = await main_page.find('//*[@id="editor"]')
 
     await text_part.mouse_click("left")
-    await main_page.sleep(1)  # give some time to focus the text part
+    for _ in range(50):
+        if await main_page.evaluate("document.activeElement.id") == "editor":
+            break
+        await main_page.sleep(0.1)
     await text_part.send_keys("Hello, world!")
 
     payloads = KeyEvents.from_mixed_input(

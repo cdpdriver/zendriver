@@ -104,7 +104,6 @@ async def test_browser_stopped_is_true_when_stopped_externally(
     browser: zd.Browser,
 ) -> None:
     await browser.get(sample_file("groceries.html"))
-    await browser.sleep(2)
     assert not browser.stopped
     process = browser._process
     process_id = browser._process_pid
