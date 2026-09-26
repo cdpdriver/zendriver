@@ -73,6 +73,22 @@ async def test_browser_stop_can_be_called_multiple_times(browser: zd.Browser) ->
     assert browser.stopped
 
 
+async def test_browser_stop_exits_gracefully_without_kill(
+    browser: zd.Browser, mocker: MockerFixture
+) -> None:
+    assert browser._process is not None
+    kill = mocker.spy(browser._process, "kill")
+
+    loop = asyncio.get_running_loop()
+    start = loop.time()
+    await browser.stop()
+    elapsed = loop.time() - start
+
+    assert browser.stopped
+    kill.assert_not_called()
+    assert elapsed < 2
+
+
 async def test_browser_stopped_is_true_after_calling_stop(browser: zd.Browser) -> None:
     await browser.get("https://example.com")
     await browser.stop()
