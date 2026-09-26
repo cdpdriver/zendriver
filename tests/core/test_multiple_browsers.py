@@ -1,5 +1,6 @@
 import zendriver as zd
 from tests.conftest import CreateBrowser
+from tests.sample_data import sample_file
 
 
 async def test_multiple_browsers_diff_userdata(
@@ -29,23 +30,23 @@ async def test_multiple_browsers_diff_userdata(
 
     # Awaiting the page alone leaves this flaky on a loaded runner: the cached target still holds
     # the pre-navigation title, which is the URL, so wait for the load and then refresh it.
-    page1 = await browser1.get("https://example.com/one")
+    page1 = await browser1.get(sample_file("groceries.html"))
     await page1.wait_for_ready_state("complete")
     await page1.update_target()
     assert page1.target
-    assert page1.target.title == "Example Domain"
+    assert page1.target.title == "Grocery List"
 
-    page2 = await browser2.get("https://example.com/two")
+    page2 = await browser2.get(sample_file("groceries.html"))
     await page2.wait_for_ready_state("complete")
     await page2.update_target()
     assert page2.target
-    assert page2.target.title == "Example Domain"
+    assert page2.target.title == "Grocery List"
 
-    page3 = await browser3.get("https://example.com/three")
+    page3 = await browser3.get(sample_file("groceries.html"))
     await page3.wait_for_ready_state("complete")
     await page3.update_target()
     assert page3.target
-    assert page3.target.title == "Example Domain"
+    assert page3.target.title == "Grocery List"
 
     await browser1.stop()
     await browser2.stop()

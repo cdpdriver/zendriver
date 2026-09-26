@@ -13,6 +13,7 @@ from pytest_mock import MockerFixture
 
 import zendriver as zd
 from tests.conftest import CreateBrowser
+from tests.sample_data import sample_file
 from zendriver import cdp
 
 # these tests exercise the browser lifecycle (e.g. stopping it)
@@ -38,22 +39,23 @@ async def test_connection_error_raises_exception_and_logs_stderr(
 
 
 async def test_get_content_gets_html_content(browser: zd.Browser) -> None:
-    page = await browser.get("https://example.com")
+    page = await browser.get(sample_file("groceries.html"))
     content = await page.get_content()
     assert content.lower().startswith("<!doctype html>")
 
 
 async def test_update_target_sets_target_title(browser: zd.Browser) -> None:
-    page = await browser.get("https://example.com")
+    page = await browser.get(sample_file("groceries.html"))
+    await page.wait_for_ready_state("complete")
     await page.update_target()
     assert page.target
-    assert page.target.title == "Example Domain"
+    assert page.target.title == "Grocery List"
 
 
 async def test_browser_stop_can_be_called_on_a_closed_connection(
     browser: zd.Browser,
 ) -> None:
-    await browser.get("https://example.com")
+    await browser.get(sample_file("groceries.html"))
 
     assert browser.connection is not None
     assert not browser.connection.closed
@@ -67,7 +69,7 @@ async def test_browser_stop_can_be_called_on_a_closed_connection(
 
 
 async def test_browser_stop_can_be_called_multiple_times(browser: zd.Browser) -> None:
-    await browser.get("https://example.com")
+    await browser.get(sample_file("groceries.html"))
 
     await browser.stop()
     assert browser.stopped
@@ -93,7 +95,7 @@ async def test_browser_stop_exits_gracefully_without_kill(
 
 
 async def test_browser_stopped_is_true_after_calling_stop(browser: zd.Browser) -> None:
-    await browser.get("https://example.com")
+    await browser.get(sample_file("groceries.html"))
     await browser.stop()
     assert browser.stopped
 
@@ -101,7 +103,7 @@ async def test_browser_stopped_is_true_after_calling_stop(browser: zd.Browser) -
 async def test_browser_stopped_is_true_when_stopped_externally(
     browser: zd.Browser,
 ) -> None:
-    await browser.get("https://example.com")
+    await browser.get(sample_file("groceries.html"))
     await browser.sleep(2)
     assert not browser.stopped
     process = browser._process
