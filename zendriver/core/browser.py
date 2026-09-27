@@ -16,7 +16,7 @@ import urllib.parse
 import urllib.request
 import warnings
 from collections import defaultdict
-from typing import List, Tuple, Union, Any
+from typing import Any, List, Literal, Tuple, Union, overload
 
 import asyncio_atexit
 
@@ -148,7 +148,7 @@ class Browser:
         if not self.info:
             raise RuntimeError("Browser not yet started. use await browser.start()")
 
-        return self.info.webSocketDebuggerUrl  # type: ignore
+        return str(self.info.webSocketDebuggerUrl)
 
     @property
     def main_tab(self) -> tab.Tab | None:
@@ -165,8 +165,11 @@ class Browser:
         """returns the current targets which are of type "page"
         :return:
         """
-        tabs = filter(lambda item: item.type_ == "page", self.targets)
-        return list(tabs)  # type: ignore
+        return [
+            target
+            for target in self.targets
+            if isinstance(target, tab.Tab) and target.type_ == "page"
+        ]
 
     async def get_tab(self, text: str) -> tab.Tab | None:
         """
@@ -311,8 +314,10 @@ class Browser:
                 # use the tab to navigate to new url
                 await connection.send(cdp.page.navigate(url))
             connection.browser = self
+            if connection.target_id is None:
+                raise RuntimeError("Tab has no target to wait for navigation on")
 
-            await asyncio.wait_for(wait_for_navigation(connection.target_id), 10)  # type: ignore
+            await asyncio.wait_for(wait_for_navigation(connection.target_id), 10)
         finally:
             self.connection.remove_handlers(event_type, get_handler)
 
@@ -771,7 +776,21 @@ class Browser:
 class CookieJar:
     def __init__(self, browser: Browser):
         self._browser = browser
-        # self._connection = connection
+
+    @overload
+    async def get_all(
+        self, requests_cookie_format: Literal[False] = False
+    ) -> list[cdp.network.Cookie]: ...
+
+    @overload
+    async def get_all(
+        self, requests_cookie_format: Literal[True]
+    ) -> list[http.cookiejar.Cookie]: ...
+
+    @overload
+    async def get_all(
+        self, requests_cookie_format: bool = False
+    ) -> list[cdp.network.Cookie] | list[http.cookiejar.Cookie]: ...
 
     async def get_all(
         self, requests_cookie_format: bool = False
@@ -797,19 +816,7 @@ class CookieJar:
 
         cookies = await connection.send(cdp.storage.get_cookies())
         if requests_cookie_format:
-            import requests.cookies
-
-            return [
-                requests.cookies.create_cookie(  # type: ignore
-                    name=c.name,
-                    value=c.value,
-                    domain=c.domain,
-                    path=c.path,
-                    expires=c.expires,
-                    secure=c.secure,
-                )
-                for c in cookies
-            ]
+            return [_to_cookiejar_cookie(c) for c in cookies]
         return cookies
 
     async def set_all(self, cookies: List[cdp.network.CookieParam]) -> None:
@@ -956,3 +963,27 @@ class HTTPApi:
             None, lambda: urllib.request.urlopen(request, timeout=10)
         )
         return json.loads(response.read())
+
+
+def _to_cookiejar_cookie(cookie: cdp.network.Cookie) -> http.cookiejar.Cookie:
+    return http.cookiejar.Cookie(
+        version=0,
+        name=cookie.name,
+        value=cookie.value,
+        port=None,
+        port_specified=False,
+        domain=cookie.domain,
+        domain_specified=bool(cookie.domain),
+        domain_initial_dot=cookie.domain.startswith("."),
+        path=cookie.path,
+        path_specified=bool(cookie.path),
+        secure=cookie.secure,
+        expires=(
+            None if cookie.session or cookie.expires is None else int(cookie.expires)
+        ),
+        discard=cookie.session,
+        comment=None,
+        comment_url=None,
+        rest={"HttpOnly": ""} if cookie.http_only else {},
+        rfc2109=False,
+    )

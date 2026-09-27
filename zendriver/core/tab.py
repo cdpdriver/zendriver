@@ -709,7 +709,7 @@ class Tab(Connection):
             node = util.filter_recurse(doc, lambda n: n.node_id == nid)
             if not node:
                 try:
-                    node = await self.send(cdp.dom.resolve_node(node_id=nid))  # type: ignore
+                    node = await self.send(cdp.dom.describe_node(node_id=nid))
                 except ProtocolException:
                     continue
                 if not node:
@@ -841,11 +841,7 @@ class Tab(Connection):
 
     async def evaluate(
         self, expression: str, await_promise: bool = False, return_by_value: bool = True
-    ) -> (
-        Any
-        | None
-        | typing.Tuple[cdp.runtime.RemoteObject, cdp.runtime.ExceptionDetails | None]
-    ):
+    ) -> Any:
         ser: cdp.runtime.SerializationOptions | None = None
         if not return_by_value:
             ser = cdp.runtime.SerializationOptions(
@@ -1930,7 +1926,7 @@ class Tab(Connection):
         :rtype:
         """
         if not user_agent:
-            user_agent = await self.evaluate("navigator.userAgent")  # type: ignore
+            user_agent = await self.evaluate("navigator.userAgent")
             if not user_agent:
                 raise ValueError(
                     "Could not read existing user agent from navigator object"

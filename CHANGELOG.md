@@ -26,6 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix extensions added with `Config.add_extension()` not loading on Chrome 137+. The default `--disable-features` switch was overridden by a second one, since Chrome only uses the last. All `--disable-features` switches, including user-provided ones, are now merged into one, and `--enable-unsafe-extension-debugging` is passed when extensions are added @stephanlensky
 - Fix commands hanging forever when the browser connection closed while they were waiting for a response, for example because the browser crashed or `Connection.aclose()` was called. Pending commands now raise instead, and `Connection.send()` raises `ProtocolException` instead of returning `None` when the connection is closed @stephanlensky
 - Fix mouse helpers dispatching inconsistent button and pressure state that pages can observe. Mouse clicks and drags now report a pressure of `0.5` while a button is held and `buttons=0` on release, drag movements keep `buttons=1`, `mouse_move()` no longer sends a `mouseReleased` event, and `Tab.mouse_move()` with `steps` now moves from the last mouse position instead of from `(0, 0)`. The `buttons` argument of `mouse_click()` is deprecated and ignored @stephanlensky
+- Fix `add_handler()` with a CDP domain module (for example `tab.add_handler(cdp.network, handler)`) registering the domain's enum types instead of its events, so the handler was never called @stephanlensky
+- Fix synchronous event handlers sometimes calling only the last registered handler when several handlers were registered for the same event @stephanlensky
+- Fix event handlers being called a second time with only the event when they raised a `TypeError`. Handlers now receive the connection as a second argument only if their signature accepts one @stephanlensky
+- Fix `Element.get()` returning `None` for attributes with an empty value, such as `disabled=""`. It now returns `""` and only returns `None` when the attribute does not exist @stephanlensky
+- Fix `remove_handlers(event_type)` raising `KeyError` when no handlers were registered for that event @stephanlensky
+- Fix `Element.get_position(abs=True)` raising `AttributeError` @stephanlensky
+- Fix `Element.get()` returning dictionary methods for attribute names such as `items` or `keys` instead of `None` @stephanlensky
+- Fix `Tab.find_elements_by_text()` skipping matches which are not part of the fetched document tree @stephanlensky
+- Fix `CookieJar.get_all(requests_cookie_format=True)` raising `ImportError` when `requests` is not installed, and returning session cookies as already expired. It now builds `http.cookiejar.Cookie` objects with the standard library @stephanlensky
 
 ### Added
 

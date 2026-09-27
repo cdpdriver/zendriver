@@ -902,7 +902,7 @@ class CdpDomain:
         code = "\n".join(f"from . import {d}" for d in sorted(dependencies))
 
         if needs_deprecation:
-            code += "\nfrom deprecated.sphinx import deprecated # type: ignore"
+            code += "\nfrom deprecated.sphinx import deprecated"
 
         return code
 
@@ -1028,6 +1028,7 @@ def main() -> None:
         util_path.write_text(
             dedent(
                 """
+            import types
             import typing
 
             T_JSON_DICT = typing.Dict[str, typing.Any]
@@ -1045,6 +1046,11 @@ def main() -> None:
             def parse_json_event(json: T_JSON_DICT) -> typing.Any:
                 ''' Parse a JSON dictionary into a CDP event. '''
                 return _event_parsers[json['method']].from_json(json['params'])
+
+
+            def get_event_classes(module: types.ModuleType) -> typing.List[type]:
+                ''' Return the event classes defined in a CDP domain module. '''
+                return [cls for cls in _event_parsers.values() if cls.__module__ == module.__name__]
             """
             )
         )

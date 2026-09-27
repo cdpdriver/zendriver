@@ -14,7 +14,7 @@ from .util import event_class, T_JSON_DICT
 from . import dom
 from . import dom_debugger
 from . import page
-from deprecated.sphinx import deprecated  # type: ignore
+from deprecated.sphinx import deprecated
 
 
 @dataclass

@@ -1,5 +1,6 @@
 import asyncio
 import gc
+import http.cookiejar
 import pathlib
 import pickle
 import subprocess
@@ -198,6 +199,43 @@ async def test_cookies_save_and_load_round_trip(
 
     restored = {cookie.name: cookie.value for cookie in await browser.cookies.get_all()}
     assert restored.get("kept") == "yes"
+
+
+async def test_cookies_get_all_in_requests_cookie_format(
+    browser: zd.Browser,
+) -> None:
+    await browser.cookies.set_all(
+        [
+            cdp.network.CookieParam(
+                name="session_cookie",
+                value="yes",
+                domain="example.com",
+                path="/",
+                http_only=True,
+            ),
+            cdp.network.CookieParam(
+                name="persistent_cookie",
+                value="yes",
+                domain="example.com",
+                path="/",
+                expires=cdp.network.TimeSinceEpoch(4102444800),
+            ),
+        ]
+    )
+
+    cookies = {
+        cookie.name: cookie
+        for cookie in await browser.cookies.get_all(requests_cookie_format=True)
+    }
+
+    session_cookie = cookies["session_cookie"]
+    assert isinstance(session_cookie, http.cookiejar.Cookie)
+    assert session_cookie.expires is None
+    assert not session_cookie.is_expired()
+    assert session_cookie.has_nonstandard_attr("HttpOnly")
+    assert cookies["persistent_cookie"].expires is not None
+    assert not cookies["persistent_cookie"].is_expired()
+    assert not cookies["persistent_cookie"].has_nonstandard_attr("HttpOnly")
 
 
 async def test_browser_starts_with_lang_option(

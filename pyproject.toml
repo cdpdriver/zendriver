@@ -89,5 +89,6 @@ check_untyped_defs = true
 [[tool.mypy.overrides]]
 module = [
     "asyncio_atexit",
+    "grapheme",
 ]
 ignore_missing_imports = true

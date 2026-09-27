@@ -241,7 +241,42 @@ async def test_add_handler_module_event(browser: zd.Browser) -> None:
 
     tab.add_handler(zd.cdp.network, request_handler)
 
-    assert len(tab.handlers) == 29
+    assert set(tab.handlers) == set(zd.cdp.util.get_event_classes(zd.cdp.network))
+    assert zd.cdp.network.RequestWillBeSent in tab.handlers
+    assert zd.cdp.network.ResourceType not in tab.handlers
+
+
+async def test_add_handler_module_event_receives_events(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    received: list[Any] = []
+
+    async def page_handler(event: Any) -> None:
+        received.append(event)
+
+    tab.add_handler(zd.cdp.page, page_handler)
+    await tab.reload()
+    await tab.wait(1)
+
+    assert any(isinstance(event, zd.cdp.page.LoadEventFired) for event in received)
+
+
+async def test_sync_handlers_are_each_called(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    first_called = asyncio.Event()
+    second_called = asyncio.Event()
+    loop = asyncio.get_running_loop()
+
+    def first_handler(event: zd.cdp.page.LoadEventFired) -> None:
+        loop.call_soon_threadsafe(first_called.set)
+
+    def second_handler(event: zd.cdp.page.LoadEventFired) -> None:
+        loop.call_soon_threadsafe(second_called.set)
+
+    tab.add_handler(zd.cdp.page.LoadEventFired, first_handler)
+    tab.add_handler(zd.cdp.page.LoadEventFired, second_handler)
+    await tab.reload()
+
+    await asyncio.wait_for(asyncio.gather(first_called.wait(), second_called.wait()), 5)
 
 
 async def test_remove_handlers(browser: zd.Browser) -> None:
@@ -254,6 +289,55 @@ async def test_remove_handlers(browser: zd.Browser) -> None:
     assert len(tab.handlers) == 1
 
     tab.remove_handlers()
+    assert len(tab.handlers) == 0
+
+
+async def test_handler_raising_type_error_is_called_once(
+    browser: zd.Browser,
+) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    calls: list[tuple[Any, ...]] = []
+    called = asyncio.Event()
+
+    async def handler(*args: Any) -> None:
+        calls.append(args)
+        called.set()
+        raise TypeError("raised by the handler itself")
+
+    tab.add_handler(zd.cdp.page.LoadEventFired, handler)
+    await tab.reload()
+    await asyncio.wait_for(called.wait(), 5)
+    await tab.wait(0.5)
+
+    assert len(calls) == 1
+    assert calls[0][1] is tab
+
+
+async def test_handler_without_connection_argument_receives_event(
+    browser: zd.Browser,
+) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    received: list[Any] = []
+    called = asyncio.Event()
+
+    async def handler(event: zd.cdp.page.LoadEventFired) -> None:
+        received.append(event)
+        called.set()
+
+    tab.add_handler(zd.cdp.page.LoadEventFired, handler)
+    await tab.reload()
+    await asyncio.wait_for(called.wait(), 5)
+
+    assert isinstance(received[0], zd.cdp.page.LoadEventFired)
+
+
+async def test_remove_handlers_for_event_without_handlers(
+    browser: zd.Browser,
+) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+
+    tab.remove_handlers(zd.cdp.network.RequestWillBeSent)
+
     assert len(tab.handlers) == 0
 
 
@@ -652,3 +736,32 @@ async def test_shadow_children_includes_closed_shadow_root(
 
     assert [child.tag for child in heading.shadow_children] == ["button"]
     assert heading.shadow_children[0].attrs["id"] == "shadow-button"
+
+
+async def test_get_position_abs_includes_scroll_offset(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    await tab.evaluate("document.body.style.height = '5000px'")
+    button = await tab.select("#download_file")
+
+    await tab.evaluate("window.scrollTo(0, 100)")
+    position = await button.get_position(abs=True)
+
+    assert position is not None
+    assert position.abs_y == position.top + 100 + position.height / 2
+
+
+async def test_element_get_only_returns_html_attributes(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    button = await tab.select("#download_file")
+
+    assert button.get("id") == "download_file"
+    assert button.get("missing") is None
+    assert button.get("items") is None
+
+
+async def test_element_get_returns_empty_attribute_value(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    await tab.evaluate("document.querySelector('#download_file').disabled = true")
+    button = await tab.select("#download_file")
+
+    assert button.get("disabled") == ""

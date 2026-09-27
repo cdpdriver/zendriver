@@ -2,7 +2,7 @@ from enum import Enum, IntEnum
 from typing import List, Optional, Tuple, TypedDict, Union
 
 import emoji
-import grapheme  # type: ignore
+import grapheme
 
 
 class KeyModifiers(IntEnum):

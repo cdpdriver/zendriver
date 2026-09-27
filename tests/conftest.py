@@ -47,7 +47,7 @@ class TestConfig:
     ARTIFACTS_DIR = Path(os.getenv("ZENDRIVER_TEST_ARTIFACTS_DIR", "test-artifacts"))
 
 
-class CreateBrowser(AbstractAsyncContextManager):  # type: ignore
+class CreateBrowser(AbstractAsyncContextManager[zd.Browser]):
     def __init__(
         self,
         *,
@@ -96,14 +96,14 @@ class CreateBrowser(AbstractAsyncContextManager):  # type: ignore
 @pytest.fixture
 def create_browser() -> type[CreateBrowser]:
     if sys.platform == "win32":
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())  # type: ignore
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     return CreateBrowser
 
 
 @pytest.fixture(params=TestConfig.BROWSER_MODE.fixture_params)
 def headless(request: pytest.FixtureRequest) -> bool:
-    return request.param["headless"]  # type: ignore
+    return bool(request.param["headless"])
 
 
 @pytest.fixture(scope="session")

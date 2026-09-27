@@ -41,7 +41,8 @@ def get_documented_modules() -> list[Path]:
 def load_mkdocs_yml() -> dict[str, Any]:
     mkdocs_yml_path = MKDOCS_YML
     with mkdocs_yml_path.open() as f:
-        return yaml.safe_load(f)  # type: ignore
+        mkdocs_yml: dict[str, Any] = yaml.safe_load(f)
+    return mkdocs_yml
 
 
 def write_mkdocs_yml(mkdocs_yml: dict[str, Any]) -> None:
@@ -55,7 +56,8 @@ def get_nav_item_by_title(
 ) -> list[dict[str, Any]]:
     for item in nav_section:
         if title in item:
-            return item[title]  # type: ignore
+            nav_items: list[dict[str, Any]] = item[title]
+            return nav_items
 
     raise ValueError(f"Title '{title}' not found in nav section")
 
