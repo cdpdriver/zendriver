@@ -624,3 +624,20 @@ async def test_set_download_path_creates_directory(
     await tab.set_download_path(download_path)
 
     assert download_path.is_dir()
+
+
+async def test_shadow_children_includes_closed_shadow_root(
+    browser: zd.Browser,
+) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    await tab.evaluate(
+        """
+        const root = document.querySelector("h1").attachShadow({ mode: "closed" });
+        root.innerHTML = "<button id='shadow-button'>Shadow</button>";
+        """
+    )
+
+    heading = await tab.select("h1")
+
+    assert [child.tag for child in heading.shadow_children] == ["button"]
+    assert heading.shadow_children[0].attrs["id"] == "shadow-button"

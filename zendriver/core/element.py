@@ -158,6 +158,19 @@ class Element:
         return self.node.shadow_roots
 
     @property
+    def shadow_children(self) -> list[Element]:
+        """
+        returns the children of the element's shadow root, which can be open or closed.
+        returns an empty list when the element has no shadow root.
+        """
+        if not self.shadow_roots:
+            return []
+        return [
+            create(child, self._tab, self._tree)
+            for child in self.shadow_roots[0].children or []
+        ]
+
+    @property
     def template_content(self) -> cdp.dom.Node | None:
         return self.node.template_content
 
