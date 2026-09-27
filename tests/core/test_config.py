@@ -68,3 +68,11 @@ def test_extensions_enable_unsafe_extension_debugging(
     config.add_extension(tmp_path)
 
     assert "--enable-unsafe-extension-debugging" in config()
+
+
+def test_expert_does_not_disable_web_security() -> None:
+    config = zd.Config(browser_executable_path=FAKE_BROWSER_PATH, expert=True)
+    args = config()
+
+    assert "--disable-site-isolation-trials" in args
+    assert "--disable-web-security" not in args
