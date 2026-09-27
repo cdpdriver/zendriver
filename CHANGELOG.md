@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix `Browser.stop()` always waiting 3 seconds and then force-killing the browser process, even when the browser had already exited gracefully. The exit check read `Popen.returncode`, which is only updated by `poll()`/`wait()`. @stephanlensky
 - Fix `Browser.start()` always sleeping for `browser_connection_timeout` before the first connection attempt. It now tries to connect immediately and only waits between retries. @stephanlensky
 - Fix `Browser` instances never being garbage collected after `Browser.stop()`. The asyncio atexit callback and the global registered instances set kept a reference to every browser, and per-target connections were left open. @stephanlensky
+- Fix the connection listener crashing with `InvalidStateError` when a response arrived for a command that was already cancelled (for example by `asyncio.wait_for`), which left later commands hanging forever @stephanlensky
+- Fix every received CDP event being kept in memory for the lifetime of its connection @stephanlensky
 
 ### Added
 

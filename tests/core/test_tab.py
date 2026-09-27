@@ -565,3 +565,41 @@ async def test_evaluate_stress_test_complex_objects(browser: zd.Browser) -> None
             ), f"Expected {validator} for '{expression}', got {type(result)}: {result}"
         else:
             raise ValueError("Validator must be a type or callable")
+
+
+async def test_response_to_cancelled_command_does_not_stop_listener(
+    browser: zd.Browser,
+) -> None:
+    """A response arriving after its command was cancelled used to crash the listener (#89)."""
+    tab = await browser.get(sample_file("groceries.html"))
+
+    with pytest.raises(asyncio.TimeoutError):
+        await asyncio.wait_for(
+            tab.evaluate(
+                "new Promise((r) => setTimeout(() => r(1), 500))", await_promise=True
+            ),
+            0.1,
+        )
+    # resolves after the cancelled command's response has been received
+    assert (
+        await asyncio.wait_for(
+            tab.evaluate(
+                "new Promise((r) => setTimeout(() => r(2), 1000))", await_promise=True
+            ),
+            5,
+        )
+        == 2
+    )
+
+    assert tab.listener is not None and tab.listener.running
+    assert await tab.evaluate("1 + 1") == 2
+
+
+async def test_events_are_not_retained(browser: zd.Browser) -> None:
+    """Every received event used to be kept in memory for the connection's lifetime (#198)."""
+    tab = await browser.get(sample_file("groceries.html"))
+    tab.add_handler(zd.cdp.page.LoadEventFired, lambda _: None)
+    await tab.reload()
+    await tab.evaluate("1 + 1")
+
+    assert tab.mapper == {}

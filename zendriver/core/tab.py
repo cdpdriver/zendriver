@@ -1055,12 +1055,16 @@ class Tab(Connection):
                 future.set_result(event)
 
         self.browser.connection.add_handler(event_type, close_handler)
-
-        if self.target and self.target.target_id:
-            await self.send(cdp.target.close_target(target_id=self.target.target_id))
-
-        await asyncio.wait_for(future, 10)
-        self.browser.connection.remove_handlers(event_type, close_handler)
+        try:
+            if self.target and self.target.target_id:
+                # sent through the browser session, since this tab's own session
+                # may be detached before chrome responds to the command
+                await self.browser.connection.send(
+                    cdp.target.close_target(target_id=self.target.target_id)
+                )
+            await asyncio.wait_for(future, 10)
+        finally:
+            self.browser.connection.remove_handlers(event_type, close_handler)
 
     async def get_window(self) -> Tuple[cdp.browser.WindowID, cdp.browser.Bounds]:
         """

@@ -193,7 +193,6 @@ class CantTouchThis(type):
 class Connection(metaclass=CantTouchThis):
     websocket: websockets.asyncio.client.ClientConnection | None = None
     _target: cdp.target.TargetInfo | None
-    _current_id_mutex: asyncio.Lock = asyncio.Lock()
     _download_behavior: List[str] | None = None
 
     def __init__(
@@ -205,7 +204,7 @@ class Connection(metaclass=CantTouchThis):
     ):
         super().__init__()
         self._target = target
-        self.__count__ = itertools.count(0)
+        self._message_ids = itertools.count(1)
         self._owner = _owner
         self.websocket_url: str = websocket_url
         self.websocket = None
@@ -643,10 +642,7 @@ class Connection(metaclass=CantTouchThis):
 
         tx = Transaction(cdp_obj)
         tx.connection = self
-        if not self.mapper:
-            self.__count__ = itertools.count(0)
-        async with self._current_id_mutex:
-            tx.id = next(self.__count__)
+        tx.id = self._next_message_id()
         self.mapper.update({tx.id: tx})
 
         if not _is_update:
@@ -790,6 +786,15 @@ class Connection(metaclass=CantTouchThis):
             await self._send_oneshot(cdp.page.enable())
         setattr(self, "_prep_expert_done", True)
 
+    def _next_message_id(self) -> int:
+        """
+        message ids are shared by all sessions on a websocket, so that a response
+        chrome sends without a session id can never be matched to the wrong command
+        """
+        if self._session_parent is not None:
+            return self._session_parent._next_message_id()
+        return next(self._message_ids)
+
     async def _receive_message(self) -> dict[str, Any] | None:
         """
         returns the next message addressed to this connection, or None when
@@ -820,7 +825,7 @@ class Connection(metaclass=CantTouchThis):
 
         tx = Transaction(cdp_obj)
         tx.connection = self
-        tx.id = -2
+        tx.id = self._next_message_id()
         tx.session_id = self.session_id
         self.mapper.update({tx.id: tx})
         await self.websocket.send(tx.message)
@@ -927,23 +932,12 @@ class Listener:
 
                     # complete the transaction, which is a Future object
                     # and thus will return to anyone awaiting it.
-                    tx(**message)
-                else:
-                    if message["id"] == -2:
-                        maybe_tx = self.connection.mapper.get(-2)
-                        if maybe_tx:
-                            tx = maybe_tx
-                            tx(**message)
-                        continue
+                    if not tx.done():
+                        tx(**message)
             else:
                 # probably an event
                 try:
                     event = cdp.util.parse_json_event(message)
-                    event_tx = EventTransaction(event)
-                    if not self.connection.mapper:
-                        self.connection.__count__ = itertools.count(0)
-                    event_tx.id = next(self.connection.__count__)
-                    self.connection.mapper[event_tx.id] = event_tx
                 except Exception as e:
                     logger.info(
                         "%s: %s  during parsing of json from event : %s"
