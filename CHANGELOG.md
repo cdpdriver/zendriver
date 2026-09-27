@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix every received CDP event being kept in memory for the lifetime of its connection @stephanlensky
 - Fix `await tab` raising `ValueError: No listener created yet` on a tab which no commands were sent to yet, such as one just opened with `browser.get(url, new_tab=True)` @stephanlensky
 - Fix `browser.get(url, new_tab=True)` intermittently raising `StopIteration` when the new tab was not registered yet, and `browser.get()` returning before the navigation when another target changed in the meantime @stephanlensky
+- Fix Widevine DRM being unavailable on platforms where Chrome installs it through the component updater, such as Windows. Removed the `--disable-component-update`, `--disable-background-networking`, `--disable-backgrounding-occluded-windows` and `--disable-renderer-backgrounding` default browser arguments @stephanlensky
 
 ### Added
 
