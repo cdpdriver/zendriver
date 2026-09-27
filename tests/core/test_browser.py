@@ -313,6 +313,7 @@ async def test_pending_commands_fail_when_connection_is_closed(
 
 async def test_get_tab_matches_url_and_title(browser: zd.Browser) -> None:
     tab = await browser.get(sample_file("groceries.html"))
+    await tab.wait_for_ready_state("complete")
 
     assert await browser.get_tab("groceries.html") is tab
     assert await browser.get_tab("grocery list") is tab
