@@ -237,3 +237,24 @@ async def test_iframe_target_can_be_connected_to(
     await iframe_target.select("#child")
     text = await iframe_target.evaluate("document.getElementById('child').innerText")
     assert text == "hello from iframe"
+
+
+async def test_start_waits_for_initial_tab(
+    create_browser: type[CreateBrowser], mocker: MockerFixture, headless: bool
+) -> None:
+    get_targets = zd.Browser._get_targets
+    calls = 0
+
+    async def get_targets_without_initial_tab(
+        self: zd.Browser,
+    ) -> list[cdp.target.TargetInfo]:
+        nonlocal calls
+        calls += 1
+        targets = await get_targets(self)
+        return targets if calls > 1 else [t for t in targets if t.type_ != "page"]
+
+    mocker.patch.object(zd.Browser, "_get_targets", get_targets_without_initial_tab)
+    browser_context = create_browser(headless=headless)
+    browser_context.config.autodiscover_targets = False
+    async with browser_context as browser:
+        assert len(browser.tabs) == 1

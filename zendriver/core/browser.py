@@ -286,10 +286,11 @@ class Browser:
                 )
                 connection = await self._get_tab(target_id)
             else:
-                # first tab from browser.tabs
-                connection = next(
-                    filter(lambda item: item.type_ == "page", self.targets)
-                )  # type: ignore
+                if not self.tabs:
+                    raise RuntimeError(
+                        "Browser has no open tab to navigate. Use new_tab=True to open one."
+                    )
+                connection = self.tabs[0]
                 # use the tab to navigate to new url
                 await connection.send(cdp.page.navigate(url))
             connection.browser = self
@@ -420,7 +421,16 @@ class Browser:
             ]
             await self.connection.send(cdp.target.set_discover_targets(discover=True))
         await self.update_targets()
+        if not connect_existing:
+            await self._wait_for_initial_tab()
         return self
+
+    async def _wait_for_initial_tab(self) -> None:
+        for _ in range(self.config.browser_connection_max_tries):
+            if self.tabs:
+                return
+            await asyncio.sleep(self.config.browser_connection_timeout)
+            await self.update_targets()
 
     async def test_connection(self) -> bool:
         if not self._http:
