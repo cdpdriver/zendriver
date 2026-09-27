@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import base64
 import datetime
 import json
@@ -544,7 +543,7 @@ class Element:
     async def mouse_click(
         self,
         button: str = "left",
-        buttons: typing.Optional[int] = 1,
+        buttons: typing.Optional[int] = None,
         modifiers: typing.Optional[int] = 0,
         hold: bool = False,
         _until_event: typing.Optional[type] = None,
@@ -552,7 +551,7 @@ class Element:
         """native click (on element) . note: this likely does not work atm, use click() instead
 
         :param button: str (default = "left")
-        :param buttons: which button (default 1 = left)
+        :param buttons: deprecated, the pressed buttons are derived from ``button``
         :param modifiers: *(Optional)* Bit field representing pressed modifier keys.
                 Alt=1, Ctrl=2, Meta/Command=4, Shift=8 (default: 0).
         :param _until_event: internal. event to wait for before returning
@@ -566,29 +565,8 @@ class Element:
         center = position.center
         logger.debug("clicking on location %.2f, %.2f" % center)
 
-        await asyncio.gather(
-            self._tab.send(
-                cdp.input_.dispatch_mouse_event(
-                    "mousePressed",
-                    x=center[0],
-                    y=center[1],
-                    modifiers=modifiers,
-                    button=cdp.input_.MouseButton(button),
-                    buttons=buttons,
-                    click_count=1,
-                )
-            ),
-            self._tab.send(
-                cdp.input_.dispatch_mouse_event(
-                    "mouseReleased",
-                    x=center[0],
-                    y=center[1],
-                    modifiers=modifiers,
-                    button=cdp.input_.MouseButton(button),
-                    buttons=buttons,
-                    click_count=1,
-                )
-            ),
+        await self._tab.mouse_click(
+            *center, button=button, buttons=buttons, modifiers=modifiers
         )
         try:
             await self.flash()
@@ -606,13 +584,7 @@ class Element:
         logger.debug(
             "mouse move to location %.2f, %.2f where %s is located", *center, self
         )
-        await self._tab.send(
-            cdp.input_.dispatch_mouse_event("mouseMoved", x=center[0], y=center[1])
-        )
-        await self._tab.sleep(0.05)
-        await self._tab.send(
-            cdp.input_.dispatch_mouse_event("mouseReleased", x=center[0], y=center[1])
-        )
+        await self._tab.mouse_move(*center, steps=1)
 
     async def mouse_drag(
         self,
@@ -655,51 +627,7 @@ class Element:
             else:
                 end_point = destination
 
-        await self._tab.send(
-            cdp.input_.dispatch_mouse_event(
-                "mousePressed",
-                x=start_point[0],
-                y=start_point[1],
-                button=cdp.input_.MouseButton("left"),
-            )
-        )
-
-        steps = 1 if (not steps or steps < 1) else steps
-        if steps == 1:
-            await self._tab.send(
-                cdp.input_.dispatch_mouse_event(
-                    "mouseMoved",
-                    x=end_point[0],
-                    y=end_point[1],
-                )
-            )
-        elif steps > 1:
-            # probably the worst waay of calculating this. but couldn't think of a better solution today.
-            step_size_x = (end_point[0] - start_point[0]) / steps
-            step_size_y = (end_point[1] - start_point[1]) / steps
-            pathway = [
-                (start_point[0] + step_size_x * i, start_point[1] + step_size_y * i)
-                for i in range(steps + 1)
-            ]
-
-            for point in pathway:
-                await self._tab.send(
-                    cdp.input_.dispatch_mouse_event(
-                        "mouseMoved",
-                        x=point[0],
-                        y=point[1],
-                    )
-                )
-                await asyncio.sleep(0)
-
-        await self._tab.send(
-            cdp.input_.dispatch_mouse_event(
-                type_="mouseReleased",
-                x=end_point[0],
-                y=end_point[1],
-                button=cdp.input_.MouseButton("left"),
-            )
-        )
+        await self._tab.mouse_drag(start_point, end_point, steps=steps)
 
     async def scroll_into_view(self) -> None:
         """scrolls element into view"""

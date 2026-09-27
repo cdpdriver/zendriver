@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mouse Events Test</title>
+    <style>
+        body { margin: 0; }
+        #source { position: absolute; left: 50px; top: 50px; width: 50px; height: 50px; background: red; }
+        #target { position: absolute; left: 300px; top: 50px; width: 50px; height: 50px; background: blue; }
+    </style>
+</head>
+<body>
+    <div id="source"></div>
+    <div id="target"></div>
+    <script>
+        window.mouseEvents = [];
+        for (const type of ["pointerdown", "pointermove", "pointerup", "mousedown", "mousemove", "mouseup"]) {
+            document.addEventListener(type, event => window.mouseEvents.push({
+                type,
+                x: event.clientX,
+                y: event.clientY,
+                pressure: event.pressure ?? null,
+                buttons: event.buttons,
+            }), true);
+        }
+    </script>
+</body>
+</html>
