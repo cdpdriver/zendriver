@@ -41,7 +41,11 @@ async def test_get_frames_returns_nested_cross_site_frames(
 ) -> None:
     tab = await browser.get(cross_site_iframe_url)
 
-    child, grandchild = await get_frames(tab, 2)
+    frames = await get_frames(tab, 2)
+    child = next(frame for frame in frames if (frame.url or "").endswith("/child"))
+    grandchild = next(
+        frame for frame in frames if (frame.url or "").endswith("/grandchild")
+    )
     await child.select("#child")
     await grandchild.select("#grandchild")
 

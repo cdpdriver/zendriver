@@ -27,6 +27,8 @@ async def test_clear_input_does_not_notify_react(browser: zd.Browser) -> None:
     was dispatched, so React's onChange check never ran. React state stayed at "10".
     """
     tab = await browser.get(sample_file("react-controlled-input-test.html"))
+    # the simulated React state is set up in window.onload
+    await tab.wait_for_ready_state("complete")
 
     input_el = await tab.select("#controlled-input")
 
@@ -58,6 +60,8 @@ async def test_clear_input_by_deleting_does_not_notify_react(
     was never called. React state stayed at "10".
     """
     tab = await browser.get(sample_file("react-controlled-input-test.html"))
+    # the simulated React state is set up in window.onload
+    await tab.wait_for_ready_state("complete")
 
     input_el = await tab.select("#controlled-input")
 
@@ -88,6 +92,8 @@ async def test_fill_react_controlled_input_produces_mixed_value(
     empty field, producing a mixed value like "025" or "1025" instead of "25".
     """
     tab = await browser.get(sample_file("react-controlled-input-test.html"))
+    # the simulated React state is set up in window.onload
+    await tab.wait_for_ready_state("complete")
 
     input_el = await tab.select("#controlled-input")
 

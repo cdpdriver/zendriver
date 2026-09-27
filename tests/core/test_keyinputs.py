@@ -49,6 +49,8 @@ async def test_visible_events(browser: zd.Browser) -> None:
 async def test_escape_key_popup(browser: zd.Browser) -> None:
     """Test escape key functionality to close a popup."""
     main_page = await browser.get(sample_file("special_key_detector.html"))
+    # the page registers its listeners in a script at the end of the body
+    await main_page.wait_for_ready_state("complete")
 
     status_check = await main_page.find('//*[@id="status"]')
     assert (

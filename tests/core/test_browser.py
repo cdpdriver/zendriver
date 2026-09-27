@@ -234,5 +234,6 @@ async def test_iframe_target_can_be_connected_to(
         f"/devtools/page/{iframe_target.target_id}"
     )
 
+    await iframe_target.select("#child")
     text = await iframe_target.evaluate("document.getElementById('child').innerText")
     assert text == "hello from iframe"
