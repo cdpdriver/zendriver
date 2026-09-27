@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support for unstable variants of Microsoft Edge on macOS @mokurin000
 - Add `Tab.get_frames()` and `Element.get_frame()` to access out-of-process (e.g. cross-origin) iframes as `Tab` objects, and an `include_frames` option to `find()`, `find_all()`, `select()` and `select_all()` which also searches these iframes @stephanlensky
+- Add `Browser.create_context()` to open a tab in a new browser context with its own proxy. Authenticated HTTP, HTTPS and SOCKS5 proxies (e.g. `socks5://user:pass@host:port`) are supported through a local forwarding proxy @stephanlensky
 
 ### Changed
 

@@ -10,6 +10,7 @@ import pathlib
 import pickle
 import re
 import shutil
+import ssl
 import subprocess
 import urllib.parse
 import urllib.request
@@ -24,6 +25,7 @@ from . import tab, util
 from ._contradict import ContraDict
 from .config import BrowserType, Config, PathLike, is_posix
 from .connection import Connection
+from .proxy import ProxyForwarder, UpstreamProxy
 
 logger = logging.getLogger(__name__)
 
@@ -138,6 +140,7 @@ class Browser:
         self._process_pid = None
         self._is_updating = asyncio.Event()
         self.connection = None
+        self._proxy_forwarders: List[ProxyForwarder] = []
         logger.debug("Session object initialized: %s" % vars(self))
 
     @property
@@ -300,6 +303,62 @@ class Browser:
             self.connection.remove_handlers(event_type, get_handler)
 
         return connection
+
+    async def create_context(
+        self,
+        url: str = "about:blank",
+        *,
+        new_window: bool = True,
+        dispose_on_detach: bool = True,
+        proxy_server: str | None = None,
+        proxy_bypass_list: List[str] | None = None,
+        proxy_ssl_context: ssl.SSLContext | None = None,
+        origins_with_universal_network_access: List[str] | None = None,
+    ) -> tab.Tab:
+        """creates a new browser context, which is similar to an incognito profile, and opens a tab in it.
+
+        each context can use its own proxy, while browser arguments apply one proxy to the whole browser.
+
+        :param url: the url to open in the new tab
+        :param new_window: open the tab in a new window
+        :param dispose_on_detach: dispose the context when the debugging session disconnects
+        :param proxy_server: proxy for this context, such as ``http://host:port`` or ``socks5://host:port``.
+            credentials are supported for http, https and socks5 proxies, e.g. ``http://user:pass@host:port``.
+            since chrome can not pass proxy credentials itself, zendriver then runs a local proxy which
+            forwards to the given one. it is stopped when the browser is stopped.
+        :param proxy_bypass_list: hosts which should not use the proxy, such as ``*.example.com``.
+            chrome never proxies loopback addresses unless ``<-loopback>`` is included.
+        :param proxy_ssl_context: ssl context for connecting to an authenticated https proxy
+        :param origins_with_universal_network_access: origins to grant unlimited cross-origin access to
+        :return: the tab opened in the new context
+        """
+        if not self.connection:
+            raise RuntimeError("Browser not yet started. use await browser.start()")
+
+        if proxy_server is not None:
+            upstream = UpstreamProxy.from_url(proxy_server, proxy_ssl_context)
+            if upstream is not None:
+                forwarder = ProxyForwarder(upstream)
+                await forwarder.start()
+                self._proxy_forwarders.append(forwarder)
+                proxy_server = forwarder.proxy_server
+
+        context_id = await self.connection.send(
+            cdp.target.create_browser_context(
+                dispose_on_detach=dispose_on_detach,
+                proxy_server=proxy_server,
+                proxy_bypass_list=",".join(proxy_bypass_list)
+                if proxy_bypass_list
+                else None,
+                origins_with_universal_network_access=origins_with_universal_network_access,
+            )
+        )
+        target_id = await self.connection.send(
+            cdp.target.create_target(
+                url, browser_context_id=context_id, new_window=new_window
+            )
+        )
+        return await self._get_tab(target_id)
 
     async def start(self) -> Browser:
         """launches the actual browser"""
@@ -638,6 +697,10 @@ class Browser:
                 )
             await self.connection.aclose()
             logger.debug("closed the connection")
+
+        for forwarder in self._proxy_forwarders:
+            await forwarder.close()
+        self._proxy_forwarders.clear()
 
         if self._process:
             try:
