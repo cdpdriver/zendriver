@@ -309,3 +309,11 @@ async def test_pending_commands_fail_when_connection_is_closed(
             await asyncio.wait_for(browser_command, timeout=10)
     finally:
         process.resume()
+
+
+async def test_get_tab_matches_url_and_title(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+
+    assert await browser.get_tab("groceries.html") is tab
+    assert await browser.get_tab("grocery list") is tab
+    assert await browser.get_tab("does-not-exist") is None
