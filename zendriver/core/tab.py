@@ -1564,6 +1564,7 @@ class Tab(Connection):
         :rtype:
         """
         path = pathlib.Path(path)
+        path.mkdir(parents=True, exist_ok=True)
         await self.send(
             cdp.browser.set_download_behavior(
                 behavior="allow", download_path=str(path.resolve())
