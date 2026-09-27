@@ -797,19 +797,7 @@ class CookieJar:
 
         cookies = await connection.send(cdp.storage.get_cookies())
         if requests_cookie_format:
-            import requests.cookies
-
-            return [
-                requests.cookies.create_cookie(  # type: ignore
-                    name=c.name,
-                    value=c.value,
-                    domain=c.domain,
-                    path=c.path,
-                    expires=c.expires,
-                    secure=c.secure,
-                )
-                for c in cookies
-            ]
+            return [_to_cookiejar_cookie(c) for c in cookies]
         return cookies
 
     async def set_all(self, cookies: List[cdp.network.CookieParam]) -> None:
@@ -956,3 +944,27 @@ class HTTPApi:
             None, lambda: urllib.request.urlopen(request, timeout=10)
         )
         return json.loads(response.read())
+
+
+def _to_cookiejar_cookie(cookie: cdp.network.Cookie) -> http.cookiejar.Cookie:
+    return http.cookiejar.Cookie(
+        version=0,
+        name=cookie.name,
+        value=cookie.value,
+        port=None,
+        port_specified=False,
+        domain=cookie.domain,
+        domain_specified=bool(cookie.domain),
+        domain_initial_dot=cookie.domain.startswith("."),
+        path=cookie.path,
+        path_specified=bool(cookie.path),
+        secure=cookie.secure,
+        expires=(
+            None if cookie.session or cookie.expires is None else int(cookie.expires)
+        ),
+        discard=cookie.session,
+        comment=None,
+        comment_url=None,
+        rest={"HttpOnly": ""} if cookie.http_only else {},
+        rfc2109=False,
+    )
