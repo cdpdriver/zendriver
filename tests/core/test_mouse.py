@@ -4,6 +4,12 @@ import zendriver as zd
 from tests.sample_data import sample_file
 
 
+async def open_mouse_events_page(browser: zd.Browser) -> zd.Tab:
+    tab = await browser.get(sample_file("mouse_events.html"))
+    await tab.wait_for_ready_state("complete")
+    return tab
+
+
 async def get_mouse_events(tab: zd.Tab) -> list[dict[str, Any]]:
     events = await tab.evaluate("window.mouseEvents")
     assert isinstance(events, list)
@@ -15,7 +21,7 @@ def get_event_types(events: list[dict[str, Any]]) -> list[str]:
 
 
 async def test_mouse_click_releases_button(browser: zd.Browser) -> None:
-    tab = await browser.get(sample_file("mouse_events.html"))
+    tab = await open_mouse_events_page(browser)
 
     await tab.mouse_click(75, 75)
 
@@ -29,7 +35,7 @@ async def test_mouse_click_releases_button(browser: zd.Browser) -> None:
 
 
 async def test_mouse_move_does_not_release_button(browser: zd.Browser) -> None:
-    tab = await browser.get(sample_file("mouse_events.html"))
+    tab = await open_mouse_events_page(browser)
 
     await tab.mouse_move(75, 75, steps=5)
 
@@ -45,7 +51,7 @@ async def test_mouse_move_does_not_release_button(browser: zd.Browser) -> None:
 
 
 async def test_mouse_down_move_up_holds_button(browser: zd.Browser) -> None:
-    tab = await browser.get(sample_file("mouse_events.html"))
+    tab = await open_mouse_events_page(browser)
 
     await tab.mouse_down(75, 75)
     await tab.mouse_move(325, 75, steps=10)
@@ -67,7 +73,7 @@ async def test_mouse_down_move_up_holds_button(browser: zd.Browser) -> None:
 
 
 async def test_tab_mouse_drag_relative(browser: zd.Browser) -> None:
-    tab = await browser.get(sample_file("mouse_events.html"))
+    tab = await open_mouse_events_page(browser)
 
     await tab.mouse_drag((75, 75), (250, 0), relative=True, steps=5)
 
@@ -79,7 +85,7 @@ async def test_tab_mouse_drag_relative(browser: zd.Browser) -> None:
 
 
 async def test_element_mouse_drag_holds_button(browser: zd.Browser) -> None:
-    tab = await browser.get(sample_file("mouse_events.html"))
+    tab = await open_mouse_events_page(browser)
     source = await tab.select("#source")
     target = await tab.select("#target")
 
