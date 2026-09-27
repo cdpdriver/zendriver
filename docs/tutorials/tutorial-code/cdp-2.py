@@ -24,7 +24,7 @@ async def main() -> None:
     page.add_handler(cdp.runtime.ConsoleAPICalled, console_handler)
 
     await (await page.select("#myButton")).click()
-    await page.wait(1) # Wait for the console messages to be printed
+    await page.wait(1)  # Wait for the console messages to be printed
 
     # Remember to remove handlers to stop listening to console events
     page.remove_handlers(runtime.ConsoleAPICalled, console_handler)
