@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+### Added
+
+### Changed
+
+### Removed
+
+## [0.17.0] - 2026-09-26
+
 This is quite a large release, including a number of fixes from first-time contributors (thank you!) as well as ports for *all* `nodriver` features and bugfixes that have been added upstream since Zendriver was forked. Additionally, I've managed to remove the last remaining `# type: ignore` comments, which uncovered a few additional bugs that have also been fixed in this release.
 
 This release marks two years of Zendriver! Huge thanks to everyone that has contributed so far.
@@ -55,8 +65,6 @@ This release marks two years of Zendriver! Huge thanks to everyone that has cont
 - Tabs and other targets now share the browser's websocket connection using flat CDP sessions (`Target.attachToTarget` with `flatten=True`) instead of opening a separate websocket per target. This fixes `HTTP 500` errors when connecting to iframe targets. @stephanlensky
 - `Tab.set_download_path()` now creates the download directory if it does not exist @stephanlensky
 - Expert mode no longer passes `--disable-web-security` @stephanlensky
-
-### Removed
 
 ## [0.16.0] - 2026-08-16
 
