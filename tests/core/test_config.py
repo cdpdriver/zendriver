@@ -1,3 +1,5 @@
+import pathlib
+
 import zendriver as zd
 
 # The path is never executed, it only has to be set so that Config does not try to
@@ -38,3 +40,31 @@ def test_add_argument_still_rejects_lang() -> None:
     except ValueError:
         return
     raise AssertionError("add_argument should reject --lang")
+
+
+def get_disable_features_args(args: list[str]) -> list[str]:
+    return [arg for arg in args if arg.startswith("--disable-features=")]
+
+
+def test_disable_features_is_passed_once() -> None:
+    config = zd.Config(
+        browser_executable_path=FAKE_BROWSER_PATH,
+        browser_args=["--disable-features=UseOzonePlatform,site-per-process"],
+    )
+
+    assert get_disable_features_args(config()) == [
+        "--disable-features=IsolateOrigins,DisableLoadExtensionCommandLineSwitch,site-per-process,UseOzonePlatform"
+    ]
+
+
+def test_extensions_enable_unsafe_extension_debugging(
+    tmp_path: pathlib.Path,
+) -> None:
+    (tmp_path / "manifest.json").write_text("{}")
+    config = zd.Config(browser_executable_path=FAKE_BROWSER_PATH)
+
+    assert "--enable-unsafe-extension-debugging" not in config()
+
+    config.add_extension(tmp_path)
+
+    assert "--enable-unsafe-extension-debugging" in config()

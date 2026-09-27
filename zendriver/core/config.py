@@ -198,7 +198,6 @@ class Config:
         args = self._default_browser_args.copy()
 
         args += ["--user-data-dir=%s" % self.user_data_dir]
-        args += ["--disable-features=IsolateOrigins,site-per-process"]
         args += ["--disable-session-crashed-bubble"]
         if self.expert:
             args += ["--disable-web-security", "--disable-site-isolation-trials"]
@@ -223,8 +222,10 @@ class Config:
             ]
         if self.disable_webgl:
             args += ["--disable-webgl", "--disable-webgl2"]
+        if self._extensions:
+            args.append("--enable-unsafe-extension-debugging")
 
-        return args
+        return merge_disable_features_args(args)
 
     def add_argument(self, arg: str) -> None:
         if any(
@@ -262,6 +263,23 @@ class Config:
     #     d.pop("browser_args")
     #     d["browser_args"] = self()
     #     return d
+
+
+def merge_disable_features_args(args: list[str]) -> list[str]:
+    """Chrome only uses the last --disable-features switch, so combine all of them into one."""
+    prefix = "--disable-features="
+    features: list[str] = []
+    other_args: list[str] = []
+    for arg in args:
+        if arg.startswith(prefix):
+            for feature in arg.removeprefix(prefix).split(","):
+                if feature and feature not in features:
+                    features.append(feature)
+        else:
+            other_args.append(arg)
+    if features:
+        other_args.append(prefix + ",".join(features))
+    return other_args
 
 
 def is_root() -> bool:
