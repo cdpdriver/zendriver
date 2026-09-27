@@ -16,12 +16,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix `Browser.stop()` always waiting 3 seconds and then force-killing the browser process, even when the browser had already exited gracefully. The exit check read `Popen.returncode`, which is only updated by `poll()`/`wait()`. @stephanlensky
 - Fix `Browser.start()` always sleeping for `browser_connection_timeout` before the first connection attempt. It now tries to connect immediately and only waits between retries. @stephanlensky
 - Fix `Browser` instances never being garbage collected after `Browser.stop()`. The asyncio atexit callback and the global registered instances set kept a reference to every browser, and per-target connections were left open. @stephanlensky
+- Fix the connection listener crashing with `InvalidStateError` when a response arrived for a command that was already cancelled (for example by `asyncio.wait_for`), which left later commands hanging forever @stephanlensky
+- Fix every received CDP event being kept in memory for the lifetime of its connection @stephanlensky
+- Fix `await tab` raising `ValueError: No listener created yet` on a tab which no commands were sent to yet, such as one just opened with `browser.get(url, new_tab=True)` @stephanlensky
+- Fix `browser.get(url, new_tab=True)` intermittently raising `StopIteration` when the new tab was not registered yet, and `browser.get()` returning before the navigation when another target changed in the meantime @stephanlensky
 
 ### Added
 
 - Add support for unstable variants of Microsoft Edge on macOS @mokurin000
+- Add `Tab.get_frames()` and `Element.get_frame()` to access out-of-process (e.g. cross-origin) iframes as `Tab` objects, and an `include_frames` option to `find()`, `find_all()`, `select()` and `select_all()` which also searches these iframes @stephanlensky
 
 ### Changed
+
+- Tabs and other targets now share the browser's websocket connection using flat CDP sessions (`Target.attachToTarget` with `flatten=True`) instead of opening a separate websocket per target. This fixes `HTTP 500` errors when connecting to iframe targets. @stephanlensky
 
 ### Removed
 
