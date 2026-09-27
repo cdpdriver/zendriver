@@ -32,10 +32,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `Tab.get_frames()` and `Element.get_frame()` to access out-of-process (e.g. cross-origin) iframes as `Tab` objects, and an `include_frames` option to `find()`, `find_all()`, `select()` and `select_all()` which also searches these iframes @stephanlensky
 - Add `Browser.create_context()` to open a tab in a new browser context with its own proxy. Authenticated HTTP, HTTPS and SOCKS5 proxies (e.g. `socks5://user:pass@host:port`) are supported through a local forwarding proxy @stephanlensky
 - Add `Tab.mouse_down()`, `Tab.mouse_up()` and `Tab.mouse_drag()` to press, hold and release mouse buttons separately, for example to drag a slider with custom movement @stephanlensky
+- Add `Browser.get_tab()` to find a tab by text in its URL or title @stephanlensky
+- Add `Element.shadow_children` to access the children of an element's open or closed shadow root @stephanlensky
+- Add `Tab.is_scrolled_to_bottom()` and `Tab.bypass_insecure_connection_warning()` @stephanlensky
 
 ### Changed
 
 - Tabs and other targets now share the browser's websocket connection using flat CDP sessions (`Target.attachToTarget` with `flatten=True`) instead of opening a separate websocket per target. This fixes `HTTP 500` errors when connecting to iframe targets. @stephanlensky
+- `Tab.set_download_path()` now creates the download directory if it does not exist @stephanlensky
+- Expert mode no longer passes `--disable-web-security` @stephanlensky
 
 ### Removed
 

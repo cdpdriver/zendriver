@@ -1257,6 +1257,25 @@ class Tab(Connection):
         )
         await asyncio.sleep(height * (amount / 100) / speed)
 
+    async def is_scrolled_to_bottom(self) -> bool:
+        """
+        returns True if the page is scrolled to the bottom.
+        useful when scrolling through paginated pages of different lengths.
+        """
+        return bool(
+            await self.evaluate(
+                "Math.ceil(window.scrollY + window.innerHeight)"
+                " >= document.documentElement.scrollHeight"
+            )
+        )
+
+    async def bypass_insecure_connection_warning(self) -> None:
+        """
+        proceeds past Chrome's warning page for sites with an invalid certificate
+        """
+        body = await self.select("body")
+        await body.send_keys("thisisunsafe")
+
     async def wait_for(
         self,
         selector: str | None = None,
@@ -1564,6 +1583,7 @@ class Tab(Connection):
         :rtype:
         """
         path = pathlib.Path(path)
+        path.mkdir(parents=True, exist_ok=True)
         await self.send(
             cdp.browser.set_download_behavior(
                 behavior="allow", download_path=str(path.resolve())

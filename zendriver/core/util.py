@@ -69,7 +69,7 @@ async def start(
                  if both host and port are provided, zendriver will not start a local chrome browser!
 
     :param expert:  when set to True, enabled "expert" mode.
-                    This conveys, the inclusion of parameters: --disable-web-security ----disable-site-isolation-trials,
+                    This conveys, the inclusion of parameters: --disable-site-isolation-trials,
                     as well as some scripts and patching useful for debugging (for example, ensuring shadow-root is always in "open" mode)
 
     :param user_agent: if set, this will be used as the user agent for the browser.

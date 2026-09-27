@@ -5,7 +5,7 @@ import zendriver as zd
 
 async def main() -> None:
     browser = await zd.start()
-    page = await browser.get(
+    await browser.get(
         "https://cdpdriver.github.io/examples/login-page.html",
     )
 

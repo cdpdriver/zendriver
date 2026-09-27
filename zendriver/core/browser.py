@@ -168,6 +168,20 @@ class Browser:
         tabs = filter(lambda item: item.type_ == "page", self.targets)
         return list(tabs)  # type: ignore
 
+    async def get_tab(self, text: str) -> tab.Tab | None:
+        """
+        returns the first tab whose url or title contains the given text (case-insensitive),
+        or None if no tab matches
+        """
+        await self.update_targets()
+        text = text.lower()
+        for t in self.tabs:
+            if t.target and (
+                text in t.target.url.lower() or text in t.target.title.lower()
+            ):
+                return t
+        return None
+
     @property
     def cookies(self) -> CookieJar:
         if not self._cookies:

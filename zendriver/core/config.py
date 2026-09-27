@@ -70,7 +70,7 @@ class Config:
         :param lang: language string to use other than the default "en-US,en;q=0.9"
         :param user_agent: custom user-agent string
         :param expert: when set to True, enabled "expert" mode.
-               This conveys, the inclusion of parameters: --disable-web-security ----disable-site-isolation-trials,
+               This conveys, the inclusion of parameters: --disable-site-isolation-trials,
                as well as some scripts and patching useful for debugging (for example, ensuring shadow-root is always in "open" mode)
 
         :param kwargs:
@@ -200,7 +200,7 @@ class Config:
         args += ["--user-data-dir=%s" % self.user_data_dir]
         args += ["--disable-session-crashed-bubble"]
         if self.expert:
-            args += ["--disable-web-security", "--disable-site-isolation-trials"]
+            args += ["--disable-site-isolation-trials"]
         if self._browser_args:
             args.extend([arg for arg in self._browser_args if arg not in args])
         if self.headless:

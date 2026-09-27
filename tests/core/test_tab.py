@@ -1,4 +1,5 @@
 import asyncio
+import pathlib
 from collections.abc import Generator
 from typing import Any
 
@@ -612,3 +613,42 @@ async def test_events_are_not_retained(browser: zd.Browser) -> None:
     await tab.evaluate("1 + 1")
 
     assert tab.mapper == {}
+
+
+async def test_set_download_path_creates_directory(
+    browser: zd.Browser, tmp_path: pathlib.Path
+) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    download_path = tmp_path / "nested" / "downloads"
+
+    await tab.set_download_path(download_path)
+
+    assert download_path.is_dir()
+
+
+async def test_is_scrolled_to_bottom(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    await tab.evaluate("document.body.style.height = '5000px'")
+
+    assert not await tab.is_scrolled_to_bottom()
+
+    await tab.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)")
+
+    assert await tab.is_scrolled_to_bottom()
+
+
+async def test_shadow_children_includes_closed_shadow_root(
+    browser: zd.Browser,
+) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    await tab.evaluate(
+        """
+        const root = document.querySelector("h1").attachShadow({ mode: "closed" });
+        root.innerHTML = "<button id='shadow-button'>Shadow</button>";
+        """
+    )
+
+    heading = await tab.select("h1")
+
+    assert [child.tag for child in heading.shadow_children] == ["button"]
+    assert heading.shadow_children[0].attrs["id"] == "shadow-button"
