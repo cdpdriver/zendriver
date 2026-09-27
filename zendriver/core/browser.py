@@ -260,45 +260,43 @@ class Browser:
         if not self.connection:
             raise RuntimeError("Browser not yet started. use await browser.start()")
 
-        future = asyncio.get_running_loop().create_future()
+        navigated_target_ids: set[cdp.target.TargetID] = set()
+        navigated = asyncio.Event()
         event_type = cdp.target.TargetInfoChanged
 
         async def get_handler(event: cdp.target.TargetInfoChanged) -> None:
-            if future.done():
-                return
-
             # ignore TargetInfoChanged event from browser startup
-            if event.target_info.url != "about:blank" or (
-                url == "about:blank" and event.target_info.url == "about:blank"
-            ):
-                future.set_result(event)
+            if event.target_info.url != "about:blank" or url == "about:blank":
+                navigated_target_ids.add(event.target_info.target_id)
+                navigated.set()
+
+        async def wait_for_navigation(target_id: cdp.target.TargetID) -> None:
+            while target_id not in navigated_target_ids:
+                navigated.clear()
+                await navigated.wait()
 
         self.connection.add_handler(event_type, get_handler)
-
-        if new_tab or new_window:
-            # create new target using the browser session
-            target_id = await self.connection.send(
-                cdp.target.create_target(
-                    url, new_window=new_window, enable_begin_frame_control=True
+        try:
+            if new_tab or new_window:
+                # create new target using the browser session
+                target_id = await self.connection.send(
+                    cdp.target.create_target(
+                        url, new_window=new_window, enable_begin_frame_control=True
+                    )
                 )
-            )
-            # get the connection matching the new target_id from our inventory
-            connection: tab.Tab = next(
-                filter(
-                    lambda item: item.type_ == "page" and item.target_id == target_id,
-                    self.targets,
-                )
-            )  # type: ignore
-            connection.browser = self
-        else:
-            # first tab from browser.tabs
-            connection = next(filter(lambda item: item.type_ == "page", self.targets))  # type: ignore
-            # use the tab to navigate to new url
-            await connection.send(cdp.page.navigate(url))
+                connection = await self._get_tab(target_id)
+            else:
+                # first tab from browser.tabs
+                connection = next(
+                    filter(lambda item: item.type_ == "page", self.targets)
+                )  # type: ignore
+                # use the tab to navigate to new url
+                await connection.send(cdp.page.navigate(url))
             connection.browser = self
 
-        await asyncio.wait_for(future, 10)
-        self.connection.remove_handlers(event_type, get_handler)
+            await asyncio.wait_for(wait_for_navigation(connection.target_id), 10)  # type: ignore
+        finally:
+            self.connection.remove_handlers(event_type, get_handler)
 
         return connection
 
@@ -537,6 +535,18 @@ class Browser:
             raise RuntimeError("Browser not yet started. use await browser.start()")
         info = await self.connection.send(cdp.target.get_targets(), _is_update=True)
         return info
+
+    async def _get_tab(self, target_id: cdp.target.TargetID) -> tab.Tab:
+        """
+        the TargetCreated handler may not have processed a newly created target yet,
+        in which case the target is added by updating the targets
+        """
+        for _ in range(2):
+            for target in self.targets:
+                if target.target_id == target_id and isinstance(target, tab.Tab):
+                    return target
+            await self.update_targets()
+        raise RuntimeError(f"target {target_id} not found")
 
     def _create_tab(self, target_info: cdp.target.TargetInfo) -> tab.Tab:
         return tab.Tab(
