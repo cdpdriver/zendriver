@@ -41,6 +41,16 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+MOUSE_BUTTON_FLAGS = {
+    "none": 0,
+    "left": 1,
+    "right": 2,
+    "middle": 4,
+    "back": 8,
+    "forward": 16,
+}
+MOUSE_PRESSED_FORCE = 0.5
+
 
 class Tab(Connection):
     """
@@ -154,6 +164,8 @@ class Tab(Connection):
         self.browser = browser
         self._dom = None
         self._window_id = None
+        self._mouse_position: tuple[float, float] = (0.0, 0.0)
+        self._mouse_buttons = 0
 
     @property
     def inspector_url(self) -> str:
@@ -1625,39 +1637,101 @@ class Tab(Connection):
 
         await verify_cf(self, click_delay, timeout, challenge_selector, flash_corners)
 
+    async def _dispatch_mouse_event(
+        self,
+        type_: str,
+        x: float,
+        y: float,
+        button: str = "none",
+        modifiers: typing.Optional[int] = 0,
+        click_count: typing.Optional[int] = None,
+    ) -> None:
+        await self.send(
+            cdp.input_.dispatch_mouse_event(
+                type_,
+                x=x,
+                y=y,
+                modifiers=modifiers,
+                button=cdp.input_.MouseButton(button),
+                buttons=self._mouse_buttons,
+                click_count=click_count,
+                force=MOUSE_PRESSED_FORCE if self._mouse_buttons else 0,
+            )
+        )
+        self._mouse_position = (x, y)
+
     async def mouse_move(
         self, x: float, y: float, steps: int = 10, flash: bool = False
     ) -> None:
+        """moves the mouse from its last known position to x,y, without releasing
+        any held buttons
+
+        :param x:
+        :param y:
+        :param steps: move in <steps> points, this could make it look more "natural"
+        :param flash: show a red dot at the visited points
+        """
         steps = 1 if (not steps or steps < 1) else steps
-        # probably the worst waay of calculating this. but couldn't think of a better solution today.
-        if steps > 1:
-            step_size_x = x // steps
-            step_size_y = y // steps
-            pathway = [(step_size_x * i, step_size_y * i) for i in range(steps + 1)]
-            for point in pathway:
-                if flash:
-                    await self.flash_point(point[0], point[1])
-                await self.send(
-                    cdp.input_.dispatch_mouse_event(
-                        "mouseMoved", x=point[0], y=point[1]
-                    )
-                )
-        else:
-            await self.send(cdp.input_.dispatch_mouse_event("mouseMoved", x=x, y=y))
-        if flash:
-            await self.flash_point(x, y)
-        else:
-            await self.sleep(0.05)
-        await self.send(cdp.input_.dispatch_mouse_event("mouseReleased", x=x, y=y))
-        if flash:
-            await self.flash_point(x, y)
+        start_x, start_y = self._mouse_position
+        for i in range(1, steps + 1):
+            point_x = start_x + (x - start_x) * i / steps
+            point_y = start_y + (y - start_y) * i / steps
+            if flash:
+                await self.flash_point(point_x, point_y)
+            await self._dispatch_mouse_event("mouseMoved", point_x, point_y)
+            await asyncio.sleep(0)
+
+    async def mouse_down(
+        self,
+        x: float,
+        y: float,
+        button: str = "left",
+        modifiers: typing.Optional[int] = 0,
+        click_count: int = 1,
+    ) -> None:
+        """presses and holds a mouse button at position x,y. release it with
+        :py:meth:`mouse_up`
+
+        :param x:
+        :param y:
+        :param button: str (default = "left")
+        :param modifiers: *(Optional)* Bit field representing pressed modifier keys.
+                Alt=1, Ctrl=2, Meta/Command=4, Shift=8 (default: 0).
+        :param click_count: number of times the button was clicked (default 1)
+        """
+        self._mouse_buttons |= MOUSE_BUTTON_FLAGS[button]
+        await self._dispatch_mouse_event(
+            "mousePressed", x, y, button, modifiers, click_count
+        )
+
+    async def mouse_up(
+        self,
+        x: float,
+        y: float,
+        button: str = "left",
+        modifiers: typing.Optional[int] = 0,
+        click_count: int = 1,
+    ) -> None:
+        """releases a mouse button at position x,y
+
+        :param x:
+        :param y:
+        :param button: str (default = "left")
+        :param modifiers: *(Optional)* Bit field representing pressed modifier keys.
+                Alt=1, Ctrl=2, Meta/Command=4, Shift=8 (default: 0).
+        :param click_count: number of times the button was clicked (default 1)
+        """
+        self._mouse_buttons &= ~MOUSE_BUTTON_FLAGS[button]
+        await self._dispatch_mouse_event(
+            "mouseReleased", x, y, button, modifiers, click_count
+        )
 
     async def mouse_click(
         self,
         x: float,
         y: float,
         button: str = "left",
-        buttons: typing.Optional[int] = 1,
+        buttons: typing.Optional[int] = None,
         modifiers: typing.Optional[int] = 0,
         _until_event: typing.Optional[type] = None,
         flash: typing.Optional[bool] = False,
@@ -1666,38 +1740,50 @@ class Tab(Connection):
         :param y:
         :param x:
         :param button: str (default = "left")
-        :param buttons: which button (default 1 = left)
+        :param buttons: deprecated, the pressed buttons are derived from ``button``
         :param modifiers: *(Optional)* Bit field representing pressed modifier keys.
                 Alt=1, Ctrl=2, Meta/Command=4, Shift=8 (default: 0).
         :param _until_event: internal. event to wait for before returning
         :return:
         """
-
-        await self.send(
-            cdp.input_.dispatch_mouse_event(
-                "mousePressed",
-                x=x,
-                y=y,
-                modifiers=modifiers,
-                button=cdp.input_.MouseButton(button),
-                buttons=buttons,
-                click_count=1,
+        if buttons is not None:
+            warnings.warn(
+                "the buttons argument of mouse_click() is deprecated and ignored, "
+                "the pressed buttons are derived from button",
+                DeprecationWarning,
+                stacklevel=2,
             )
-        )
-
-        await self.send(
-            cdp.input_.dispatch_mouse_event(
-                "mouseReleased",
-                x=x,
-                y=y,
-                modifiers=modifiers,
-                button=cdp.input_.MouseButton(button),
-                buttons=buttons,
-                click_count=1,
-            )
-        )
+        await self.mouse_down(x, y, button, modifiers)
+        await self.mouse_up(x, y, button, modifiers)
         if flash:
             await self.flash_point(x, y)
+
+    async def mouse_drag(
+        self,
+        source_point: tuple[float, float],
+        dest_point: tuple[float, float],
+        relative: bool = False,
+        steps: int = 1,
+    ) -> None:
+        """drags the mouse from one point to another while holding the left button.
+        to drag an element, use :py:meth:`element.Element.mouse_drag` instead
+
+        :param source_point: coordinates (x,y) to press the button at
+        :param dest_point: coordinates (x,y) to release the button at
+        :param relative: when True, treats dest_point as relative to source_point.
+               for example (-100, 200) will move left 100px and down 200px
+        :param steps: move in <steps> points, this could make it look more "natural" (default 1),
+               but also a lot slower.
+               for very smooth action use 50-100
+        """
+        if relative:
+            dest_point = (
+                source_point[0] + dest_point[0],
+                source_point[1] + dest_point[1],
+            )
+        await self.mouse_down(*source_point)
+        await self.mouse_move(*dest_point, steps=steps)
+        await self.mouse_up(*dest_point)
 
     async def flash_point(
         self, x: float, y: float, duration: float = 0.5, size: int = 10

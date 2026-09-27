@@ -24,12 +24,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix `Browser.start()` sometimes returning before the browser's initial tab was registered, which made `browser.get(url)` raise `RuntimeError: coroutine raised StopIteration`. `browser.get(url)` now raises a descriptive error if there is no tab to navigate @stephanlensky
 - Fix extensions added with `Config.add_extension()` not loading on Chrome 137+. The default `--disable-features` switch was overridden by a second one, since Chrome only uses the last. All `--disable-features` switches, including user-provided ones, are now merged into one, and `--enable-unsafe-extension-debugging` is passed when extensions are added @stephanlensky
 - Fix commands hanging forever when the browser connection closed while they were waiting for a response, for example because the browser crashed or `Connection.aclose()` was called. Pending commands now raise instead, and `Connection.send()` raises `ProtocolException` instead of returning `None` when the connection is closed @stephanlensky
+- Fix mouse helpers dispatching inconsistent button and pressure state that pages can observe. Mouse clicks and drags now report a pressure of `0.5` while a button is held and `buttons=0` on release, drag movements keep `buttons=1`, `mouse_move()` no longer sends a `mouseReleased` event, and `Tab.mouse_move()` with `steps` now moves from the last mouse position instead of from `(0, 0)`. The `buttons` argument of `mouse_click()` is deprecated and ignored @stephanlensky
 
 ### Added
 
 - Add support for unstable variants of Microsoft Edge on macOS @mokurin000
 - Add `Tab.get_frames()` and `Element.get_frame()` to access out-of-process (e.g. cross-origin) iframes as `Tab` objects, and an `include_frames` option to `find()`, `find_all()`, `select()` and `select_all()` which also searches these iframes @stephanlensky
 - Add `Browser.create_context()` to open a tab in a new browser context with its own proxy. Authenticated HTTP, HTTPS and SOCKS5 proxies (e.g. `socks5://user:pass@host:port`) are supported through a local forwarding proxy @stephanlensky
+- Add `Tab.mouse_down()`, `Tab.mouse_up()` and `Tab.mouse_drag()` to press, hold and release mouse buttons separately, for example to drag a slider with custom movement @stephanlensky
 
 ### Changed
 
