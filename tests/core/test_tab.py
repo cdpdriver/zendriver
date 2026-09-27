@@ -257,6 +257,55 @@ async def test_remove_handlers(browser: zd.Browser) -> None:
     assert len(tab.handlers) == 0
 
 
+async def test_handler_raising_type_error_is_called_once(
+    browser: zd.Browser,
+) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    calls: list[tuple[Any, ...]] = []
+    called = asyncio.Event()
+
+    async def handler(*args: Any) -> None:
+        calls.append(args)
+        called.set()
+        raise TypeError("raised by the handler itself")
+
+    tab.add_handler(zd.cdp.page.LoadEventFired, handler)
+    await tab.reload()
+    await asyncio.wait_for(called.wait(), 5)
+    await tab.wait(0.5)
+
+    assert len(calls) == 1
+    assert calls[0][1] is tab
+
+
+async def test_handler_without_connection_argument_receives_event(
+    browser: zd.Browser,
+) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    received: list[Any] = []
+    called = asyncio.Event()
+
+    async def handler(event: zd.cdp.page.LoadEventFired) -> None:
+        received.append(event)
+        called.set()
+
+    tab.add_handler(zd.cdp.page.LoadEventFired, handler)
+    await tab.reload()
+    await asyncio.wait_for(called.wait(), 5)
+
+    assert isinstance(received[0], zd.cdp.page.LoadEventFired)
+
+
+async def test_remove_handlers_for_event_without_handlers(
+    browser: zd.Browser,
+) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+
+    tab.remove_handlers(zd.cdp.network.RequestWillBeSent)
+
+    assert len(tab.handlers) == 0
+
+
 async def test_remove_handlers_specific_event(browser: zd.Browser) -> None:
     tab = await browser.get(sample_file("groceries.html"))
 

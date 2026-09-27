@@ -8,8 +8,6 @@ import json
 import logging
 import sys
 import types
-import typing
-from asyncio import iscoroutinefunction
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -367,6 +365,7 @@ class Connection(metaclass=CantTouchThis):
 
         if you want to receive event updates (network traffic are also 'events') you can add handlers for those events.
         handlers can be regular callback functions or async coroutine functions (and also just lamba's).
+        handlers are called with the event, and with the connection as a second argument if they accept one.
         for example, you want to check the network traffic:
 
         .. code-block::
@@ -429,7 +428,7 @@ class Connection(metaclass=CantTouchThis):
             return
 
         if not handler:
-            del self.handlers[event_type]
+            self.handlers.pop(event_type, None)
             return
 
         if handler in self.handlers[event_type]:
@@ -851,6 +850,14 @@ class Connection(metaclass=CantTouchThis):
             pass
 
 
+def _accepts_connection_argument(handler: Callable[..., Any]) -> bool:
+    try:
+        inspect.signature(handler).bind(None, None)
+    except (TypeError, ValueError):
+        return False
+    return True
+
+
 class Listener:
     def __init__(self, connection: Connection):
         self.connection = connection
@@ -973,23 +980,15 @@ class Listener:
                         continue
                     for callback in callbacks:
                         try:
-                            if iscoroutinefunction(callback):
-                                try:
-                                    asyncio.create_task(
-                                        callback(event, self.connection)
-                                    )
-                                except TypeError:
-                                    asyncio.create_task(callback(event))
+                            args = (
+                                (event, self.connection)
+                                if _accepts_connection_argument(callback)
+                                else (event,)
+                            )
+                            if inspect.iscoroutinefunction(callback):
+                                asyncio.create_task(callback(*args))
                             else:
-                                callback = typing.cast(Callable, callback)  # type: ignore
-
-                                def run_callback() -> None:
-                                    try:
-                                        callback(event, self.connection)
-                                    except TypeError:
-                                        callback(event)
-
-                                asyncio.create_task(asyncio.to_thread(run_callback))
+                                asyncio.create_task(asyncio.to_thread(callback, *args))
                         except Exception as e:
                             logger.warning(
                                 "exception in callback %s for event %s => %s",
