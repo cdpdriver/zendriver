@@ -14,6 +14,7 @@ import zendriver as zd
 from tests.conftest import CreateBrowser
 from tests.sample_data import sample_file
 from zendriver import cdp
+from zendriver.core.connection import ProtocolException
 
 # these tests exercise the browser lifecycle (e.g. stopping it)
 pytestmark = pytest.mark.fresh_browser
@@ -258,3 +259,53 @@ async def test_start_waits_for_initial_tab(
     browser_context.config.autodiscover_targets = False
     async with browser_context as browser:
         assert len(browser.tabs) == 1
+
+
+async def test_pending_commands_fail_when_browser_process_dies(
+    browser: zd.Browser,
+) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    assert browser.connection is not None
+    assert browser._process_pid is not None
+
+    process = Process(browser._process_pid)
+    process.suspend()
+    browser_command = asyncio.create_task(
+        browser.connection.send(cdp.browser.get_version())
+    )
+    tab_command = asyncio.create_task(tab.send(cdp.page.get_frame_tree()))
+    await asyncio.sleep(0.5)
+    assert not browser_command.done()
+    assert not tab_command.done()
+
+    process.kill()
+    results = await asyncio.wait_for(
+        asyncio.gather(browser_command, tab_command, return_exceptions=True),
+        timeout=10,
+    )
+
+    assert all(isinstance(result, Exception) for result in results)
+
+
+async def test_pending_commands_fail_when_connection_is_closed(
+    browser: zd.Browser,
+) -> None:
+    await browser.get(sample_file("groceries.html"))
+    assert browser.connection is not None
+    assert browser._process_pid is not None
+
+    process = Process(browser._process_pid)
+    process.suspend()
+    try:
+        browser_command = asyncio.create_task(
+            browser.connection.send(cdp.browser.get_version())
+        )
+        await asyncio.sleep(0.5)
+        assert not browser_command.done()
+
+        await browser.connection.aclose()
+
+        with pytest.raises(ProtocolException):
+            await asyncio.wait_for(browser_command, timeout=10)
+    finally:
+        process.resume()

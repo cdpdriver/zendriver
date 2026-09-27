@@ -500,9 +500,14 @@ class Connection(metaclass=CantTouchThis):
         self.manually_enabled_domains.clear()
         self.__dict__.pop("_prep_headless_done", None)
         self.__dict__.pop("_prep_expert_done", None)
+        self._fail_pending_transactions(
+            ProtocolException("target session was detached")
+        )
+
+    def _fail_pending_transactions(self, exception: BaseException) -> None:
         for tx in self.mapper.values():
             if not tx.done():
-                tx.set_exception(ProtocolException("target session was detached"))
+                tx.set_exception(exception)
         self.mapper.clear()
 
     async def aclose(self) -> None:
@@ -532,6 +537,7 @@ class Connection(metaclass=CantTouchThis):
                 self.manually_enabled_domains.clear()
             await self.websocket.close()
             self.websocket = None
+            self._fail_pending_transactions(ProtocolException("connection was closed"))
             logger.debug("\n❌ closed websocket connection to %s", self.websocket_url)
 
     async def sleep(self, t: Union[int, float] = 0.25) -> None:
@@ -629,7 +635,7 @@ class Connection(metaclass=CantTouchThis):
         """
         await self.aopen()
         if self.websocket is None:
-            return  # type: ignore
+            raise ProtocolException("connection was closed")
         if self._owner:
             browser = self._owner
             if browser.config:
@@ -655,7 +661,7 @@ class Connection(metaclass=CantTouchThis):
         if self.websocket is None:
             raise ProtocolException("target session was detached")
         tx.session_id = self.session_id
-        await self.websocket.send(tx.message)
+        await self._send_transaction(tx)
         try:
             return await tx  # type: ignore
         except ProtocolException as e:
@@ -795,6 +801,15 @@ class Connection(metaclass=CantTouchThis):
             return self._session_parent._next_message_id()
         return next(self._message_ids)
 
+    async def _send_transaction(self, tx: Transaction) -> None:
+        if self.websocket is None:
+            raise ProtocolException("connection was closed")
+        try:
+            await self.websocket.send(tx.message)
+        except BaseException:
+            self.mapper.pop(tx.id, None)  # type: ignore
+            raise
+
     async def _receive_message(self) -> dict[str, Any] | None:
         """
         returns the next message addressed to this connection, or None when
@@ -828,7 +843,7 @@ class Connection(metaclass=CantTouchThis):
         tx.id = self._next_message_id()
         tx.session_id = self.session_id
         self.mapper.update({tx.id: tx})
-        await self.websocket.send(tx.message)
+        await self._send_transaction(tx)
         try:
             # in try except since if browser connection sends this it reises an exception
             return await tx
@@ -907,6 +922,7 @@ class Listener:
                 )
                 for session in list(self.connection._sessions.values()):
                     session._detach_session()
+                self.connection._fail_pending_transactions(e)
                 break
 
             if not self.running:
