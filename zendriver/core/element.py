@@ -223,14 +223,7 @@ class Element:
         # check if it may be present in the element attributes (eg, href=, src=, alt=)
         # returns None when attribute is not found
         # instead of raising AttributeError
-        x = getattr(self.attrs, item, None)
-        if x:
-            return x  # type: ignore
-        return None
-
-    #     x = getattr(self.node, item, None)
-    #
-    #     return x
+        return self.get(item)
 
     def get(self, name: str) -> str | None:
         """
@@ -243,13 +236,10 @@ class Element:
         :return: The value of the attribute, or None if it does not exist.
         :rtype: str | None
         """
-        try:
-            x = getattr(self.attrs, name, None)
-            if x:
-                return x  # type: ignore
+        value = self.attrs.get(name)
+        if value is None:
             return None
-        except AttributeError:
-            return None
+        return str(value)
 
     def __setattr__(self, key: str, value: typing.Any) -> None:
         if key[0] != "_":
@@ -539,8 +529,8 @@ class Element:
                 raise Exception("could not find position for %s " % self)
             pos = Position(quads[0])
             if abs:
-                scroll_y = (await self.tab.evaluate("window.scrollY")).value  # type: ignore
-                scroll_x = (await self.tab.evaluate("window.scrollX")).value  # type: ignore
+                scroll_y = await self.tab.evaluate("window.scrollY")
+                scroll_x = await self.tab.evaluate("window.scrollX")
                 abs_x = pos.left + scroll_x + (pos.width / 2)
                 abs_y = pos.top + scroll_y + (pos.height / 2)
                 pos.abs_x = abs_x

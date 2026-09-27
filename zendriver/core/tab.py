@@ -709,7 +709,7 @@ class Tab(Connection):
             node = util.filter_recurse(doc, lambda n: n.node_id == nid)
             if not node:
                 try:
-                    node = await self.send(cdp.dom.resolve_node(node_id=nid))  # type: ignore
+                    node = await self.send(cdp.dom.describe_node(node_id=nid))
                 except ProtocolException:
                     continue
                 if not node:

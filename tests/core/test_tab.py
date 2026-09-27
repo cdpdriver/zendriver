@@ -736,3 +736,32 @@ async def test_shadow_children_includes_closed_shadow_root(
 
     assert [child.tag for child in heading.shadow_children] == ["button"]
     assert heading.shadow_children[0].attrs["id"] == "shadow-button"
+
+
+async def test_get_position_abs_includes_scroll_offset(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    await tab.evaluate("document.body.style.height = '5000px'")
+    button = await tab.select("#download_file")
+
+    await tab.evaluate("window.scrollTo(0, 100)")
+    position = await button.get_position(abs=True)
+
+    assert position is not None
+    assert position.abs_y == position.top + 100 + position.height / 2
+
+
+async def test_element_get_only_returns_html_attributes(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    button = await tab.select("#download_file")
+
+    assert button.get("id") == "download_file"
+    assert button.get("missing") is None
+    assert button.get("items") is None
+
+
+async def test_element_get_returns_empty_attribute_value(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    await tab.evaluate("document.querySelector('#download_file').disabled = true")
+    button = await tab.select("#download_file")
+
+    assert button.get("disabled") == ""
