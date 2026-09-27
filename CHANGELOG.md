@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+This is quite a large release, including a number of fixes from first-time contributors (thank you!) as well as ports for *all* `nodriver` features and bugfixes that have been added upstream since Zendriver was forked. Additionally, I've managed to remove the last remaining `# type: ignore` comments, which uncovered a few additional bugs that have also been fixed in this release.
+
+This release marks two years of Zendriver! Huge thanks to everyone that has contributed so far.
+
 ### Fixed
 
 - Fix `ValueError` on startup when the `lang` option is set @bercedev
