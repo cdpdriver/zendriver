@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `Tab.mouse_down()`, `Tab.mouse_up()` and `Tab.mouse_drag()` to press, hold and release mouse buttons separately, for example to drag a slider with custom movement @stephanlensky
 - Add `Browser.get_tab()` to find a tab by text in its URL or title @stephanlensky
 - Add `Element.shadow_children` to access the children of an element's open or closed shadow root @stephanlensky
+- Add `Tab.is_scrolled_to_bottom()` and `Tab.bypass_insecure_connection_warning()` @stephanlensky
 
 ### Changed
 

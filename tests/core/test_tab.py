@@ -626,6 +626,17 @@ async def test_set_download_path_creates_directory(
     assert download_path.is_dir()
 
 
+async def test_is_scrolled_to_bottom(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    await tab.evaluate("document.body.style.height = '5000px'")
+
+    assert not await tab.is_scrolled_to_bottom()
+
+    await tab.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)")
+
+    assert await tab.is_scrolled_to_bottom()
+
+
 async def test_shadow_children_includes_closed_shadow_root(
     browser: zd.Browser,
 ) -> None:
