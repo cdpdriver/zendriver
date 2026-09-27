@@ -562,10 +562,10 @@ class Connection(metaclass=CantTouchThis):
         :return:
         :rtype:
         """
+        await self.update_target()
         if not self.listener:
             raise ValueError("No listener created yet")
 
-        await self.update_target()
         loop = asyncio.get_running_loop()
         start_time = loop.time()
         try:

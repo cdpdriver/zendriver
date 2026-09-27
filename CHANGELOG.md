@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix `Browser` instances never being garbage collected after `Browser.stop()`. The asyncio atexit callback and the global registered instances set kept a reference to every browser, and per-target connections were left open. @stephanlensky
 - Fix the connection listener crashing with `InvalidStateError` when a response arrived for a command that was already cancelled (for example by `asyncio.wait_for`), which left later commands hanging forever @stephanlensky
 - Fix every received CDP event being kept in memory for the lifetime of its connection @stephanlensky
+- Fix `await tab` raising `ValueError: No listener created yet` on a tab which no commands were sent to yet, such as one just opened with `browser.get(url, new_tab=True)` @stephanlensky
 
 ### Added
 

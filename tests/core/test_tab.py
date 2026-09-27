@@ -567,6 +567,15 @@ async def test_evaluate_stress_test_complex_objects(browser: zd.Browser) -> None
             raise ValueError("Validator must be a type or callable")
 
 
+async def test_awaiting_new_tab_does_not_raise(browser: zd.Browser) -> None:
+    """Awaiting a tab nothing was sent to yet used to raise ValueError (#186)."""
+    tab = await browser.get(sample_file("groceries.html"), new_tab=True)
+
+    await tab
+
+    assert await tab.evaluate("1 + 1") == 2
+
+
 async def test_response_to_cancelled_command_does_not_stop_listener(
     browser: zd.Browser,
 ) -> None:
