@@ -841,11 +841,7 @@ class Tab(Connection):
 
     async def evaluate(
         self, expression: str, await_promise: bool = False, return_by_value: bool = True
-    ) -> (
-        Any
-        | None
-        | typing.Tuple[cdp.runtime.RemoteObject, cdp.runtime.ExceptionDetails | None]
-    ):
+    ) -> Any:
         ser: cdp.runtime.SerializationOptions | None = None
         if not return_by_value:
             ser = cdp.runtime.SerializationOptions(
@@ -1930,7 +1926,7 @@ class Tab(Connection):
         :rtype:
         """
         if not user_agent:
-            user_agent = await self.evaluate("navigator.userAgent")  # type: ignore
+            user_agent = await self.evaluate("navigator.userAgent")
             if not user_agent:
                 raise ValueError(
                     "Could not read existing user agent from navigator object"

@@ -13,7 +13,7 @@ from .util import event_class, T_JSON_DICT
 
 from . import dom
 from . import runtime
-from deprecated.sphinx import deprecated  # type: ignore
+from deprecated.sphinx import deprecated
 
 
 class DOMBreakpointType(enum.Enum):

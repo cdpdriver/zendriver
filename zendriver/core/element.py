@@ -893,7 +893,7 @@ class Element:
         await self.tab.sleep()
 
         if not filename or filename == "auto":
-            parsed = urllib.parse.urlparse(self.tab.target.url)  # type: ignore
+            parsed = urllib.parse.urlparse(self.tab.url or "")
             parts = parsed.path.split("/")
             last_part = parts[-1]
             last_part = last_part.rsplit("?", 1)[0]
@@ -1110,7 +1110,7 @@ class Element:
         await self._tab
 
     async def is_recording(self) -> bool:
-        return await self.apply('(vid) => vid["_recording"]')  # type: ignore
+        return bool(await self.apply('(vid) => vid["_recording"]'))
 
     def _make_attrs(self) -> None:
         sav = None

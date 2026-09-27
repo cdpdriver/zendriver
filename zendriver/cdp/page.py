@@ -17,7 +17,7 @@ from . import emulation
 from . import io
 from . import network
 from . import runtime
-from deprecated.sphinx import deprecated  # type: ignore
+from deprecated.sphinx import deprecated
 
 
 class FrameId(str):

@@ -11,8 +11,8 @@ import types
 from typing import (
     TYPE_CHECKING,
     Any,
-    Awaitable,
     Callable,
+    Generic,
     Generator,
     List,
     Literal,
@@ -77,8 +77,8 @@ class SettingClassVarNotAllowedException(PermissionError):
     pass
 
 
-class Transaction(asyncio.Future[Any]):
-    def __init__(self, cdp_obj: Generator[dict[str, Any], dict[str, Any], Any]):
+class Transaction(asyncio.Future[T], Generic[T]):
+    def __init__(self, cdp_obj: Generator[dict[str, Any], dict[str, Any], T]):
         """
         :param cdp_obj:
         """
@@ -144,15 +144,12 @@ class Transaction(asyncio.Future[Any]):
         return fmt
 
 
-class EventTransaction(Transaction):
+class EventTransaction(Transaction[Any]):
     event = None
     value = None
 
     def __init__(self, event_object: Any):
-        try:
-            super().__init__(None)  # type: ignore
-        except Exception:
-            pass
+        asyncio.Future.__init__(self)
         self.set_result(event_object)
         self.event = self.value = self.result()
 
@@ -206,9 +203,9 @@ class Connection(metaclass=CantTouchThis):
         self._owner = _owner
         self.websocket_url: str = websocket_url
         self.websocket = None
-        self.mapper: dict[int, Transaction] = {}
-        self.handlers: dict[Any, list[Union[Callable, Awaitable]]] = (  # type: ignore
-            collections.defaultdict(list)
+        self.mapper: dict[int, Transaction[Any]] = {}
+        self.handlers: dict[Any, list[Callable[..., Any]]] = collections.defaultdict(
+            list
         )
         self.recv_task = None
         self.enabled_domains: list[Any] = []
@@ -355,7 +352,7 @@ class Connection(metaclass=CantTouchThis):
     def add_handler(
         self,
         event_type_or_domain: Union[type, types.ModuleType],
-        handler: Union[Callable, Awaitable],  # type: ignore
+        handler: Callable[..., Any],
     ) -> None:
         """
         add a handler for given event
@@ -390,7 +387,7 @@ class Connection(metaclass=CantTouchThis):
     def remove_handlers(
         self,
         event_type: Optional[type] = None,
-        handler: Optional[Union[Callable, Awaitable]] = None,  # type: ignore
+        handler: Optional[Callable[..., Any]] = None,
     ) -> None:
         """
         remove handlers for given event
@@ -460,9 +457,11 @@ class Connection(metaclass=CantTouchThis):
         async with self._attach_lock:
             if self.session_id is not None:
                 return
+            if self.target_id is None:
+                raise RuntimeError("cannot attach a session without a target")
             await browser_connection.aopen()
             session_id = await browser_connection.send(
-                cdp.target.attach_to_target(self.target_id, flatten=True),  # type: ignore
+                cdp.target.attach_to_target(self.target_id, flatten=True),
                 _is_update=True,
             )
             self.session_id = session_id
@@ -509,10 +508,12 @@ class Connection(metaclass=CantTouchThis):
             browser_connection = self._session_parent
             session_id = self.session_id
             self._detach_session()
-            if not browser_connection.closed:
+            if session_id is not None and not browser_connection.closed:
                 try:
                     await browser_connection.send(
-                        cdp.target.detach_from_target(session_id=session_id),  # type: ignore
+                        cdp.target.detach_from_target(
+                            session_id=cdp.target.SessionID(session_id)
+                        ),
                         _is_update=True,
                     )
                 except ProtocolException:
@@ -654,7 +655,7 @@ class Connection(metaclass=CantTouchThis):
         tx.session_id = self.session_id
         await self._send_transaction(tx)
         try:
-            return await tx  # type: ignore
+            return await tx
         except ProtocolException as e:
             e.message = e.message or ""
             e.message += f"\ncommand:{tx.method}\nparams:{tx.params}"
@@ -792,13 +793,14 @@ class Connection(metaclass=CantTouchThis):
             return self._session_parent._next_message_id()
         return next(self._message_ids)
 
-    async def _send_transaction(self, tx: Transaction) -> None:
+    async def _send_transaction(self, tx: Transaction[Any]) -> None:
         if self.websocket is None:
             raise ProtocolException("connection was closed")
         try:
             await self.websocket.send(tx.message)
         except BaseException:
-            self.mapper.pop(tx.id, None)  # type: ignore
+            if tx.id is not None:
+                self.mapper.pop(tx.id, None)
             raise
 
     async def _receive_message(self) -> dict[str, Any] | None:
@@ -959,9 +961,6 @@ class Listener:
                         % (type(e).__name__, e.args, message),
                         exc_info=True,
                     )
-                    continue
-                except KeyError as e:
-                    logger.info("some lousy KeyError %s" % e, exc_info=True)
                     continue
                 try:
                     if type(event) in self.connection.handlers:

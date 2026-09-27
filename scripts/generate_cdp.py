@@ -902,7 +902,7 @@ class CdpDomain:
         code = "\n".join(f"from . import {d}" for d in sorted(dependencies))
 
         if needs_deprecation:
-            code += "\nfrom deprecated.sphinx import deprecated # type: ignore"
+            code += "\nfrom deprecated.sphinx import deprecated"
 
         return code
 

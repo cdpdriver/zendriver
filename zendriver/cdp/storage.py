@@ -15,7 +15,7 @@ from . import browser
 from . import network
 from . import page
 from . import target
-from deprecated.sphinx import deprecated  # type: ignore
+from deprecated.sphinx import deprecated
 
 
 class SerializedStorageKey(str):
