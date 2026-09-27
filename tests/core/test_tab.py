@@ -241,7 +241,42 @@ async def test_add_handler_module_event(browser: zd.Browser) -> None:
 
     tab.add_handler(zd.cdp.network, request_handler)
 
-    assert len(tab.handlers) == 29
+    assert set(tab.handlers) == set(zd.cdp.util.get_event_classes(zd.cdp.network))
+    assert zd.cdp.network.RequestWillBeSent in tab.handlers
+    assert zd.cdp.network.ResourceType not in tab.handlers
+
+
+async def test_add_handler_module_event_receives_events(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    received: list[Any] = []
+
+    async def page_handler(event: Any) -> None:
+        received.append(event)
+
+    tab.add_handler(zd.cdp.page, page_handler)
+    await tab.reload()
+    await tab.wait(1)
+
+    assert any(isinstance(event, zd.cdp.page.LoadEventFired) for event in received)
+
+
+async def test_sync_handlers_are_each_called(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    first_called = asyncio.Event()
+    second_called = asyncio.Event()
+    loop = asyncio.get_running_loop()
+
+    def first_handler(event: zd.cdp.page.LoadEventFired) -> None:
+        loop.call_soon_threadsafe(first_called.set)
+
+    def second_handler(event: zd.cdp.page.LoadEventFired) -> None:
+        loop.call_soon_threadsafe(second_called.set)
+
+    tab.add_handler(zd.cdp.page.LoadEventFired, first_handler)
+    tab.add_handler(zd.cdp.page.LoadEventFired, second_handler)
+    await tab.reload()
+
+    await asyncio.wait_for(asyncio.gather(first_called.wait(), second_called.wait()), 5)
 
 
 async def test_remove_handlers(browser: zd.Browser) -> None:

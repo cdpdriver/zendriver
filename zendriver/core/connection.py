@@ -381,16 +381,8 @@ class Connection(metaclass=CantTouchThis):
         :rtype:
         """
         if isinstance(event_type_or_domain, types.ModuleType):
-            for name, obj in inspect.getmembers_static(event_type_or_domain):
-                if name.isupper():
-                    continue
-                if not name[0].isupper():
-                    continue
-                if type(obj) is type:
-                    continue
-                if inspect.isbuiltin(obj):
-                    continue
-                self.handlers[obj].append(handler)
+            for event_type in cdp.util.get_event_classes(event_type_or_domain):
+                self.handlers[event_type].append(handler)
 
         else:
             self.handlers[event_type_or_domain].append(handler)
