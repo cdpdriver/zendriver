@@ -398,6 +398,22 @@ async def test_wait_for_ready_state(browser: zd.Browser) -> None:
     assert ready_state == "complete"
 
 
+async def test_wait_for_ready_state_times_out_when_evaluate_hangs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def evaluate(*args: Any, **kwargs: Any) -> None:
+        # simulate a CDP response that never arrives
+        await asyncio.Event().wait()
+
+    tab = zd.Tab.__new__(zd.Tab)
+    monkeypatch.setattr(tab, "evaluate", evaluate)
+
+    # the outer wait_for is only a safety net so the test can't hang; its
+    # TimeoutError has no message, so `match` tells the two apart
+    with pytest.raises(asyncio.TimeoutError, match="until complete"):
+        await asyncio.wait_for(tab.wait_for_ready_state("complete", timeout=1), 5)
+
+
 async def test_expect_request(browser: zd.Browser) -> None:
     tab = browser.main_tab
     assert tab is not None
