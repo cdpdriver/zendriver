@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The "Failed to connect to browser" error now suggests `sandbox=False` instead of `no_sandbox=True`, which isn't a real option and was silently ignored
+
 ### Added
 
 ### Changed

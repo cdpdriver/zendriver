@@ -462,7 +462,7 @@ class Browser:
                 Failed to connect to browser
                 ---------------------
                 One of the causes could be when you are running as root.
-                In that case you need to pass no_sandbox=True
+                In that case you need to pass sandbox=False
                 """
                 )
             )
