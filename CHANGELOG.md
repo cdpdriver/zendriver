@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `Tab.wait_for_ready_state` now respects `timeout` even when a `document.readyState` check never gets a response, instead of hanging forever
+
 ### Added
 
 ### Changed

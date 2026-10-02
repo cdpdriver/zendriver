@@ -1330,20 +1330,23 @@ class Tab(Connection):
         :return: True if the ready state is reached.
         :rtype: bool
         """
-        loop = asyncio.get_event_loop()
-        start_time = loop.time()
 
-        while True:
-            ready_state = await self.evaluate("document.readyState")
-            if ready_state == until:
-                return True
+        async def _poll() -> bool:
+            while True:
+                ready_state = await self.evaluate("document.readyState")
+                if ready_state == until:
+                    return True
+                await asyncio.sleep(0.1)
 
-            if loop.time() - start_time > timeout:
-                raise asyncio.TimeoutError(
-                    "time ran out while waiting for load page until %s" % until
-                )
-
-            await asyncio.sleep(0.1)
+        # the timeout has to cover the evaluate() call too, otherwise a
+        # CDP response that never arrives (e.g. page blocked by a dialog)
+        # hangs here forever
+        try:
+            return await asyncio.wait_for(_poll(), timeout)
+        except asyncio.TimeoutError:
+            raise asyncio.TimeoutError(
+                "time ran out while waiting for load page until %s" % until
+            ) from None
 
     def expect_request(
         self, url_pattern: Union[str, re.Pattern[str]]
