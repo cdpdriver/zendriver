@@ -9,14 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- The "Failed to connect to browser" error now suggests `sandbox=False` instead of `no_sandbox=True`, which isn't a real option and was silently ignored
-- `Tab.wait_for_ready_state` now respects `timeout` even when a `document.readyState` check never gets a response, instead of hanging forever
-
 ### Added
 
 ### Changed
 
 ### Removed
+
+## [0.17.1] - 2026-10-01
+
+### Fixed
+
+- The "Failed to connect to browser" error now suggests `sandbox=False` instead of `no_sandbox=True`, which isn't a real option and was silently ignored
+- `Tab.wait_for_ready_state` now respects `timeout` even when a `document.readyState` check never gets a response, instead of hanging forever
 
 ## [0.17.0] - 2026-09-26
 
