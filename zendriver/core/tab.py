@@ -11,7 +11,18 @@ import typing
 import urllib.parse
 import warnings
 import webbrowser
-from typing import TYPE_CHECKING, Any, List, Literal, Optional, Tuple, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Awaitable,
+    Callable,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
 from .intercept import BaseFetchInterception
 from .. import cdp
@@ -29,6 +40,16 @@ if TYPE_CHECKING:
     from .element import Element
 
 logger = logging.getLogger(__name__)
+
+MOUSE_BUTTON_FLAGS = {
+    "none": 0,
+    "left": 1,
+    "right": 2,
+    "middle": 4,
+    "back": 8,
+    "forward": 16,
+}
+MOUSE_PRESSED_FORCE = 0.5
 
 
 class Tab(Connection):
@@ -143,6 +164,8 @@ class Tab(Connection):
         self.browser = browser
         self._dom = None
         self._window_id = None
+        self._mouse_position: tuple[float, float] = (0.0, 0.0)
+        self._mouse_buttons = 0
 
     @property
     def inspector_url(self) -> str:
@@ -188,12 +211,58 @@ class Tab(Connection):
 
         webbrowser.open(self.inspector_url)
 
+    async def get_frames(self) -> List[Tab]:
+        """
+        get the out-of-process iframes (for example cross-origin iframes) inside this tab,
+        including nested ones.
+
+        each frame is returned as a :py:obj:`Tab`, so it can be used like any other tab
+        (``select``, ``find``, ``evaluate``, ...).
+
+        iframes rendered in the same process as their parent are not returned, since
+        their elements are already reachable from the parent tab, for example using
+        ``select_all(selector, include_frames=True)``.
+        """
+        if not self.browser:
+            raise RuntimeError("Browser not yet started. use await browser.start()")
+
+        await self.browser.update_targets()
+        frame_tree = await self.send(cdp.page.get_frame_tree())
+        frame_ids = {tree.frame.id_ for tree in util.flatten_frame_tree(frame_tree)}
+
+        frames: List[Tab] = []
+        for target in self.browser.targets:
+            if (
+                isinstance(target, Tab)
+                and target.type_ == "iframe"
+                and target.target is not None
+                and target.target.parent_frame_id in frame_ids
+            ):
+                frames.append(target)
+                try:
+                    frames.extend(await target.get_frames())
+                except ProtocolException:
+                    logger.debug("could not get frames of %s", target, exc_info=True)
+        return list({frame.target_id: frame for frame in frames}.values())
+
+    async def _search_frames(
+        self, search: Callable[[Tab], Awaitable[List[Element]]]
+    ) -> List[Element]:
+        items: List[Element] = []
+        for frame in await self.get_frames():
+            try:
+                items.extend(await search(frame))
+            except ProtocolException:
+                logger.debug("could not search frame %s", frame, exc_info=True)
+        return items
+
     async def find(
         self,
         text: str,
         best_match: bool = True,
         return_enclosing_element: bool = True,
         timeout: Union[int, float] = 10,
+        include_frames: bool = False,
     ) -> Element:
         """
         find single element by text
@@ -222,11 +291,18 @@ class Tab(Connection):
                  # ignore the return_enclosing_element flag if the found node is NOT a text node but a
                  # regular element (one having a tag) in which case that is exactly what we need.
         :param timeout: raise timeout exception when after this many seconds nothing is found.
+        :param include_frames: whether to also search out-of-process iframes (see :py:meth:`get_frames`).
         """
         loop = asyncio.get_running_loop()
         start_time = loop.time()
 
         text = text.strip()
+
+        async def find_in_frame(frame: Tab) -> List[Element]:
+            item = await frame.find_element_by_text(
+                text, best_match, return_enclosing_element
+            )
+            return [item] if item else []
 
         while True:
             item = await self.find_element_by_text(
@@ -234,6 +310,11 @@ class Tab(Connection):
             )
             if item:
                 return item
+
+            if include_frames:
+                items = await self._search_frames(find_in_frame)
+                if items:
+                    return items[0]
 
             if loop.time() - start_time > timeout:
                 raise asyncio.TimeoutError(
@@ -246,6 +327,7 @@ class Tab(Connection):
         self,
         selector: str,
         timeout: Union[int, float] = 10,
+        include_frames: bool = False,
     ) -> Element:
         """
         find single element by css selector.
@@ -253,6 +335,7 @@ class Tab(Connection):
 
         :param selector: css selector, eg a[href], button[class*=close], a > img[src]
         :param timeout: raise timeout exception when after this many seconds nothing is found.
+        :param include_frames: whether to also search iframes, including out-of-process iframes (see :py:meth:`get_frames`).
         """
         loop = asyncio.get_running_loop()
         start_time = loop.time()
@@ -260,12 +343,14 @@ class Tab(Connection):
         selector = selector.strip()
 
         while True:
-            item = await self.query_selector(selector)
-            if isinstance(item, list):
+            if include_frames:
+                items = await self._query_selector_all_with_frames(selector)
+                if items:
+                    return items[0]
+            else:
+                item = await self.query_selector(selector)
                 if item:
-                    return item[0]
-            elif item:
-                return item
+                    return item
 
             if loop.time() - start_time > timeout:
                 raise asyncio.TimeoutError(
@@ -278,6 +363,7 @@ class Tab(Connection):
         self,
         text: str,
         timeout: Union[int, float] = 10,
+        include_frames: bool = False,
     ) -> List[Element]:
         """
         find multiple elements by text
@@ -285,6 +371,7 @@ class Tab(Connection):
 
         :param text: text to search for. note: script contents are also considered text
         :param timeout: raise timeout exception when after this many seconds nothing is found.
+        :param include_frames: whether to also search out-of-process iframes (see :py:meth:`get_frames`).
         """
         loop = asyncio.get_running_loop()
         now = loop.time()
@@ -293,6 +380,12 @@ class Tab(Connection):
 
         while True:
             items = await self.find_elements_by_text(text)
+            if include_frames:
+                items.extend(
+                    await self._search_frames(
+                        lambda frame: frame.find_elements_by_text(text)
+                    )
+                )
             if items:
                 return items
 
@@ -316,7 +409,7 @@ class Tab(Connection):
 
         :param selector: css selector, eg a[href], button[class*=close], a > img[src]
         :param timeout: raise timeout exception when after this many seconds nothing is found.
-        :param include_frames: whether to include results in iframes.
+        :param include_frames: whether to include results in iframes, including out-of-process iframes (see :py:meth:`get_frames`).
         """
 
         loop = asyncio.get_running_loop()
@@ -324,10 +417,10 @@ class Tab(Connection):
         selector = selector.strip()
 
         while True:
-            items = []
-            items.extend(
-                await self.query_selector_all(selector, _include_frames=include_frames)
-            )
+            if include_frames:
+                items = await self._query_selector_all_with_frames(selector)
+            else:
+                items = await self.query_selector_all(selector)
 
             if items:
                 return items
@@ -338,6 +431,15 @@ class Tab(Connection):
                 )
 
             await self.sleep(0.5)
+
+    async def _query_selector_all_with_frames(self, selector: str) -> List[Element]:
+        items = await self.query_selector_all(selector, _include_frames=True)
+        items.extend(
+            await self._search_frames(
+                lambda frame: frame.query_selector_all(selector, _include_frames=True)
+            )
+        )
+        return items
 
     async def xpath(self, xpath: str, timeout: float = 2.5) -> List[Element]:  # noqa
         """
@@ -588,14 +690,17 @@ class Tab(Connection):
         text = text.strip()
         doc = await self.send(cdp.dom.get_document(-1, True))
         search_id, nresult = await self.send(cdp.dom.perform_search(text, True))
-        if nresult:
-            node_ids = await self.send(
-                cdp.dom.get_search_results(search_id, 0, nresult)
-            )
-        else:
-            node_ids = []
-
-        await self.send(cdp.dom.discard_search_results(search_id))
+        try:
+            if nresult:
+                node_ids = await self.send(
+                    cdp.dom.get_search_results(search_id, 0, nresult)
+                )
+            else:
+                node_ids = []
+            await self.send(cdp.dom.discard_search_results(search_id))
+        except ProtocolException:
+            # the search session is dropped when the document is replaced mid-search
+            return []
 
         if not node_ids:
             node_ids = []
@@ -604,7 +709,7 @@ class Tab(Connection):
             node = util.filter_recurse(doc, lambda n: n.node_id == nid)
             if not node:
                 try:
-                    node = await self.send(cdp.dom.resolve_node(node_id=nid))  # type: ignore
+                    node = await self.send(cdp.dom.describe_node(node_id=nid))
                 except ProtocolException:
                     continue
                 if not node:
@@ -736,11 +841,7 @@ class Tab(Connection):
 
     async def evaluate(
         self, expression: str, await_promise: bool = False, return_by_value: bool = True
-    ) -> (
-        Any
-        | None
-        | typing.Tuple[cdp.runtime.RemoteObject, cdp.runtime.ExceptionDetails | None]
-    ):
+    ) -> Any:
         ser: cdp.runtime.SerializationOptions | None = None
         if not return_by_value:
             ser = cdp.runtime.SerializationOptions(
@@ -965,12 +1066,16 @@ class Tab(Connection):
                 future.set_result(event)
 
         self.browser.connection.add_handler(event_type, close_handler)
-
-        if self.target and self.target.target_id:
-            await self.send(cdp.target.close_target(target_id=self.target.target_id))
-
-        await asyncio.wait_for(future, 10)
-        self.browser.connection.remove_handlers(event_type, close_handler)
+        try:
+            if self.target and self.target.target_id:
+                # sent through the browser session, since this tab's own session
+                # may be detached before chrome responds to the command
+                await self.browser.connection.send(
+                    cdp.target.close_target(target_id=self.target.target_id)
+                )
+            await asyncio.wait_for(future, 10)
+        finally:
+            self.browser.connection.remove_handlers(event_type, close_handler)
 
     async def get_window(self) -> Tuple[cdp.browser.WindowID, cdp.browser.Bounds]:
         """
@@ -1151,6 +1256,25 @@ class Tab(Connection):
         )
         await asyncio.sleep(height * (amount / 100) / speed)
 
+    async def is_scrolled_to_bottom(self) -> bool:
+        """
+        returns True if the page is scrolled to the bottom.
+        useful when scrolling through paginated pages of different lengths.
+        """
+        return bool(
+            await self.evaluate(
+                "Math.ceil(window.scrollY + window.innerHeight)"
+                " >= document.documentElement.scrollHeight"
+            )
+        )
+
+    async def bypass_insecure_connection_warning(self) -> None:
+        """
+        proceeds past Chrome's warning page for sites with an invalid certificate
+        """
+        body = await self.select("body")
+        await body.send_keys("thisisunsafe")
+
     async def wait_for(
         self,
         selector: str | None = None,
@@ -1206,20 +1330,23 @@ class Tab(Connection):
         :return: True if the ready state is reached.
         :rtype: bool
         """
-        loop = asyncio.get_event_loop()
-        start_time = loop.time()
 
-        while True:
-            ready_state = await self.evaluate("document.readyState")
-            if ready_state == until:
-                return True
+        async def _poll() -> bool:
+            while True:
+                ready_state = await self.evaluate("document.readyState")
+                if ready_state == until:
+                    return True
+                await asyncio.sleep(0.1)
 
-            if loop.time() - start_time > timeout:
-                raise asyncio.TimeoutError(
-                    "time ran out while waiting for load page until %s" % until
-                )
-
-            await asyncio.sleep(0.1)
+        # the timeout has to cover the evaluate() call too, otherwise a
+        # CDP response that never arrives (e.g. page blocked by a dialog)
+        # hangs here forever
+        try:
+            return await asyncio.wait_for(_poll(), timeout)
+        except asyncio.TimeoutError:
+            raise asyncio.TimeoutError(
+                "time ran out while waiting for load page until %s" % until
+            ) from None
 
     def expect_request(
         self, url_pattern: Union[str, re.Pattern[str]]
@@ -1458,6 +1585,7 @@ class Tab(Connection):
         :rtype:
         """
         path = pathlib.Path(path)
+        path.mkdir(parents=True, exist_ok=True)
         await self.send(
             cdp.browser.set_download_behavior(
                 behavior="allow", download_path=str(path.resolve())
@@ -1531,39 +1659,101 @@ class Tab(Connection):
 
         await verify_cf(self, click_delay, timeout, challenge_selector, flash_corners)
 
+    async def _dispatch_mouse_event(
+        self,
+        type_: str,
+        x: float,
+        y: float,
+        button: str = "none",
+        modifiers: typing.Optional[int] = 0,
+        click_count: typing.Optional[int] = None,
+    ) -> None:
+        await self.send(
+            cdp.input_.dispatch_mouse_event(
+                type_,
+                x=x,
+                y=y,
+                modifiers=modifiers,
+                button=cdp.input_.MouseButton(button),
+                buttons=self._mouse_buttons,
+                click_count=click_count,
+                force=MOUSE_PRESSED_FORCE if self._mouse_buttons else 0,
+            )
+        )
+        self._mouse_position = (x, y)
+
     async def mouse_move(
         self, x: float, y: float, steps: int = 10, flash: bool = False
     ) -> None:
+        """moves the mouse from its last known position to x,y, without releasing
+        any held buttons
+
+        :param x:
+        :param y:
+        :param steps: move in <steps> points, this could make it look more "natural"
+        :param flash: show a red dot at the visited points
+        """
         steps = 1 if (not steps or steps < 1) else steps
-        # probably the worst waay of calculating this. but couldn't think of a better solution today.
-        if steps > 1:
-            step_size_x = x // steps
-            step_size_y = y // steps
-            pathway = [(step_size_x * i, step_size_y * i) for i in range(steps + 1)]
-            for point in pathway:
-                if flash:
-                    await self.flash_point(point[0], point[1])
-                await self.send(
-                    cdp.input_.dispatch_mouse_event(
-                        "mouseMoved", x=point[0], y=point[1]
-                    )
-                )
-        else:
-            await self.send(cdp.input_.dispatch_mouse_event("mouseMoved", x=x, y=y))
-        if flash:
-            await self.flash_point(x, y)
-        else:
-            await self.sleep(0.05)
-        await self.send(cdp.input_.dispatch_mouse_event("mouseReleased", x=x, y=y))
-        if flash:
-            await self.flash_point(x, y)
+        start_x, start_y = self._mouse_position
+        for i in range(1, steps + 1):
+            point_x = start_x + (x - start_x) * i / steps
+            point_y = start_y + (y - start_y) * i / steps
+            if flash:
+                await self.flash_point(point_x, point_y)
+            await self._dispatch_mouse_event("mouseMoved", point_x, point_y)
+            await asyncio.sleep(0)
+
+    async def mouse_down(
+        self,
+        x: float,
+        y: float,
+        button: str = "left",
+        modifiers: typing.Optional[int] = 0,
+        click_count: int = 1,
+    ) -> None:
+        """presses and holds a mouse button at position x,y. release it with
+        :py:meth:`mouse_up`
+
+        :param x:
+        :param y:
+        :param button: str (default = "left")
+        :param modifiers: *(Optional)* Bit field representing pressed modifier keys.
+                Alt=1, Ctrl=2, Meta/Command=4, Shift=8 (default: 0).
+        :param click_count: number of times the button was clicked (default 1)
+        """
+        self._mouse_buttons |= MOUSE_BUTTON_FLAGS[button]
+        await self._dispatch_mouse_event(
+            "mousePressed", x, y, button, modifiers, click_count
+        )
+
+    async def mouse_up(
+        self,
+        x: float,
+        y: float,
+        button: str = "left",
+        modifiers: typing.Optional[int] = 0,
+        click_count: int = 1,
+    ) -> None:
+        """releases a mouse button at position x,y
+
+        :param x:
+        :param y:
+        :param button: str (default = "left")
+        :param modifiers: *(Optional)* Bit field representing pressed modifier keys.
+                Alt=1, Ctrl=2, Meta/Command=4, Shift=8 (default: 0).
+        :param click_count: number of times the button was clicked (default 1)
+        """
+        self._mouse_buttons &= ~MOUSE_BUTTON_FLAGS[button]
+        await self._dispatch_mouse_event(
+            "mouseReleased", x, y, button, modifiers, click_count
+        )
 
     async def mouse_click(
         self,
         x: float,
         y: float,
         button: str = "left",
-        buttons: typing.Optional[int] = 1,
+        buttons: typing.Optional[int] = None,
         modifiers: typing.Optional[int] = 0,
         _until_event: typing.Optional[type] = None,
         flash: typing.Optional[bool] = False,
@@ -1572,38 +1762,50 @@ class Tab(Connection):
         :param y:
         :param x:
         :param button: str (default = "left")
-        :param buttons: which button (default 1 = left)
+        :param buttons: deprecated, the pressed buttons are derived from ``button``
         :param modifiers: *(Optional)* Bit field representing pressed modifier keys.
                 Alt=1, Ctrl=2, Meta/Command=4, Shift=8 (default: 0).
         :param _until_event: internal. event to wait for before returning
         :return:
         """
-
-        await self.send(
-            cdp.input_.dispatch_mouse_event(
-                "mousePressed",
-                x=x,
-                y=y,
-                modifiers=modifiers,
-                button=cdp.input_.MouseButton(button),
-                buttons=buttons,
-                click_count=1,
+        if buttons is not None:
+            warnings.warn(
+                "the buttons argument of mouse_click() is deprecated and ignored, "
+                "the pressed buttons are derived from button",
+                DeprecationWarning,
+                stacklevel=2,
             )
-        )
-
-        await self.send(
-            cdp.input_.dispatch_mouse_event(
-                "mouseReleased",
-                x=x,
-                y=y,
-                modifiers=modifiers,
-                button=cdp.input_.MouseButton(button),
-                buttons=buttons,
-                click_count=1,
-            )
-        )
+        await self.mouse_down(x, y, button, modifiers)
+        await self.mouse_up(x, y, button, modifiers)
         if flash:
             await self.flash_point(x, y)
+
+    async def mouse_drag(
+        self,
+        source_point: tuple[float, float],
+        dest_point: tuple[float, float],
+        relative: bool = False,
+        steps: int = 1,
+    ) -> None:
+        """drags the mouse from one point to another while holding the left button.
+        to drag an element, use :py:meth:`element.Element.mouse_drag` instead
+
+        :param source_point: coordinates (x,y) to press the button at
+        :param dest_point: coordinates (x,y) to release the button at
+        :param relative: when True, treats dest_point as relative to source_point.
+               for example (-100, 200) will move left 100px and down 200px
+        :param steps: move in <steps> points, this could make it look more "natural" (default 1),
+               but also a lot slower.
+               for very smooth action use 50-100
+        """
+        if relative:
+            dest_point = (
+                source_point[0] + dest_point[0],
+                source_point[1] + dest_point[1],
+            )
+        await self.mouse_down(*source_point)
+        await self.mouse_move(*dest_point, steps=steps)
+        await self.mouse_up(*dest_point)
 
     async def flash_point(
         self, x: float, y: float, duration: float = 0.5, size: int = 10
@@ -1727,7 +1929,7 @@ class Tab(Connection):
         :rtype:
         """
         if not user_agent:
-            user_agent = await self.evaluate("navigator.userAgent")  # type: ignore
+            user_agent = await self.evaluate("navigator.userAgent")
             if not user_agent:
                 raise ValueError(
                     "Could not read existing user agent from navigator object"

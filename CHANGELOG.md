@@ -15,6 +15,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.17.1] - 2026-10-01
+
+### Fixed
+
+- The "Failed to connect to browser" error now suggests `sandbox=False` instead of `no_sandbox=True`, which isn't a real option and was silently ignored
+- `Tab.wait_for_ready_state` now respects `timeout` even when a `document.readyState` check never gets a response, instead of hanging forever
+
+## [0.17.0] - 2026-09-26
+
+This is quite a large release, including a number of fixes from first-time contributors (thank you!) as well as ports for *all* `nodriver` features and bugfixes that have been added upstream since Zendriver was forked. Additionally, I've managed to remove the last remaining `# type: ignore` comments, which uncovered a few additional bugs that have also been fixed in this release.
+
+This release marks two years of Zendriver! Huge thanks to everyone that has contributed so far.
+
+### Fixed
+
+- Fix `ValueError` on startup when the `lang` option is set @bercedev
+- Fix `verify_cf()` never clicking the Turnstile checkbox on Turnstile markup where the `cf-turnstile-response`/`cf_challenge_response` input is rendered as a document-level sibling of the challenge's shadow-DOM host rather than nested inside it. The lookup was scoped to `host_element`, always found nothing, and `verify_cf()` returned before ever calling `mouse_click`. Now queries the input from the document (`tab.query_selector`) instead. @A-Nolan
+- Fix HTTP method casing to resolve CDP connection issues on some Windows installations @fitudao3788
+- Fix `404 Not Found` WebSocket connection error for `iframe` targets by routing all target connections to `/devtools/page/<target_id>` in `Browser._handle_target_update`.
+- Fix `Browser.stop()` always waiting 3 seconds and then force-killing the browser process, even when the browser had already exited gracefully. The exit check read `Popen.returncode`, which is only updated by `poll()`/`wait()`. @stephanlensky
+- Fix `Browser.start()` always sleeping for `browser_connection_timeout` before the first connection attempt. It now tries to connect immediately and only waits between retries. @stephanlensky
+- Fix `Browser` instances never being garbage collected after `Browser.stop()`. The asyncio atexit callback and the global registered instances set kept a reference to every browser, and per-target connections were left open. @stephanlensky
+- Fix the connection listener crashing with `InvalidStateError` when a response arrived for a command that was already cancelled (for example by `asyncio.wait_for`), which left later commands hanging forever @stephanlensky
+- Fix every received CDP event being kept in memory for the lifetime of its connection @stephanlensky
+- Fix `Tab.find()` raising `ProtocolException: No search session with given id found` instead of retrying when the page's document is replaced during the search @stephanlensky
+- Fix `await tab` raising `ValueError: No listener created yet` on a tab which no commands were sent to yet, such as one just opened with `browser.get(url, new_tab=True)` @stephanlensky
+- Fix `browser.get(url, new_tab=True)` intermittently raising `StopIteration` when the new tab was not registered yet, and `browser.get()` returning before the navigation when another target changed in the meantime @stephanlensky
+- Fix Widevine DRM being unavailable on platforms where Chrome installs it through the component updater, such as Windows. Removed the `--disable-component-update`, `--disable-background-networking`, `--disable-backgrounding-occluded-windows` and `--disable-renderer-backgrounding` default browser arguments @stephanlensky
+- Fix `Browser.start()` sometimes returning before the browser's initial tab was registered, which made `browser.get(url)` raise `RuntimeError: coroutine raised StopIteration`. `browser.get(url)` now raises a descriptive error if there is no tab to navigate @stephanlensky
+- Fix extensions added with `Config.add_extension()` not loading on Chrome 137+. The default `--disable-features` switch was overridden by a second one, since Chrome only uses the last. All `--disable-features` switches, including user-provided ones, are now merged into one, and `--enable-unsafe-extension-debugging` is passed when extensions are added @stephanlensky
+- Fix commands hanging forever when the browser connection closed while they were waiting for a response, for example because the browser crashed or `Connection.aclose()` was called. Pending commands now raise instead, and `Connection.send()` raises `ProtocolException` instead of returning `None` when the connection is closed @stephanlensky
+- Fix mouse helpers dispatching inconsistent button and pressure state that pages can observe. Mouse clicks and drags now report a pressure of `0.5` while a button is held and `buttons=0` on release, drag movements keep `buttons=1`, `mouse_move()` no longer sends a `mouseReleased` event, and `Tab.mouse_move()` with `steps` now moves from the last mouse position instead of from `(0, 0)`. The `buttons` argument of `mouse_click()` is deprecated and ignored @stephanlensky
+- Fix `add_handler()` with a CDP domain module (for example `tab.add_handler(cdp.network, handler)`) registering the domain's enum types instead of its events, so the handler was never called @stephanlensky
+- Fix synchronous event handlers sometimes calling only the last registered handler when several handlers were registered for the same event @stephanlensky
+- Fix event handlers being called a second time with only the event when they raised a `TypeError`. Handlers now receive the connection as a second argument only if their signature accepts one @stephanlensky
+- Fix `Element.get()` returning `None` for attributes with an empty value, such as `disabled=""`. It now returns `""` and only returns `None` when the attribute does not exist @stephanlensky
+- Fix `remove_handlers(event_type)` raising `KeyError` when no handlers were registered for that event @stephanlensky
+- Fix `Element.get_position(abs=True)` raising `AttributeError` @stephanlensky
+- Fix `Element.get()` returning dictionary methods for attribute names such as `items` or `keys` instead of `None` @stephanlensky
+- Fix `Tab.find_elements_by_text()` skipping matches which are not part of the fetched document tree @stephanlensky
+- Fix `CookieJar.get_all(requests_cookie_format=True)` raising `ImportError` when `requests` is not installed, and returning session cookies as already expired. It now builds `http.cookiejar.Cookie` objects with the standard library @stephanlensky
+
+### Added
+
+- Add support for unstable variants of Microsoft Edge on macOS @mokurin000
+- Add `Tab.get_frames()` and `Element.get_frame()` to access out-of-process (e.g. cross-origin) iframes as `Tab` objects, and an `include_frames` option to `find()`, `find_all()`, `select()` and `select_all()` which also searches these iframes @stephanlensky
+- Add `Browser.create_context()` to open a tab in a new browser context with its own proxy. Authenticated HTTP, HTTPS and SOCKS5 proxies (e.g. `socks5://user:pass@host:port`) are supported through a local forwarding proxy @stephanlensky
+- Add `Tab.mouse_down()`, `Tab.mouse_up()` and `Tab.mouse_drag()` to press, hold and release mouse buttons separately, for example to drag a slider with custom movement @stephanlensky
+- Add `Browser.get_tab()` to find a tab by text in its URL or title @stephanlensky
+- Add `Element.shadow_children` to access the children of an element's open or closed shadow root @stephanlensky
+- Add `Tab.is_scrolled_to_bottom()` and `Tab.bypass_insecure_connection_warning()` @stephanlensky
+
+### Changed
+
+- Tabs and other targets now share the browser's websocket connection using flat CDP sessions (`Target.attachToTarget` with `flatten=True`) instead of opening a separate websocket per target. This fixes `HTTP 500` errors when connecting to iframe targets. @stephanlensky
+- `Tab.set_download_path()` now creates the download directory if it does not exist @stephanlensky
+- Expert mode no longer passes `--disable-web-security` @stephanlensky
+
+## [0.16.0] - 2026-08-16
+
+### Fixed
+
+- Fix `pattern` argument in `CookieJar.save` @Lyesbcb
+
+### Added
+
+- Add support for Microsoft Edge browser @mokurin000
+
 ## [0.15.5] - 2026-07-15
 
 ### Fixed

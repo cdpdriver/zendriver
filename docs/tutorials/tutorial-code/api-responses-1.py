@@ -7,7 +7,7 @@ async def main() -> None:
     browser = await zd.start()
 
     # TODO: Read the API response
-    page = await browser.get(
+    await browser.get(
         "https://cdpdriver.github.io/examples/api-request.html",
     )
 

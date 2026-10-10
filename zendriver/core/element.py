@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import base64
 import datetime
 import json
@@ -159,6 +158,19 @@ class Element:
         return self.node.shadow_roots
 
     @property
+    def shadow_children(self) -> list[Element]:
+        """
+        returns the children of the element's shadow root, which can be open or closed.
+        returns an empty list when the element has no shadow root.
+        """
+        if not self.shadow_roots:
+            return []
+        return [
+            create(child, self._tab, self._tree)
+            for child in self.shadow_roots[0].children or []
+        ]
+
+    @property
     def template_content(self) -> cdp.dom.Node | None:
         return self.node.template_content
 
@@ -190,20 +202,28 @@ class Element:
     def tab(self) -> Tab:
         return self._tab
 
+    async def get_frame(self) -> Tab | None:
+        """
+        get the frame of this iframe element as a :py:obj:`Tab`, when the iframe runs
+        in its own process (for example cross-origin iframes) and therefore has no
+        :py:obj:`content_document`.
+
+        returns None if this element is not such an iframe.
+        """
+        if self.frame_id is None:
+            return None
+        for frame in await self._tab.get_frames():
+            if str(frame.target_id) == str(self.frame_id):
+                return frame
+        return None
+
     @deprecated(reason="Use get() instead")
     def __getattr__(self, item: str) -> str | None:
         # if attribute is not found on the element python object
         # check if it may be present in the element attributes (eg, href=, src=, alt=)
         # returns None when attribute is not found
         # instead of raising AttributeError
-        x = getattr(self.attrs, item, None)
-        if x:
-            return x  # type: ignore
-        return None
-
-    #     x = getattr(self.node, item, None)
-    #
-    #     return x
+        return self.get(item)
 
     def get(self, name: str) -> str | None:
         """
@@ -216,13 +236,10 @@ class Element:
         :return: The value of the attribute, or None if it does not exist.
         :rtype: str | None
         """
-        try:
-            x = getattr(self.attrs, name, None)
-            if x:
-                return x  # type: ignore
+        value = self.attrs.get(name)
+        if value is None:
             return None
-        except AttributeError:
-            return None
+        return str(value)
 
     def __setattr__(self, key: str, value: typing.Any) -> None:
         if key[0] != "_":
@@ -512,8 +529,8 @@ class Element:
                 raise Exception("could not find position for %s " % self)
             pos = Position(quads[0])
             if abs:
-                scroll_y = (await self.tab.evaluate("window.scrollY")).value  # type: ignore
-                scroll_x = (await self.tab.evaluate("window.scrollX")).value  # type: ignore
+                scroll_y = await self.tab.evaluate("window.scrollY")
+                scroll_x = await self.tab.evaluate("window.scrollX")
                 abs_x = pos.left + scroll_x + (pos.width / 2)
                 abs_y = pos.top + scroll_y + (pos.height / 2)
                 pos.abs_x = abs_x
@@ -529,7 +546,7 @@ class Element:
     async def mouse_click(
         self,
         button: str = "left",
-        buttons: typing.Optional[int] = 1,
+        buttons: typing.Optional[int] = None,
         modifiers: typing.Optional[int] = 0,
         hold: bool = False,
         _until_event: typing.Optional[type] = None,
@@ -537,7 +554,7 @@ class Element:
         """native click (on element) . note: this likely does not work atm, use click() instead
 
         :param button: str (default = "left")
-        :param buttons: which button (default 1 = left)
+        :param buttons: deprecated, the pressed buttons are derived from ``button``
         :param modifiers: *(Optional)* Bit field representing pressed modifier keys.
                 Alt=1, Ctrl=2, Meta/Command=4, Shift=8 (default: 0).
         :param _until_event: internal. event to wait for before returning
@@ -551,29 +568,8 @@ class Element:
         center = position.center
         logger.debug("clicking on location %.2f, %.2f" % center)
 
-        await asyncio.gather(
-            self._tab.send(
-                cdp.input_.dispatch_mouse_event(
-                    "mousePressed",
-                    x=center[0],
-                    y=center[1],
-                    modifiers=modifiers,
-                    button=cdp.input_.MouseButton(button),
-                    buttons=buttons,
-                    click_count=1,
-                )
-            ),
-            self._tab.send(
-                cdp.input_.dispatch_mouse_event(
-                    "mouseReleased",
-                    x=center[0],
-                    y=center[1],
-                    modifiers=modifiers,
-                    button=cdp.input_.MouseButton(button),
-                    buttons=buttons,
-                    click_count=1,
-                )
-            ),
+        await self._tab.mouse_click(
+            *center, button=button, buttons=buttons, modifiers=modifiers
         )
         try:
             await self.flash()
@@ -591,13 +587,7 @@ class Element:
         logger.debug(
             "mouse move to location %.2f, %.2f where %s is located", *center, self
         )
-        await self._tab.send(
-            cdp.input_.dispatch_mouse_event("mouseMoved", x=center[0], y=center[1])
-        )
-        await self._tab.sleep(0.05)
-        await self._tab.send(
-            cdp.input_.dispatch_mouse_event("mouseReleased", x=center[0], y=center[1])
-        )
+        await self._tab.mouse_move(*center, steps=1)
 
     async def mouse_drag(
         self,
@@ -640,51 +630,7 @@ class Element:
             else:
                 end_point = destination
 
-        await self._tab.send(
-            cdp.input_.dispatch_mouse_event(
-                "mousePressed",
-                x=start_point[0],
-                y=start_point[1],
-                button=cdp.input_.MouseButton("left"),
-            )
-        )
-
-        steps = 1 if (not steps or steps < 1) else steps
-        if steps == 1:
-            await self._tab.send(
-                cdp.input_.dispatch_mouse_event(
-                    "mouseMoved",
-                    x=end_point[0],
-                    y=end_point[1],
-                )
-            )
-        elif steps > 1:
-            # probably the worst waay of calculating this. but couldn't think of a better solution today.
-            step_size_x = (end_point[0] - start_point[0]) / steps
-            step_size_y = (end_point[1] - start_point[1]) / steps
-            pathway = [
-                (start_point[0] + step_size_x * i, start_point[1] + step_size_y * i)
-                for i in range(steps + 1)
-            ]
-
-            for point in pathway:
-                await self._tab.send(
-                    cdp.input_.dispatch_mouse_event(
-                        "mouseMoved",
-                        x=point[0],
-                        y=point[1],
-                    )
-                )
-                await asyncio.sleep(0)
-
-        await self._tab.send(
-            cdp.input_.dispatch_mouse_event(
-                type_="mouseReleased",
-                x=end_point[0],
-                y=end_point[1],
-                button=cdp.input_.MouseButton("left"),
-            )
-        )
+        await self._tab.mouse_drag(start_point, end_point, steps=steps)
 
     async def scroll_into_view(self) -> None:
         """scrolls element into view"""
@@ -947,7 +893,7 @@ class Element:
         await self.tab.sleep()
 
         if not filename or filename == "auto":
-            parsed = urllib.parse.urlparse(self.tab.target.url)  # type: ignore
+            parsed = urllib.parse.urlparse(self.tab.url or "")
             parts = parsed.path.split("/")
             last_part = parts[-1]
             last_part = last_part.rsplit("?", 1)[0]
@@ -1164,7 +1110,7 @@ class Element:
         await self._tab
 
     async def is_recording(self) -> bool:
-        return await self.apply('(vid) => vid["_recording"]')  # type: ignore
+        return bool(await self.apply('(vid) => vid["_recording"]'))
 
     def _make_attrs(self) -> None:
         sav = None

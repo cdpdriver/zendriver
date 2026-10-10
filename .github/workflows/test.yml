@@ -15,12 +15,15 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ ubuntu-latest, windows-latest ]
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
         uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
       - name: Set up Python
         run: uv python install
       - name: Install dependencies
@@ -28,9 +31,16 @@ jobs:
       - name: Run tests
         env:
           ZENDRIVER_TEST_BROWSERS: "headless"
-          ZENDRIVER_TEST_NO_SANDBOX: "true"
+          ZENDRIVER_TEST_WORKERS: "3"
         shell: bash
         run: ./scripts/test.sh
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts-${{ matrix.os }}
+          path: test-artifacts/
+          if-no-files-found: ignore
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         env:

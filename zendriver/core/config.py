@@ -23,7 +23,7 @@ is_posix = sys.platform.startswith(("darwin", "cygwin", "linux", "linux2"))
 PathLike = Union[str, pathlib.Path]
 AUTO = None
 
-BrowserType = Literal["chrome", "brave", "auto"]
+BrowserType = Literal["chrome", "brave", "msedge", "auto"]
 
 
 class Config:
@@ -70,7 +70,7 @@ class Config:
         :param lang: language string to use other than the default "en-US,en;q=0.9"
         :param user_agent: custom user-agent string
         :param expert: when set to True, enabled "expert" mode.
-               This conveys, the inclusion of parameters: --disable-web-security ----disable-site-isolation-trials,
+               This conveys, the inclusion of parameters: --disable-site-isolation-trials,
                as well as some scripts and patching useful for debugging (for example, ensuring shadow-root is always in "open" mode)
 
         :param kwargs:
@@ -126,10 +126,6 @@ class Config:
             "--password-store=basic",
             "--disable-infobars",
             "--disable-breakpad",
-            "--disable-component-update",
-            "--disable-backgrounding-occluded-windows",
-            "--disable-renderer-backgrounding",
-            "--disable-background-networking",
             "--disable-dev-shm-usage",
             "--disable-features=IsolateOrigins,DisableLoadExtensionCommandLineSwitch,site-per-process",
             "--disable-session-crashed-bubble",
@@ -202,16 +198,17 @@ class Config:
         args = self._default_browser_args.copy()
 
         args += ["--user-data-dir=%s" % self.user_data_dir]
-        args += ["--disable-features=IsolateOrigins,site-per-process"]
         args += ["--disable-session-crashed-bubble"]
         if self.expert:
-            args += ["--disable-web-security", "--disable-site-isolation-trials"]
+            args += ["--disable-site-isolation-trials"]
         if self._browser_args:
             args.extend([arg for arg in self._browser_args if arg not in args])
         if self.headless:
             args.append("--headless=new")
         if self.user_agent:
             args.append(f"--user-agent={self.user_agent}")
+        if self.lang:
+            args.append(f"--lang={self.lang}")
         if not self.sandbox:
             args.append("--no-sandbox")
         if self.host:
@@ -225,8 +222,10 @@ class Config:
             ]
         if self.disable_webgl:
             args += ["--disable-webgl", "--disable-webgl2"]
+        if self._extensions:
+            args.append("--enable-unsafe-extension-debugging")
 
-        return args
+        return merge_disable_features_args(args)
 
     def add_argument(self, arg: str) -> None:
         if any(
@@ -264,6 +263,23 @@ class Config:
     #     d.pop("browser_args")
     #     d["browser_args"] = self()
     #     return d
+
+
+def merge_disable_features_args(args: list[str]) -> list[str]:
+    """Chrome only uses the last --disable-features switch, so combine all of them into one."""
+    prefix = "--disable-features="
+    features: list[str] = []
+    other_args: list[str] = []
+    for arg in args:
+        if arg.startswith(prefix):
+            for feature in arg.removeprefix(prefix).split(","):
+                if feature and feature not in features:
+                    features.append(feature)
+        else:
+            other_args.append(arg)
+    if features:
+        other_args.append(prefix + ",".join(features))
+    return other_args
 
 
 def is_root() -> bool:
@@ -311,16 +327,17 @@ def find_binary(candidates: list[str]) -> str | None:
 def find_executable(browser: BrowserType = "auto") -> PathLike:
     """
     Finds the executable for the specified browser and returns its disk path.
-    :param browser: The browser to find. Can be "chrome", "brave" or "auto".
+    :param browser: The browser to find. Can be "chrome", "brave", "msedge" or "auto".
+
     :return: The path to the browser executable.
     """
     browsers_to_try = []
     if browser == "auto":
-        browsers_to_try = ["chrome", "brave"]
-    elif browser in ["chrome", "brave"]:
+        browsers_to_try = ["chrome", "brave", "msedge"]
+    elif browser in ["chrome", "brave", "msedge"]:
         browsers_to_try = [browser]
     else:
-        raise ValueError("browser must be 'chrome', 'brave' or 'auto'")
+        raise ValueError("browser must be 'chrome', 'brave', 'msedge' or 'auto'")
 
     for browser_name in browsers_to_try:
         candidates = []
@@ -359,6 +376,54 @@ def find_executable(browser: BrowserType = "auto") -> PathLike:
                         ):
                             candidates.append(
                                 os.sep.join((item2, subitem, "chrome.exe"))
+                            )
+        elif browser_name == "msedge":
+            if is_posix:
+                # Wrappers in PATH may respect user flags, e.g.
+                for item in os.environ["PATH"].split(os.pathsep):
+                    for subitem in (
+                        "microsoft-edge-stable",
+                        "microsoft-edge-beta",
+                        "microsoft-edge-canary",
+                        "microsoft-edge",
+                        "msedge",
+                    ):
+                        candidates.append(os.sep.join((item, subitem)))
+
+                match sys.platform:
+                    case "linux":
+                        # Pick the wrapper scripts first to solve problems
+                        candidates += [
+                            "/opt/microsoft/msedge/microsoft-edge",
+                            "/opt/microsoft/msedge/msedge",
+                            "/opt/microsoft/msedge-beta/microsoft-edge-beta",
+                            "/opt/microsoft/msedge-beta/msedge",
+                            "/opt/microsoft/msedge-dev/microsoft-edge-dev",
+                            "/opt/microsoft/msedge-dev/msedge",
+                            "/opt/microsoft/msedge-canary/microsoft-edge-canary",
+                            "/opt/microsoft/msedge-canary/msedge",
+                        ]
+                    case "darwin":
+                        candidates += [
+                            "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+                            "/Applications/Microsoft Edge Beta.app/Contents/MacOS/Microsoft Edge Beta",
+                            "/Applications/Microsoft Edge Dev.app/Contents/MacOS/Microsoft Edge Dev",
+                            "/Applications/Microsoft Edge Canary.app/Contents/MacOS/Microsoft Edge Canary",
+                        ]
+            else:
+                for item2 in map(
+                    os.environ.get,
+                    (
+                        "PROGRAMFILES",
+                        "PROGRAMFILES(X86)",
+                        "LOCALAPPDATA",
+                        "PROGRAMW6432",
+                    ),
+                ):
+                    if item2 is not None:
+                        for subitem in ("Microsoft/Edge/Application",):
+                            candidates.append(
+                                os.sep.join((item2, subitem, "msedge.exe"))
                             )
         elif browser_name == "brave":
             if is_posix:

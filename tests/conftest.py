@@ -1,13 +1,17 @@
 import asyncio
+import http.server
 import logging
 import os
+import re
 import signal
 import sys
+import threading
 from contextlib import AbstractAsyncContextManager
 from enum import Enum
+from pathlib import Path
 from threading import Event
 from types import FrameType
-from typing import AsyncGenerator, Any
+from typing import AsyncGenerator, Any, Generator, Iterator
 
 import pytest
 
@@ -40,17 +44,19 @@ class TestConfig:
     PAUSE_AFTER_TEST = os.getenv("ZENDRIVER_PAUSE_AFTER_TEST", "false") == "true"
     SANDBOX = os.getenv("ZENDRIVER_TEST_SANDBOX", "false") == "true"
     USE_WAYLAND = os.getenv("WAYLAND_DISPLAY") is not None
+    ARTIFACTS_DIR = Path(os.getenv("ZENDRIVER_TEST_ARTIFACTS_DIR", "test-artifacts"))
 
 
-class CreateBrowser(AbstractAsyncContextManager):  # type: ignore
+class CreateBrowser(AbstractAsyncContextManager[zd.Browser]):
     def __init__(
         self,
         *,
         headless: bool = True,
         sandbox: bool = TestConfig.SANDBOX,
         browser_args: list[str] | None = None,
-        browser_connection_max_tries: int = 15,
-        browser_connection_timeout: float = 3.0,
+        browser_connection_max_tries: int = 180,
+        browser_connection_timeout: float = 0.25,
+        lang: str | None = None,
     ):
         args = []
         if not headless and TestConfig.USE_WAYLAND:
@@ -67,6 +73,7 @@ class CreateBrowser(AbstractAsyncContextManager):  # type: ignore
             browser_args=args,
             browser_connection_max_tries=browser_connection_max_tries,
             browser_connection_timeout=browser_connection_timeout,
+            lang=lang,
         )
 
         self.browser: zd.Browser | None = None
@@ -89,24 +96,148 @@ class CreateBrowser(AbstractAsyncContextManager):  # type: ignore
 @pytest.fixture
 def create_browser() -> type[CreateBrowser]:
     if sys.platform == "win32":
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())  # type: ignore
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     return CreateBrowser
 
 
 @pytest.fixture(params=TestConfig.BROWSER_MODE.fixture_params)
 def headless(request: pytest.FixtureRequest) -> bool:
-    return request.param["headless"]  # type: ignore
+    return bool(request.param["headless"])
+
+
+@pytest.fixture(scope="session")
+async def shared_browsers() -> AsyncGenerator[dict[bool, zd.Browser], None]:
+    browsers: dict[bool, zd.Browser] = {}
+    yield browsers
+    for browser in browsers.values():
+        await browser.stop()
+
+
+async def _get_shared_browser(
+    browsers: dict[bool, zd.Browser], headless: bool
+) -> zd.Browser:
+    browser = browsers.get(headless)
+    if browser is None or browser.stopped:
+        browser = await CreateBrowser(headless=headless).__aenter__()
+        browsers[headless] = browser
+        return browser
+
+    # closing the previous tabs also drops any handlers or overrides tests added to them
+    new_tab = await browser.get("about:blank", new_tab=True)
+    for tab in browser.tabs:
+        if tab is not new_tab:
+            await tab.close()
+    await browser.cookies.clear()
+    assert browser.tabs == [new_tab]
+    return browser
+
+
+TEST_REPORTS_KEY = pytest.StashKey[dict[str, pytest.TestReport]]()
+
+
+@pytest.hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_makereport(
+    item: pytest.Item, call: pytest.CallInfo[None]
+) -> Generator[None, pytest.TestReport, pytest.TestReport]:
+    report = yield
+    item.stash.setdefault(TEST_REPORTS_KEY, {})[report.when] = report
+    return report
+
+
+async def save_page_artifacts(
+    request: pytest.FixtureRequest, browser: zd.Browser
+) -> None:
+    if not request.node.get_closest_marker("external") or browser.stopped:
+        return
+    report = request.node.stash.get(TEST_REPORTS_KEY, {}).get("call")
+    if report is None or not report.failed:
+        return
+
+    directory = TestConfig.ARTIFACTS_DIR / re.sub(r"[^\w.-]", "_", request.node.nodeid)
+    directory.mkdir(parents=True, exist_ok=True)
+    for index, tab in enumerate(browser.tabs):
+        try:
+            (directory / f"tab-{index}.html").write_text(
+                await tab.get_content(), encoding="utf-8"
+            )
+            await tab.save_screenshot(directory / f"tab-{index}.png", format="png")
+            logger.info(
+                "Saved artifacts for tab %d (%s) to %s", index, tab.url, directory
+            )
+        except Exception:
+            logger.exception("Failed to save artifacts for tab %d (%s)", index, tab.url)
+
+
+@pytest.fixture
+def cross_site_iframe_url() -> Iterator[str]:
+    """Serve a page on 127.0.0.1 embedding an iframe from localhost, which in turn
+    embeds an iframe from 127.0.0.1 again.
+
+    Each iframe is a different site than its parent, so Chrome's site isolation
+    puts it in another process and exposes it as a separate "iframe" target.
+    """
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            port = server.server_address[1]
+            if self.path == "/child":
+                body = (
+                    "<html><body>"
+                    "<p id='child'>hello from iframe</p>"
+                    "<button id='button' onclick=\"this.innerText='clicked'\">"
+                    "click me</button>"
+                    f"<iframe id='grandchild-frame' src='http://127.0.0.1:{port}/grandchild'></iframe>"
+                    "</body></html>"
+                )
+            elif self.path == "/grandchild":
+                body = (
+                    "<html><body><p id='grandchild'>hello from nested iframe</p>"
+                    "</body></html>"
+                )
+            else:
+                body = (
+                    "<html><body>"
+                    f"<iframe id='child-frame' src='http://localhost:{port}/child'></iframe>"
+                    "</body></html>"
+                )
+            data = body.encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+        def log_message(self, format: str, *args: object) -> None:
+            pass
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_address[1]}/"
+    finally:
+        server.shutdown()
+        server.server_close()
 
 
 @pytest.fixture
 async def browser(
-    headless: bool, create_browser: type[CreateBrowser]
+    request: pytest.FixtureRequest,
+    headless: bool,
+    create_browser: type[CreateBrowser],
+    shared_browsers: dict[bool, zd.Browser],
 ) -> AsyncGenerator[zd.Browser, None]:
     NEXT_TEST_EVENT.clear()
 
-    async with create_browser(headless=headless) as browser:
+    if request.node.get_closest_marker("fresh_browser"):
+        async with create_browser(headless=headless) as browser:
+            yield browser
+            await save_page_artifacts(request, browser)
+    else:
+        browser = await _get_shared_browser(shared_browsers, headless)
         yield browser
+        await save_page_artifacts(request, browser)
 
     if TestConfig.PAUSE_AFTER_TEST:
         logger.info(

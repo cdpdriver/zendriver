@@ -15,6 +15,7 @@ This script will:
 - Update zendriver/_version.py with the new version number
 - Run `uv sync` to update the lock file
 - Update CHANGELOG.md, creating a new section for the release and moving unreleased changes there
+  (any text between the [Unreleased] header and the ### Fixed header is kept as a note for the release)
 - Commit and push changes to pyproject.toml, uv.lock, zendriver/_version.py, and CHANGELOG.md
 - Create and push a git tag for the new version
 - Create a new release on GitHub ($GITHUB_TOKEN environment variable must be set)
@@ -46,7 +47,7 @@ VERSION_PY = Path("zendriver/_version.py")
 
 CHANGELOG_MD = Path("CHANGELOG.md")
 CHANGELOG_MD_UNRELEASED_REGEX = (
-    r"## \[Unreleased\]\s+"
+    r"## \[Unreleased\]\n(?P<note>[\s\S]*?)"
     r"### Fixed\n(?P<fixed>[\s\S]+?)"
     r"### Added\n(?P<added>[\s\S]+?)"
     r"### Changed\n(?P<changed>[\s\S]+?)"
@@ -160,11 +161,14 @@ def write_changelog(new_version: str, dryrun: bool) -> str:
         print("Error: No changes found in CHANGELOG.md")
         sys.exit(1)
 
-    new_version_changes = "\n\n".join(
+    new_version_parts = [
         f"### {section.title()}\n\n{unreleased_changes[section]}"
         for section in ("fixed", "added", "changed", "removed")
         if unreleased_changes[section]
-    )
+    ]
+    if unreleased_changes["note"]:
+        new_version_parts.insert(0, unreleased_changes["note"])
+    new_version_changes = "\n\n".join(new_version_parts)
 
     new_version_section = (
         f"## [{new_version}] - {datetime.date.today()}\n\n{new_version_changes}"

@@ -3,6 +3,7 @@
 Generate release notes from CHANGELOG.md and write them to docs/release-notes.md.
 """
 
+import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
@@ -14,7 +15,7 @@ def get_releases() -> str:
     with CHANGELOG_MD.open() as f:
         changelog_md = f.read()
 
-    sections = changelog_md.split("\n## ")[1:]
+    sections = re.split(r"\n## (?=\[)", changelog_md)[1:]
     unreleased = sections.pop(0)
     # small sanity check
     if not unreleased.startswith("[Unreleased]"):

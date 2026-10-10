@@ -1,9 +1,13 @@
 import asyncio
 import re
-from typing import Union, Any
+from typing import Any, TypeVar, Union
 
 from .. import cdp
 from .connection import Connection
+
+BaseRequestExpectationT = TypeVar(
+    "BaseRequestExpectationT", bound="BaseRequestExpectation"
+)
 
 
 class BaseRequestExpectation:
@@ -80,7 +84,7 @@ class BaseRequestExpectation:
             cdp.network.LoadingFinished, self._loading_finished_handler
         )
 
-    async def __aenter__(self):  # type: ignore
+    async def __aenter__(self: BaseRequestExpectationT) -> BaseRequestExpectationT:
         """
         Enter the context manager, adding request and response handlers.
         """

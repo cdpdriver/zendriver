@@ -57,7 +57,7 @@ async def main() -> None:
     page = await browser.get(
         "https://cdpdriver.github.io/examples/login-page.html",
     )
-    await asyncio.sleep(0.5)  # Wait for the page to load
+    await page.wait_for_ready_state("complete")  # Wait for the page to load
 
     name = "John Doe"
     email = "john.doe@example.com"
