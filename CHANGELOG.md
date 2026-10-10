@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Headless browsers now send their user-agent client hints (`Sec-CH-UA*` request headers, `navigator.userAgentData`): the override removing the `HeadlessChrome` token from the user agent used to drop them, leaving a Chrome without client hints for anti-bot solutions to spot @khamaileon
+
 ### Added
 
 ### Changed

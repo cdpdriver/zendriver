@@ -29,6 +29,53 @@ from .proxy import ProxyForwarder, UpstreamProxy
 
 logger = logging.getLogger(__name__)
 
+# the navigator.userAgentData hints a cdp.emulation.UserAgentMetadata is made of
+_CLIENT_HINTS = [
+    "architecture",
+    "bitness",
+    "brands",
+    "formFactors",
+    "fullVersionList",
+    "mobile",
+    "model",
+    "platform",
+    "platformVersion",
+    "uaFullVersion",
+    "wow64",
+]
+# an internal page, loaded without any network access, exposing navigator.userAgentData
+_CLIENT_HINTS_PAGE = "chrome://version"
+
+
+def _user_agent_metadata(
+    hints: dict[str, Any],
+) -> cdp.emulation.UserAgentMetadata:
+    """the cdp metadata carrying the given navigator.userAgentData hints"""
+
+    def brands(
+        items: list[dict[str, str]],
+    ) -> list[cdp.emulation.UserAgentBrandVersion]:
+        return [
+            cdp.emulation.UserAgentBrandVersion(
+                brand=item["brand"], version=item["version"]
+            )
+            for item in items
+        ]
+
+    return cdp.emulation.UserAgentMetadata(
+        platform=hints["platform"],
+        platform_version=hints["platformVersion"],
+        architecture=hints["architecture"],
+        model=hints.get("model", ""),
+        mobile=hints.get("mobile", False),
+        brands=brands(hints.get("brands", [])),
+        full_version_list=brands(hints.get("fullVersionList", [])),
+        full_version=hints.get("uaFullVersion"),
+        bitness=hints.get("bitness"),
+        wow64=hints.get("wow64"),
+        form_factors=hints.get("formFactors"),
+    )
+
 
 class Browser:
     """
@@ -141,6 +188,10 @@ class Browser:
         self._is_updating = asyncio.Event()
         self.connection = None
         self._proxy_forwarders: List[ProxyForwarder] = []
+        self._headless_user_agent: (
+            tuple[str, cdp.emulation.UserAgentMetadata] | None
+        ) = None
+        """user agent and client hints of a headless browser, read once at startup"""
         logger.debug("Session object initialized: %s" % vars(self))
 
     @property
@@ -501,6 +552,8 @@ class Browser:
         await self.update_targets()
         if not connect_existing:
             await self._wait_for_initial_tab()
+        if self.config.headless:
+            await self._read_headless_user_agent()
         return self
 
     async def _wait_for_initial_tab(self) -> None:
@@ -509,6 +562,59 @@ class Browser:
                 return
             await asyncio.sleep(self.config.browser_connection_timeout)
             await self.update_targets()
+
+    async def _read_headless_user_agent(self) -> None:
+        """
+        read the user agent and client hints the headless browser exposes natively,
+        for :py:meth:`Connection._prepare_headless` to apply to every target.
+
+        headless chrome only differs from a visible one by the "HeadlessChrome" token of
+        its user agent string. removing it takes a user agent override, and an override
+        without metadata makes the browser drop its client hints (the Sec-CH-UA* request
+        headers and navigator.userAgentData), which no real chrome does: the metadata
+        is read from the browser itself, on an internal page, since the initial
+        about:blank is not a secure context and exposes no navigator.userAgentData.
+        """
+        if not self.connection:
+            return
+
+        try:
+            target_id = await self.connection.send(
+                cdp.target.create_target(_CLIENT_HINTS_PAGE)
+            )
+            hints_tab = await self._get_tab(target_id)
+            # this tab must stay untouched by the override it is read for
+            setattr(hints_tab, "_prep_headless_done", True)
+            try:
+                await hints_tab.wait_for_ready_state("complete")
+                user_agent = await hints_tab.evaluate("navigator.userAgent")
+                hints = json.loads(
+                    await hints_tab.evaluate(
+                        "navigator.userAgentData.getHighEntropyValues(%s)"
+                        ".then(JSON.stringify)" % json.dumps(_CLIENT_HINTS),
+                        await_promise=True,
+                    )
+                )
+            finally:
+                if self.config.autodiscover_targets:
+                    await hints_tab.close()
+                else:
+                    # Tab.close() waits for a TargetDestroyed event, which only comes
+                    # when targets are discovered
+                    await self.connection.send(cdp.target.close_target(target_id))
+                    self.targets.remove(hints_tab)
+        except Exception:
+            logger.warning(
+                "could not read the client hints of the headless browser, "
+                "its user agent override will drop them",
+                exc_info=True,
+            )
+            return
+
+        self._headless_user_agent = (
+            user_agent.replace("Headless", ""),
+            _user_agent_metadata(hints),
+        )
 
     async def test_connection(self) -> bool:
         if not self._http:
@@ -635,6 +741,16 @@ class Browser:
                     return target
             await self.update_targets()
         raise RuntimeError(f"target {target_id} not found")
+
+    @property
+    def headless_user_agent(
+        self,
+    ) -> tuple[str, cdp.emulation.UserAgentMetadata] | None:
+        """
+        the user agent and client hints applied to the targets of a headless browser,
+        or None when they could not be read (the override then drops the client hints)
+        """
+        return self._headless_user_agent
 
     def _create_tab(self, target_info: cdp.target.TargetInfo) -> tab.Tab:
         return tab.Tab(

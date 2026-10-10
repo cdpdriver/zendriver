@@ -746,24 +746,40 @@ class Connection(metaclass=CantTouchThis):
             self.manually_enabled_domains.append(domain_mod)
 
     async def _prepare_headless(self) -> None:
+        """
+        remove the "HeadlessChrome" token from the user agent of this target, keeping
+        the client hints the browser read at startup (see
+        :py:meth:`Browser._read_headless_user_agent`): an override without them makes
+        the target send none, which no real chrome does
+        """
         if getattr(self, "_prep_headless_done", None):
             return
-        response = await self._send_oneshot(
-            cdp.runtime.evaluate(
-                expression="navigator.userAgent",
-                user_gesture=True,
-                await_promise=True,
-                return_by_value=True,
-                allow_unsafe_eval_blocked_by_csp=True,
-            )
-        )
-        if response and response[0].value:
-            ua = response[0].value
+        headless_user_agent = self._owner._headless_user_agent if self._owner else None
+        if headless_user_agent is not None:
+            user_agent, metadata = headless_user_agent
             await self._send_oneshot(
                 cdp.network.set_user_agent_override(
-                    user_agent=ua.replace("Headless", ""),
+                    user_agent=user_agent,
+                    user_agent_metadata=metadata,
                 )
             )
+        else:
+            response = await self._send_oneshot(
+                cdp.runtime.evaluate(
+                    expression="navigator.userAgent",
+                    user_gesture=True,
+                    await_promise=True,
+                    return_by_value=True,
+                    allow_unsafe_eval_blocked_by_csp=True,
+                )
+            )
+            if response and response[0].value:
+                ua = response[0].value
+                await self._send_oneshot(
+                    cdp.network.set_user_agent_override(
+                        user_agent=ua.replace("Headless", ""),
+                    )
+                )
         setattr(self, "_prep_headless_done", True)
 
     async def _prepare_expert(self) -> None:
