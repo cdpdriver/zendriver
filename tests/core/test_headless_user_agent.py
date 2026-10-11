@@ -1,3 +1,4 @@
+import asyncio
 import http.server
 import json
 import re
@@ -24,6 +25,67 @@ USER_AGENTS = {
     "Android": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/155.0.0.0 Mobile Safari/537.36",
 }
+
+
+RECORD_USER_AGENT = (
+    "<p id='ua'></p><p id='brands'></p><script>"
+    "document.getElementById('ua').innerText = navigator.userAgent;"
+    "document.getElementById('brands').innerText = "
+    "navigator.userAgentData ? navigator.userAgentData.brands.length : -1;"
+    "</script>"
+)
+RECORD_WORKER_USER_AGENT = (
+    "<p id='worker-ua'></p><script>"
+    "const worker = new Worker(URL.createObjectURL(new Blob("
+    "['postMessage(navigator.userAgent)'], {type: 'application/javascript'})));"
+    "worker.onmessage = e => { document.getElementById('worker-ua').innerText = e.data; };"
+    "</script>"
+)
+
+
+@pytest.fixture
+def cross_site_iframe_user_agent_url() -> Iterator[str]:
+    """Serve a page on 127.0.0.1 embedding an iframe from localhost, which embeds an
+    iframe from 127.0.0.1 again: each is another site than its parent, which Chrome's
+    site isolation puts in a target of its own. The first script of each iframe records
+    the user agent and client hints it sees, and the page starts a worker reporting
+    its own user agent."""
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            port = server.server_address[1]
+            if self.path == "/child":
+                body = (
+                    f"<html><body>{RECORD_USER_AGENT}"
+                    f"<iframe src='http://127.0.0.1:{port}/grandchild'></iframe>"
+                    "</body></html>"
+                )
+            elif self.path == "/grandchild":
+                body = f"<html><body>{RECORD_USER_AGENT}</body></html>"
+            else:
+                body = (
+                    f"<html><body>{RECORD_WORKER_USER_AGENT}"
+                    f"<iframe src='http://localhost:{port}/child'></iframe>"
+                    "</body></html>"
+                )
+            data = body.encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+        def log_message(self, format: str, *args: object) -> None:
+            pass
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_address[1]}/"
+    finally:
+        server.shutdown()
+        server.server_close()
 
 
 @pytest.fixture
@@ -134,3 +196,42 @@ async def test_user_agent_is_a_visible_chrome_with_client_hints(
     assert "Headless" not in page_request["user-agent"]
     assert page_request.get("sec-ch-ua")
     assert page_request.get("sec-ch-ua-platform")
+
+
+async def test_cross_site_iframes_see_the_user_agent_from_their_first_script(
+    browser: zd.Browser, cross_site_iframe_user_agent_url: str
+) -> None:
+    """An iframe of another site runs in a target of its own: it must carry the user
+    agent of the browser from its first script, not once a command is sent to it.
+    Workers are attached and paused the same way, and must still run."""
+    tab = await browser.get(cross_site_iframe_user_agent_url)
+
+    frames: list[zd.Tab] = []
+    for _ in range(50):
+        frames = await tab.get_frames()
+        if len(frames) >= 2:
+            break
+        await asyncio.sleep(0.1)
+    assert (
+        len(frames) == 2
+    ), "expected the cross-site iframes to be targets of their own"
+
+    for suffix in ("/child", "/grandchild"):
+        frame = next(frame for frame in frames if (frame.url or "").endswith(suffix))
+        await frame.select("#ua")
+        user_agent = await frame.evaluate("document.getElementById('ua').innerText")
+        assert "Headless" not in user_agent, suffix
+        assert "Chrome/" in user_agent, suffix
+        brands = await frame.evaluate("document.getElementById('brands').innerText")
+        assert int(brands) > 0, suffix
+
+    worker_user_agent = ""
+    for _ in range(50):
+        worker_user_agent = await tab.evaluate(
+            "document.getElementById('worker-ua').innerText"
+        )
+        if worker_user_agent:
+            break
+        await asyncio.sleep(0.1)
+    assert "Chrome/" in worker_user_agent, "the worker never reported"
+    assert "Headless" not in worker_user_agent
