@@ -392,6 +392,20 @@ class Browser:
                 )
                 self.targets.remove(current_tab)
 
+    async def _adopt_target(self, target_info: cdp.target.TargetInfo) -> Connection:
+        """
+        the target described by the given info, created if target discovery has not
+        reported it yet (chrome attaches to a new target before announcing it)
+        """
+        async with self._update_target_info_mutex:
+            for target in self.targets:
+                if target.target_id == target_info.target_id:
+                    return target
+            new_target = self._create_tab(target_info)
+            self.targets.append(new_target)
+            logger.debug("target #%d adopted => %s", len(self.targets), new_target)
+            return new_target
+
     async def get(
         self, url: str = "about:blank", new_tab: bool = False, new_window: bool = False
     ) -> tab.Tab:
