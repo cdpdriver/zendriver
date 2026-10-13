@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add the `screen` option to `zendriver.start()`, `Browser.create()` and `Config`, along with a `Screen` dataclass, to choose the screen a headless browser reports to pages (size, device pixel ratio, color depth, work area, wide gamut and HDR) instead of Chrome's 800x600 default, a common headless tell. It is applied process-wide through Chrome's own `--screen-info` and `--force-color-profile` switches, so pages, iframes, workers and popups all agree @khamaileon
+
 ### Changed
 
 ### Removed
