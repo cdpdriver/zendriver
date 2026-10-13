@@ -6,12 +6,15 @@ import http
 import http.cookiejar
 import json
 import logging
+import os
 import pathlib
 import pickle
+import platform
 import re
 import shutil
 import ssl
 import subprocess
+import sys
 import urllib.parse
 import urllib.request
 import warnings
@@ -23,11 +26,134 @@ import asyncio_atexit
 from .. import cdp
 from . import tab, util
 from ._contradict import ContraDict
-from .config import BrowserType, Config, PathLike, is_posix
+from .config import BrowserType, Config, PathLike, Screen, is_posix
 from .connection import Connection
 from .proxy import ProxyForwarder, UpstreamProxy
 
 logger = logging.getLogger(__name__)
+
+
+def _user_agent_platform(user_agent: str) -> str | None:
+    """
+    the platform of the chrome sending the given user agent, named as in its
+    Sec-CH-UA-Platform hint, or None when unknown
+    """
+    # "Linux" also appears in the user agents of android and chrome os
+    for token, platform_name in (
+        ("Windows", "Windows"),
+        ("Macintosh", "macOS"),
+        ("Android", "Android"),
+        ("CrOS", "Chrome OS"),
+        ("Linux", "Linux"),
+    ):
+        if token in user_agent:
+            return platform_name
+    return None
+
+
+def _host_platform() -> str | None:
+    """the platform running this process, named as in chrome's Sec-CH-UA-Platform hint"""
+    if sys.platform == "win32":
+        return "Windows"
+    if sys.platform == "darwin":
+        return "macOS"
+    if sys.platform.startswith("linux"):
+        return "Linux"
+    return None
+
+
+if sys.platform == "win32":
+
+    def _windows_platform_version() -> str:
+        """
+        the version of the Windows.Foundation.UniversalApiContract, which chrome
+        reports as the platform version of windows: "<major>.<minor>.0"
+        """
+        import winreg
+
+        build = sys.getwindowsversion().build
+        if build < 17763:
+            # the windows 10 releases before 1809, whose contract version chrome knows
+            major = next(
+                (
+                    version
+                    for release_build, version in (
+                        (17134, 6),
+                        (16299, 5),
+                        (15063, 4),
+                        (14393, 3),
+                        (10586, 2),
+                    )
+                    if build >= release_build
+                ),
+                1,
+            )
+            return f"{major}.0.0"
+        try:
+            with winreg.OpenKey(
+                winreg.HKEY_LOCAL_MACHINE,
+                r"SOFTWARE\Microsoft\WindowsRuntime\WellKnownContracts",
+                0,
+                winreg.KEY_QUERY_VALUE | winreg.KEY_WOW64_64KEY,
+            ) as key:
+                value, _ = winreg.QueryValueEx(
+                    key, "Windows.Foundation.UniversalApiContract"
+                )
+        except OSError:
+            # the highest version chrome knows, reported when the key is missing
+            return "19.0.0"
+        return f"{value >> 16}.{value & 0xFFFF}.0"
+
+
+def _host_platform_version() -> str:
+    """the Sec-CH-UA-Platform-Version hint of a chrome running on this host"""
+    if sys.platform == "darwin":
+        # major.minor.bugfix of the os, e.g. "15.5.0"
+        parts = platform.mac_ver()[0].split(".")
+        return ".".join((parts + ["0", "0"])[:3])
+    if sys.platform == "win32":
+        return _windows_platform_version()
+    # chrome reports no platform version on linux
+    return ""
+
+
+def _host_architecture() -> str:
+    """the Sec-CH-UA-Arch hint of a chrome running on this host: "x86" or "arm" """
+    machine = platform.machine()
+    if sys.platform == "win32":
+        # an x86 or x64 chrome emulated on an arm64 windows reports "arm"
+        machine = os.environ.get("PROCESSOR_ARCHITEW6432", machine)
+    if machine.lower().startswith(("arm", "aarch")):
+        return "arm"
+    return "x86"
+
+
+def _headless_user_agent(
+    user_agent: str,
+) -> tuple[str, cdp.emulation.UserAgentMetadata] | None:
+    """
+    the user agent and client hint metadata :py:meth:`Connection._prepare_headless`
+    applies to the targets of a headless browser sending the given user agent, or
+    None when that browser does not run on the platform of this process.
+
+    the metadata only carries the fields the protocol requires: chrome fills in the
+    others (brands, fullVersionList, bitness, wow64...) with its own values, which a
+    headless chrome shares with a visible one. the platform version and architecture
+    are those of this host, which launched the headless browser.
+    """
+    platform_name = _user_agent_platform(user_agent)
+    if platform_name is None or platform_name != _host_platform():
+        return None
+    metadata = cdp.emulation.UserAgentMetadata(
+        platform=platform_name,
+        platform_version=_host_platform_version(),
+        architecture=_host_architecture(),
+        model="",
+        mobile=False,
+        # only recent chromes fill this one in when it is omitted
+        form_factors=["Desktop"],
+    )
+    return user_agent.replace("Headless", ""), metadata
 
 
 class Browser:
@@ -81,6 +207,7 @@ class Browser:
         lang: str | None = None,
         host: str | None = None,
         port: int | None = None,
+        screen: Screen | None = None,
         **kwargs: Any,
     ) -> Browser:
         """
@@ -98,6 +225,7 @@ class Browser:
                 lang=lang,
                 host=host,
                 port=port,
+                screen=screen,
                 **kwargs,
             )
         instance = cls(config)
@@ -141,6 +269,10 @@ class Browser:
         self._is_updating = asyncio.Event()
         self.connection = None
         self._proxy_forwarders: List[ProxyForwarder] = []
+        self._headless_user_agent: (
+            tuple[str, cdp.emulation.UserAgentMetadata] | None
+        ) = None
+        """user agent and client hint metadata of a headless browser, built at startup"""
         logger.debug("Session object initialized: %s" % vars(self))
 
     @property
@@ -261,6 +393,20 @@ class Browser:
                     % (self.targets.index(current_tab), current_tab)
                 )
                 self.targets.remove(current_tab)
+
+    async def _adopt_target(self, target_info: cdp.target.TargetInfo) -> Connection:
+        """
+        the target described by the given info, created if target discovery has not
+        reported it yet (chrome attaches to a new target before announcing it)
+        """
+        async with self._update_target_info_mutex:
+            for target in self.targets:
+                if target.target_id == target_info.target_id:
+                    return target
+            new_target = self._create_tab(target_info)
+            self.targets.append(new_target)
+            logger.debug("target #%d adopted => %s", len(self.targets), new_target)
+            return new_target
 
     async def get(
         self, url: str = "about:blank", new_tab: bool = False, new_window: bool = False
@@ -501,6 +647,8 @@ class Browser:
         await self.update_targets()
         if not connect_existing:
             await self._wait_for_initial_tab()
+        if self.config.headless:
+            await self._read_headless_user_agent()
         return self
 
     async def _wait_for_initial_tab(self) -> None:
@@ -509,6 +657,27 @@ class Browser:
                 return
             await asyncio.sleep(self.config.browser_connection_timeout)
             await self.update_targets()
+
+    async def _read_headless_user_agent(self) -> None:
+        """
+        read the user agent of the headless browser, for
+        :py:meth:`Connection._prepare_headless` to override on every target without
+        its "HeadlessChrome" token, the only thing telling a headless chrome from a
+        visible one. the override carries client hint metadata (see
+        :py:func:`_headless_user_agent`): without it, the browser would drop its
+        client hints (the Sec-CH-UA* request headers and navigator.userAgentData),
+        which no real chrome does.
+        """
+        if not self.connection:
+            return
+        _, _, _, user_agent, _ = await self.connection.send(cdp.browser.get_version())
+        self._headless_user_agent = _headless_user_agent(user_agent)
+        if self._headless_user_agent is None:
+            logger.warning(
+                "the headless browser does not run on the platform of this process "
+                "(user agent: %s): its user agent override will drop the client hints",
+                user_agent,
+            )
 
     async def test_connection(self) -> bool:
         if not self._http:
@@ -635,6 +804,17 @@ class Browser:
                     return target
             await self.update_targets()
         raise RuntimeError(f"target {target_id} not found")
+
+    @property
+    def headless_user_agent(
+        self,
+    ) -> tuple[str, cdp.emulation.UserAgentMetadata] | None:
+        """
+        the user agent and client hint metadata applied to the targets of a headless
+        browser, or None when the browser does not run on the platform of this process
+        (its user agent override then drops the client hints)
+        """
+        return self._headless_user_agent
 
     def _create_tab(self, target_info: cdp.target.TargetInfo) -> tab.Tab:
         return tab.Tab(

@@ -19,7 +19,7 @@ if typing.TYPE_CHECKING:
     from .browser import Browser
     from .config import PathLike
 from .. import cdp
-from .config import BrowserType, Config
+from .config import BrowserType, Config, Screen
 
 __registered__instances__: Set[Browser] = set()
 
@@ -41,6 +41,7 @@ async def start(
     port: Optional[int] = None,
     expert: Optional[bool] = None,
     user_agent: Optional[str] = None,
+    screen: Optional[Screen] = None,
     **kwargs: Any,
 ) -> Browser:
     """
@@ -74,6 +75,10 @@ async def start(
 
     :param user_agent: if set, this will be used as the user agent for the browser.
 
+    :param screen: the :class:`zendriver.Screen` a headless browser should report to pages
+                   (size, device pixel ratio, color depth, work area, wide gamut and HDR),
+                   instead of Chrome's 800x600 default. Ignored when not headless.
+
     :return:
     """
     if not config:
@@ -89,6 +94,7 @@ async def start(
             port=port,
             expert=expert,
             user_agent=user_agent,
+            screen=screen,
             **kwargs,
         )
     from .browser import Browser
