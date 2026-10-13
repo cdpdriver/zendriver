@@ -747,10 +747,10 @@ class Connection(metaclass=CantTouchThis):
 
     async def _prepare_headless(self) -> None:
         """
-        remove the "HeadlessChrome" token from the user agent of this target, keeping
-        the client hints the browser read at startup (see
-        :py:meth:`Browser._read_headless_user_agent`): an override without them makes
-        the target send none, which no real chrome does
+        remove the "HeadlessChrome" token from the user agent of this target, with the
+        client hint metadata the browser built at startup (see
+        :py:meth:`Browser._read_headless_user_agent`): an override without it makes
+        the target drop its client hints, which no real chrome does
         """
         if getattr(self, "_prep_headless_done", None):
             return
