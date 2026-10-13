@@ -6,10 +6,12 @@ import secrets
 import sys
 import tempfile
 import zipfile
+from dataclasses import dataclass
 from typing import Any, List, Literal, Optional, Union
 
 __all__ = [
     "Config",
+    "Screen",
     "find_executable",
     "temp_profile_dir",
     "is_root",
@@ -24,6 +26,98 @@ PathLike = Union[str, pathlib.Path]
 AUTO = None
 
 BrowserType = Literal["chrome", "brave", "msedge", "auto"]
+
+
+@dataclass(frozen=True)
+class Screen:
+    """
+    The screen a headless browser reports to pages.
+
+    In headless mode, Chrome gives the browser a virtual 800x600 screen at scale 1
+    with 24-bit color, which has nothing to do with the host and is a common
+    headless tell. Pass a ``Screen`` as the ``screen`` option of :class:`Config`
+    or :func:`zendriver.start` to describe the screen the browser should report
+    instead, for example ``Screen(1920, 1080)``.
+
+    The screen is applied process-wide through Chrome's own headless switches
+    (``--screen-info`` and ``--force-color-profile``), without any CDP emulation,
+    so every page, cross-site iframe, worker and popup reports the same screen,
+    and Chrome lays its window out on that screen exactly as it does when visible.
+
+    The option only takes effect in headless mode. Chrome versions older than 142
+    ignore ``--screen-info`` and keep their 800x600 screen.
+
+    :param width: screen width in CSS pixels, as reported by ``screen.width``
+    :param height: screen height in CSS pixels, as reported by ``screen.height``
+    :param device_pixel_ratio: scale factor, as reported by ``window.devicePixelRatio``.
+           Chrome accepts 0.5 and above
+    :param color_depth: bits per pixel, as reported by ``screen.colorDepth``.
+           Common values are 24 and 30 (wide gamut and HDR screens)
+    :param work_area_insets: space taken by the menu bar, dock or task bar, as
+           ``(top, right, bottom, left)`` in CSS pixels. It is excluded from
+           ``screen.availWidth``, ``screen.availHeight`` and the window placement
+    :param wide_gamut: report a Display P3 color space, so that the
+           ``(color-gamut: p3)`` media query matches
+    :param hdr: report an HDR screen, so that the ``(dynamic-range: high)`` media
+           query matches. Implies ``wide_gamut``
+    """
+
+    width: int
+    height: int
+    device_pixel_ratio: float = 1.0
+    color_depth: int = 24
+    work_area_insets: tuple[int, int, int, int] = (0, 0, 0, 0)
+    wide_gamut: bool = False
+    hdr: bool = False
+
+    def __post_init__(self) -> None:
+        if self.width <= 0 or self.height <= 0:
+            raise ValueError("Screen width and height must be positive")
+        if self.device_pixel_ratio < 0.5:
+            raise ValueError("Screen device_pixel_ratio must be at least 0.5")
+        if self.color_depth < 1:
+            raise ValueError("Screen color_depth must be at least 1")
+        if len(self.work_area_insets) != 4:
+            raise ValueError(
+                "Screen work_area_insets must be a (top, right, bottom, left) tuple"
+            )
+        top, right, bottom, left = self.work_area_insets
+        if min(self.work_area_insets) < 0:
+            raise ValueError("Screen work_area_insets cannot be negative")
+        if top + bottom >= self.height or left + right >= self.width:
+            raise ValueError("Screen work_area_insets must leave room for a work area")
+
+    def _physical(self, css_pixels: int) -> int:
+        return round(css_pixels * self.device_pixel_ratio)
+
+    def browser_args(self) -> list[str]:
+        """
+        The Chrome switches describing this screen, for headless mode.
+
+        Chrome's ``--screen-info`` switch takes physical pixels, so sizes and
+        insets are multiplied by the device pixel ratio.
+        """
+        top, right, bottom, left = self.work_area_insets
+        screen_info = [
+            f"{self._physical(self.width)}x{self._physical(self.height)}",
+            f"devicePixelRatio={self.device_pixel_ratio:g}",
+            f"colorDepth={self.color_depth}",
+        ]
+        for name, inset in (
+            ("workAreaTop", top),
+            ("workAreaRight", right),
+            ("workAreaBottom", bottom),
+            ("workAreaLeft", left),
+        ):
+            if inset:
+                screen_info.append(f"{name}={self._physical(inset)}")
+        args = ["--screen-info={%s}" % " ".join(screen_info)]
+
+        if self.hdr:
+            args.append("--force-color-profile=hdr10")
+        elif self.wide_gamut:
+            args.append("--force-color-profile=display-p3-d65")
+        return args
 
 
 class Config:
@@ -48,6 +142,7 @@ class Config:
         user_agent: Optional[str] = None,
         disable_webrtc: Optional[bool] = True,
         disable_webgl: Optional[bool] = False,
+        screen: Optional[Screen] = None,
         **kwargs: Any,
     ):
         """
@@ -72,6 +167,8 @@ class Config:
         :param expert: when set to True, enabled "expert" mode.
                This conveys, the inclusion of parameters: --disable-site-isolation-trials,
                as well as some scripts and patching useful for debugging (for example, ensuring shadow-root is always in "open" mode)
+        :param screen: the :class:`Screen` a headless browser should report to pages,
+               instead of Chrome's 800x600 default. Ignored when not headless
 
         :param kwargs:
         """
@@ -99,6 +196,7 @@ class Config:
         self.expert = expert
         self.disable_webrtc = disable_webrtc
         self.disable_webgl = disable_webgl
+        self.screen = screen
         self._extensions: list[PathLike] = []
 
         # when using posix-ish operating system and running as root
@@ -205,6 +303,8 @@ class Config:
             args.extend([arg for arg in self._browser_args if arg not in args])
         if self.headless:
             args.append("--headless=new")
+            if self.screen:
+                args.extend(self.screen.browser_args())
         if self.user_agent:
             args.append(f"--user-agent={self.user_agent}")
         if self.lang:

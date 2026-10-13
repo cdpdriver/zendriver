@@ -6,7 +6,7 @@ from zendriver.core._contradict import (
     cdict,
 )
 from zendriver.core.browser import Browser
-from zendriver.core.config import Config
+from zendriver.core.config import Config, Screen
 from zendriver.core.connection import Connection
 from zendriver.core.element import Element
 from zendriver.core.tab import Tab
@@ -20,6 +20,7 @@ __all__ = [
     "Tab",
     "cdp",
     "Config",
+    "Screen",
     "start",
     "util",
     "Element",
