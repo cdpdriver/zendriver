@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- CSS queries (`Tab.query_selector`, `Tab.query_selector_all`) now reuse a cached document tree and node index instead of requesting the complete DOM via `DOM.getDocument` on every call. `query_selector` is roughly 30-40x faster and `query_selector_all` roughly 20x faster on repeated queries, with one extra `DOM.getDocument` per document or navigation.
+
 ### Removed
 
 ## [0.17.1] - 2026-10-01

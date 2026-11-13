@@ -93,6 +93,46 @@ async def test_select(browser: zd.Browser) -> None:
     assert result.text == "Apples"
 
 
+async def test_query_selector_reuses_cached_document(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+
+    first = await tab.select("li[aria-label^='Apples']")
+    document = tab._dom_doc
+
+    assert first is not None
+    assert document is not None
+
+    second = await tab.select("#download_file")
+
+    assert second is not None
+    assert tab._dom_doc is document
+
+
+async def test_query_selector_refreshes_cached_document_when_dom_changes(
+    browser: zd.Browser,
+) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    assert await tab.select("li") is not None
+
+    await tab.evaluate(
+        "document.body.insertAdjacentHTML('beforeend', '<div id=fresh>fresh</div>')"
+    )
+    fresh = await tab.select("#fresh")
+
+    assert fresh is not None
+    assert fresh.text_all == "fresh"
+
+
+async def test_navigation_invalidates_cached_document(browser: zd.Browser) -> None:
+    tab = await browser.get(sample_file("groceries.html"))
+    assert await tab.select("li") is not None
+    assert tab._dom_doc is not None
+
+    await tab.get(sample_file("groceries.html"))
+
+    assert tab._dom_doc is None
+
+
 async def test_query_selector_all_include_frames_queries_nested_iframe_documents(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
