@@ -199,6 +199,33 @@ def filter_recurse(
     return None
 
 
+def build_node_index(doc: cdp.dom.Node) -> dict[int, cdp.dom.Node]:
+    """
+    build an index that maps node ids to nodes in a single pass.
+
+    the tree returned by DOM.getDocument(-1, True) already contains all children, shadow
+    roots and iframe content documents, so this index allows looking up a node by its id
+    in O(1) instead of scanning the whole tree for every node id.
+
+    :param doc: the document node
+    :return: a mapping of node ids to nodes
+    """
+    index: dict[int, cdp.dom.Node] = {}
+    stack = [doc]
+    while stack:
+        node = stack.pop()
+        if node is None:
+            continue
+        index[node.node_id] = node
+        if node.children:
+            stack.extend(node.children)
+        if node.shadow_roots:
+            stack.extend(node.shadow_roots)
+        if node.content_document is not None:
+            stack.append(node.content_document)
+    return index
+
+
 def circle(
     x: float, y: float | None = None, radius: int = 10, num: int = 10, dir: int = 0
 ) -> typing.Generator[typing.Tuple[float, float], None, None]:
