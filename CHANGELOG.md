@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Headless browsers now send their user-agent client hints (`Sec-CH-UA*` request headers, `navigator.userAgentData`): the override removing the `HeadlessChrome` token from the user agent used to drop them, leaving a Chrome without client hints for anti-bot solutions to spot @khamaileon
 - Cross-site iframes and workers of a headless browser carry its user agent from their first script: Chrome attaches to them as soon as they exist and keeps them paused until they are prepared, instead of zendriver preparing them when a command is first sent to them. A cross-site iframe (an anti-bot challenge, typically) used to see `HeadlessChrome` while the page around it did not @khamaileon
+- `Browser.targets` no longer keeps the cross-site iframes of a page that navigated away, which Chrome stops listing without reporting them destroyed, so `Tab.get_frames` no longer returns them @stephanlensky
 
 ### Added
 

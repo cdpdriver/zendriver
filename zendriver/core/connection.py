@@ -874,8 +874,11 @@ class Connection(metaclass=CantTouchThis):
         if browser_connection is None:
             return
         session = browser_connection._sessions.get(event.session_id)
-        if session is not None:
-            session._detach_session()
+        if session is None:
+            return
+        session._detach_session()
+        if self._owner is not None and session.target_id is not None:
+            await self._owner._remove_target(session.target_id)
 
     async def _prepare_expert(self) -> None:
         if getattr(self, "_prep_expert_done", None):
