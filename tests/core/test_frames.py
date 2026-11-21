@@ -59,6 +59,20 @@ async def test_get_frames_returns_nested_cross_site_frames(
     )
 
 
+async def test_targets_of_frames_removed_by_navigation_are_dropped(
+    browser: zd.Browser, cross_site_iframe_url: str
+) -> None:
+    tab = await browser.get(cross_site_iframe_url)
+    old_frames = await get_frames(tab, 2)
+
+    await tab.get(f"{cross_site_iframe_url}?navigated")
+    new_frames = await get_frames(tab, 2)
+
+    target_ids = {target.target_id for target in browser.targets}
+    assert not {frame.target_id for frame in old_frames} & target_ids
+    assert {frame.target_id for frame in new_frames} <= target_ids
+
+
 async def test_select_with_include_frames_clicks_element_in_cross_site_frame(
     browser: zd.Browser, cross_site_iframe_url: str
 ) -> None:

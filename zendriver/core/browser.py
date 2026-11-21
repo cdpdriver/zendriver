@@ -187,7 +187,7 @@ class Browser:
     _process_pid: int | None
     _http: HTTPApi | None = None
     _cookies: CookieJar | None = None
-    _update_target_info_mutex: asyncio.Lock = asyncio.Lock()
+    _update_target_info_mutex: asyncio.Lock
 
     config: Config
     connection: Connection | None
@@ -260,6 +260,8 @@ class Browser:
 
         self.targets: List[Connection] = []
         """current targets (all types)"""
+        self._update_target_info_mutex = asyncio.Lock()
+        self._unlisted_target_ids: set[cdp.target.TargetID] = set()
         self.info: ContraDict | None = None
         self._target = None
         self._process = None
@@ -352,11 +354,11 @@ class Browser:
                 target_info = event.target_info
 
                 current_tab = next(
-                    filter(
-                        lambda item: item.target_id == target_info.target_id,
-                        self.targets,
-                    )
+                    (t for t in self.targets if t.target_id == target_info.target_id),
+                    None,
                 )
+                if current_tab is None:
+                    return
                 current_target = current_tab.target
 
                 if logger.getEffectiveLevel() <= 10:
@@ -379,18 +381,42 @@ class Browser:
                 new_target = self._create_tab(target_info)
 
                 self.targets.append(new_target)
+                self._unlisted_target_ids.add(target_info.target_id)
 
                 logger.debug("target #%d created => %s", len(self.targets), new_target)
 
             elif isinstance(event, cdp.target.TargetDestroyed):
+                self._unlisted_target_ids.discard(event.target_id)
                 current_tab = next(
-                    filter(lambda item: item.target_id == event.target_id, self.targets)
+                    (t for t in self.targets if t.target_id == event.target_id), None
                 )
+                if current_tab is None:
+                    return
                 logger.debug(
                     "target removed. id # %d => %s"
                     % (self.targets.index(current_tab), current_tab)
                 )
                 self.targets.remove(current_tab)
+
+    async def _adopt_target(self, target_info: cdp.target.TargetInfo) -> Connection:
+        """
+        the target described by the given info, created if target discovery has not
+        reported it yet (chrome attaches to a new target before announcing it)
+        """
+        async with self._update_target_info_mutex:
+            for target in self.targets:
+                if target.target_id == target_info.target_id:
+                    return target
+            new_target = self._create_tab(target_info)
+            self.targets.append(new_target)
+            self._unlisted_target_ids.add(target_info.target_id)
+            logger.debug("target #%d adopted => %s", len(self.targets), new_target)
+            return new_target
+
+    async def _remove_target(self, target_id: cdp.target.TargetID) -> None:
+        async with self._update_target_info_mutex:
+            self._unlisted_target_ids.discard(target_id)
+            self.targets[:] = [t for t in self.targets if t.target_id != target_id]
 
     async def get(
         self, url: str = "about:blank", new_tab: bool = False, new_window: bool = False
@@ -812,15 +838,23 @@ class Browser:
         )
 
     async def update_targets(self) -> None:
-        targets: List[cdp.target.TargetInfo]
-        targets = await self._get_targets()
-        for t in targets:
-            for existing_tab in self.targets:
-                if existing_tab.target_id == t.target_id:
-                    existing_tab.target.__dict__.update(t.__dict__)
-                    break
-            else:
-                self.targets.append(self._create_tab(t))
+        async with self._update_target_info_mutex:
+            targets: List[cdp.target.TargetInfo]
+            targets = await self._get_targets()
+            target_ids = {t.target_id for t in targets}
+            self._unlisted_target_ids -= target_ids
+            self.targets[:] = [
+                t
+                for t in self.targets
+                if t.target_id in target_ids or t.target_id in self._unlisted_target_ids
+            ]
+            for t in targets:
+                for existing_tab in self.targets:
+                    if existing_tab.target_id == t.target_id:
+                        existing_tab.target.__dict__.update(t.__dict__)
+                        break
+                else:
+                    self.targets.append(self._create_tab(t))
 
         await asyncio.sleep(0)
 
