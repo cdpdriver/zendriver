@@ -222,6 +222,7 @@ class Connection(metaclass=CantTouchThis):
         self._internal_handlers: dict[Any, list[Callable[..., Any]]] = (
             collections.defaultdict(list)
         )
+        self._child_session_ids: set[str] = set()
         self.__dict__.update(**kwargs)
 
     @property
@@ -490,6 +491,12 @@ class Connection(metaclass=CantTouchThis):
         """
         forgets the flat session locally. the browser side session is not touched.
         """
+        if self._session_parent is not None:
+            for child_session_id in self._child_session_ids:
+                child = self._session_parent._sessions.get(child_session_id)
+                if child is not None:
+                    child._detach_session()
+        self._child_session_ids.clear()
         if self._session_parent is not None and self.session_id is not None:
             self._session_parent._sessions.pop(self.session_id, None)
         self.session_id = None
@@ -817,29 +824,52 @@ class Connection(metaclass=CantTouchThis):
         )
 
     async def _on_child_attached(self, event: cdp.target.AttachedToTarget) -> None:
-        browser = self._owner
-        browser_connection = self._browser_connection
-        if browser is None or browser_connection is None:
-            return
-
-        child = await browser._adopt_target(event.target_info)
-        if child.session_id is not None:
-            # the target already has a session of its own: the auto-attached one is
-            # only used to prepare it and let it run
-            child = Connection(
-                child.websocket_url, target=event.target_info, _owner=browser
+        bound = False
+        try:
+            browser = self._owner
+            browser_connection = self._browser_connection
+            if browser is not None and browser_connection is not None:
+                child = await browser._adopt_target(event.target_info)
+                bound = await self._bind_child_session(
+                    child, browser_connection, event.session_id
+                )
+                await child._prepare_headless()
+        except Exception:
+            logger.debug(
+                "could not prepare target %s",
+                event.target_info.target_id,
+                exc_info=True,
             )
-        child._bind_session(browser_connection, event.session_id)
 
         try:
-            await child._prepare_headless()
-        except Exception:
-            logger.debug("could not prepare %s", child, exc_info=True)
-        finally:
             if event.waiting_for_debugger:
-                await child._send_oneshot(cdp.runtime.run_if_waiting_for_debugger())
+                await self._send_without_response(
+                    cdp.runtime.run_if_waiting_for_debugger(), event.session_id
+                )
+            if not bound:
+                await self._send_without_response(
+                    cdp.target.detach_from_target(session_id=event.session_id),
+                    self.session_id,
+                )
+        except Exception:
+            logger.debug(
+                "could not resume target %s",
+                event.target_info.target_id,
+                exc_info=True,
+            )
+
+    async def _bind_child_session(
+        self, child: Connection, browser_connection: Connection, session_id: str
+    ) -> bool:
+        async with child._attach_lock:
+            if child.session_id is not None:
+                return False
+            child._bind_session(browser_connection, session_id)
+        self._child_session_ids.add(session_id)
+        return True
 
     async def _on_child_detached(self, event: cdp.target.DetachedFromTarget) -> None:
+        self._child_session_ids.discard(event.session_id)
         browser_connection = self._browser_connection
         if browser_connection is None:
             return
@@ -907,6 +937,16 @@ class Connection(metaclass=CantTouchThis):
             if session is not None:
                 session._detach_session()
         return message
+
+    async def _send_without_response(
+        self, cdp_obj: Any, session_id: str | None
+    ) -> None:
+        if self.websocket is None:
+            raise ProtocolException("connection was closed")
+        tx = Transaction(cdp_obj)
+        tx.id = self._next_message_id()
+        tx.session_id = session_id
+        await self.websocket.send(tx.message)
 
     async def _send_oneshot(self, cdp_obj: Any) -> Any:
         if self.websocket is None:
