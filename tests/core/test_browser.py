@@ -310,7 +310,7 @@ async def test_headless_browser_reports_exact_screen_with_fractional_scale(
     create_browser: type[CreateBrowser],
 ) -> None:
     screen = zd.Screen(
-        1365, 767, device_pixel_ratio=1.5, work_area_insets=(25, 0, 0, 0)
+        1365, 768, device_pixel_ratio=1.5, work_area_insets=(24, 0, 0, 0)
     )
     async with create_browser(headless=True, screen=screen) as browser:
         page = await browser.get("about:blank")
@@ -318,7 +318,7 @@ async def test_headless_browser_reports_exact_screen_with_fractional_scale(
             "[screen.width, screen.height, screen.availHeight, screen.availTop]"
         )
 
-    assert reported == [1365, 767, 742, 25]
+    assert reported == [1365, 768, 744, 24]
 
 
 async def test_iframe_target_can_be_connected_to(
