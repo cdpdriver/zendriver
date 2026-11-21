@@ -152,6 +152,9 @@ class Tab(Connection):
     """
 
     browser: Browser | None
+    # document tree cache; class defaults so instances built without __init__ still work
+    _dom_doc: cdp.dom.Node | None = None
+    _dom_index: dict[int, cdp.dom.Node] | None = None
 
     def __init__(
         self,
@@ -163,9 +166,98 @@ class Tab(Connection):
         super().__init__(websocket_url, target, browser, **kwargs)
         self.browser = browser
         self._dom = None
+        self._dom_doc: cdp.dom.Node | None = None
+        self._dom_index: dict[int, cdp.dom.Node] | None = None
         self._window_id = None
         self._mouse_position: tuple[float, float] = (0.0, 0.0)
         self._mouse_buttons = 0
+
+    async def _get_dom_document(self, refresh: bool = False) -> cdp.dom.Node:
+        """
+        return the document tree for the current document.
+
+        DOM.getDocument(-1, True) serializes the complete node tree, which is the most
+        expensive part of a css query. the tree is therefore cached until the document is
+        replaced (navigation, reload, history traversal, DOM.disable) or a node id is not
+        found in it, in which case it is fetched again.
+        """
+        if refresh or self._dom_doc is None:
+            self._dom_doc = await self.send(cdp.dom.get_document(-1, True))
+            self._dom_index = util.build_node_index(self._dom_doc)
+        return self._dom_doc
+
+    def _invalidate_dom_document(self) -> None:
+        """drop the cached document tree and node index."""
+        self._dom_doc = None
+        self._dom_index = None
+
+    def _lookup_node(self, node_id: int) -> cdp.dom.Node | None:
+        """look up a node by id in the cached document tree."""
+        index = self._dom_index
+        if index is None:
+            return None
+        return index.get(node_id)
+
+    async def _resolve_node(
+        self, node_id: int, doc: Any, _node: Any
+    ) -> tuple[cdp.dom.Node | None, Any]:
+        """
+        find the node for a node id and the tree it belongs to.
+
+        a caller supplied tree is scanned as is. otherwise the cached tree is used, and if
+        the id is missing from it the document changed after the tree was fetched, so the
+        tree is fetched again once.
+
+        :param node_id: node id returned by a dom query
+        :param doc: the tree the query ran against
+        :param _node: caller supplied node, if any
+        :return: the node, if found, and the tree it belongs to
+        """
+        if _node:
+            return util.filter_recurse(doc, lambda n: n.node_id == node_id), doc
+        node = self._lookup_node(node_id)
+        if node is None and self._dom_doc is not None:
+            doc = await self._get_dom_document(refresh=True)
+            node = self._lookup_node(node_id)
+        return node, doc
+
+    async def _resolve_nodes(
+        self,
+        node_ids: list[Any],
+        doc: Any,
+        _node: Any,
+        content_doc_nodes: list[Any],
+    ) -> tuple[list[cdp.dom.Node | None], Any]:
+        """
+        collect the nodes for a list of node ids and the tree they belong to.
+
+        :param node_ids: node ids returned by a dom query
+        :param doc: the tree the query ran against
+        :param _node: caller supplied node, if any
+        :param content_doc_nodes: iframe content documents to search for a caller tree
+        :return: the nodes, and the tree they belong to
+        """
+        if _node:
+            # caller supplied tree: it is not necessarily the cached document, so scan it
+            nodes: list[cdp.dom.Node | None] = []
+            for nid in node_ids:
+                node = util.filter_recurse(doc, lambda n: n.node_id == nid)
+                if not node:
+                    for cd_node in content_doc_nodes:
+                        node = util.filter_recurse(cd_node, lambda n: n.node_id == nid)
+                        if node:
+                            break
+                nodes.append(node)
+            return nodes, doc
+
+        # node ids are unique within a document, so an index replaces the per-node tree
+        # scan. refresh the cached tree once if an id is unknown (dom mutated after the
+        # tree was fetched).
+        index = self._dom_index or util.build_node_index(doc)
+        if any(nid not in index for nid in node_ids):
+            doc = await self._get_dom_document(refresh=True)
+            index = self._dom_index or util.build_node_index(doc)
+        return [index.get(nid) for nid in node_ids], doc
 
     @property
     def inspector_url(self) -> str:
@@ -196,6 +288,7 @@ class Tab(Connection):
         # If not ignored, an exception is thrown, and masks other problems
         # (e.g., Could not find node with given id)
 
+        self._invalidate_dom_document()
         try:
             await self.send(cdp.dom.disable())
         except ProtocolException:
@@ -504,6 +597,7 @@ class Tab(Connection):
             return await self.browser.get(url, new_tab, new_window)
         else:
             await self.send(cdp.page.navigate(url))
+            self._invalidate_dom_document()
             await self.wait()
             return self
 
@@ -528,7 +622,7 @@ class Tab(Connection):
         content_doc_nodes = []
         if not _node:
             # Returns all document node ids here
-            doc = await self.send(cdp.dom.get_document(-1, True))
+            doc = await self._get_dom_document()
             if _include_frames:
                 # Collect all iframe content_document nodes
                 stack = [doc]
@@ -584,7 +678,8 @@ class Tab(Connection):
             else:
                 if e.message is not None and "could not find node" in e.message.lower():
                     # The document node is stale; refetch and retry once
-                    doc = await self.send(cdp.dom.get_document(-1, True))
+                    self._invalidate_dom_document()
+                    doc = await self._get_dom_document(refresh=True)
                     # Prevent double-retry by marking this node as 'last attempt'
                     setattr(doc, "__last", True)
                     return await self.query_selector_all(
@@ -595,15 +690,10 @@ class Tab(Connection):
                 raise
         if not node_ids:
             return []
-        items = []
+        nodes, doc = await self._resolve_nodes(node_ids, doc, _node, content_doc_nodes)
 
-        for nid in node_ids:
-            node = util.filter_recurse(doc, lambda n: n.node_id == nid)
-            if not node:
-                for cd_node in content_doc_nodes:
-                    node = util.filter_recurse(cd_node, lambda n: n.node_id == nid)
-                    if node:
-                        break
+        items = []
+        for node in nodes:
             # we pass along the retrieved document tree,
             # to improve performance
             if not node:
@@ -629,7 +719,7 @@ class Tab(Connection):
 
         doc: Any
         if not _node:
-            doc = await self.send(cdp.dom.get_document(-1, True))
+            doc = await self._get_dom_document()
         else:
             doc = _node
             if _node.node_name == "IFRAME":
@@ -658,7 +748,8 @@ class Tab(Connection):
                 and doc
             ):
                 # The document node is stale; refetch and retry once
-                doc = await self.send(cdp.dom.get_document(-1, True))
+                self._invalidate_dom_document()
+                doc = await self._get_dom_document(refresh=True)
                 # Prevent double-retry by marking this node as 'last attempt'
                 setattr(doc, "__last", True)
                 return await self.query_selector(selector, doc)
@@ -667,7 +758,7 @@ class Tab(Connection):
                 raise
         if not node_id:
             return None
-        node = util.filter_recurse(doc, lambda n: n.node_id == node_id)
+        node, doc = await self._resolve_node(node_id, doc, _node)
         if not node:
             return None
         return element.create(node, self, doc)
@@ -812,12 +903,14 @@ class Tab(Connection):
         history back
         """
         await self.send(cdp.runtime.evaluate("window.history.back()"))
+        self._invalidate_dom_document()
 
     async def forward(self) -> None:
         """
         history forward
         """
         await self.send(cdp.runtime.evaluate("window.history.forward()"))
+        self._invalidate_dom_document()
 
     async def reload(
         self,
@@ -838,6 +931,7 @@ class Tab(Connection):
                 script_to_evaluate_on_load=script_to_evaluate_on_load,
             ),
         )
+        self._invalidate_dom_document()
 
     async def evaluate(
         self, expression: str, await_promise: bool = False, return_by_value: bool = True
