@@ -1,5 +1,6 @@
 import ctypes
 import logging
+import math
 import os
 import pathlib
 import secrets
@@ -59,7 +60,8 @@ class Screen:
     :param wide_gamut: report a Display P3 color space, so that the
            ``(color-gamut: p3)`` media query matches
     :param hdr: report an HDR screen, so that the ``(dynamic-range: high)`` media
-           query matches. Implies ``wide_gamut``
+           query matches. Implies ``wide_gamut``. On some platforms, such as Linux,
+           Chrome then reports a ``color_depth`` of 24 whatever is set
     """
 
     width: int
@@ -88,14 +90,15 @@ class Screen:
             raise ValueError("Screen work_area_insets must leave room for a work area")
 
     def _physical(self, css_pixels: int) -> int:
-        return round(css_pixels * self.device_pixel_ratio)
+        return math.floor(css_pixels * self.device_pixel_ratio)
 
     def browser_args(self) -> list[str]:
         """
         The Chrome switches describing this screen, for headless mode.
 
         Chrome's ``--screen-info`` switch takes physical pixels, so sizes and
-        insets are multiplied by the device pixel ratio.
+        insets are multiplied by the device pixel ratio and rounded down, since
+        Chrome rounds them up when converting back to CSS pixels.
         """
         top, right, bottom, left = self.work_area_insets
         screen_info = [

@@ -132,6 +132,17 @@ def test_screen_work_area_insets_cover_all_sides() -> None:
     ]
 
 
+def test_screen_physical_pixels_are_rounded_down() -> None:
+    """Chrome rounds physical pixels up when converting back to CSS pixels."""
+    screen = zd.Screen(
+        1366, 768, device_pixel_ratio=1.25, work_area_insets=(25, 0, 0, 0)
+    )
+
+    assert screen.browser_args() == [
+        "--screen-info={1707x960 devicePixelRatio=1.25 colorDepth=24 workAreaTop=31}"
+    ]
+
+
 def test_screen_hdr_uses_hdr_color_profile() -> None:
     screen = zd.Screen(1920, 1080, wide_gamut=True, hdr=True)
 
