@@ -248,6 +248,79 @@ async def test_browser_starts_with_lang_option(
         assert await page.evaluate("1 + 1") == 2
 
 
+async def test_headless_browser_reports_configured_screen(
+    create_browser: type[CreateBrowser],
+) -> None:
+    """Headless Chrome reports an 800x600 screen unless told otherwise (#294)."""
+    screen = zd.Screen(
+        1512,
+        982,
+        device_pixel_ratio=2,
+        color_depth=30,
+        work_area_insets=(33, 0, 0, 0),
+        wide_gamut=True,
+    )
+    async with create_browser(headless=True, screen=screen) as browser:
+        page = await browser.get("about:blank")
+        reported = await page.evaluate(
+            """({
+                width: screen.width,
+                height: screen.height,
+                availWidth: screen.availWidth,
+                availHeight: screen.availHeight,
+                availTop: screen.availTop,
+                colorDepth: screen.colorDepth,
+                devicePixelRatio: window.devicePixelRatio,
+                wideGamut: matchMedia('(color-gamut: p3)').matches,
+                hdr: matchMedia('(dynamic-range: high)').matches,
+            })"""
+        )
+
+    assert reported == {
+        "width": 1512,
+        "height": 982,
+        "availWidth": 1512,
+        "availHeight": 949,
+        "availTop": 33,
+        "colorDepth": 30,
+        "devicePixelRatio": 2,
+        "wideGamut": True,
+        "hdr": False,
+    }
+
+
+async def test_headless_browser_reports_hdr_screen(
+    create_browser: type[CreateBrowser],
+) -> None:
+    async with create_browser(
+        headless=True, screen=zd.Screen(1920, 1080, hdr=True)
+    ) as browser:
+        page = await browser.get("about:blank")
+        reported = await page.evaluate(
+            """({
+                wideGamut: matchMedia('(color-gamut: p3)').matches,
+                hdr: matchMedia('(dynamic-range: high)').matches,
+            })"""
+        )
+
+    assert reported == {"wideGamut": True, "hdr": True}
+
+
+async def test_headless_browser_reports_exact_screen_with_fractional_scale(
+    create_browser: type[CreateBrowser],
+) -> None:
+    screen = zd.Screen(
+        1365, 767, device_pixel_ratio=1.5, work_area_insets=(25, 0, 0, 0)
+    )
+    async with create_browser(headless=True, screen=screen) as browser:
+        page = await browser.get("about:blank")
+        reported = await page.evaluate(
+            "[screen.width, screen.height, screen.availHeight, screen.availTop]"
+        )
+
+    assert reported == [1365, 767, 742, 25]
+
+
 async def test_iframe_target_can_be_connected_to(
     browser: zd.Browser, cross_site_iframe_url: str
 ) -> None:

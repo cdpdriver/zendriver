@@ -105,6 +105,31 @@ if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 ```
 
+## Headless screen
+
+In headless mode, Chrome reports a virtual 800x600 screen at scale 1 with 24-bit color, which has nothing to do with the host and is a common headless tell. The `screen` option describes the screen the browser should report instead (Chrome 142 or newer). It is applied process-wide by Chrome itself, so pages, iframes, workers and popups all agree.
+
+```python
+import zendriver as zd
+
+# a plain, common desktop screen
+browser = await zd.start(headless=True, screen=zd.Screen(1920, 1080))
+
+# or something closer to a MacBook Pro: a Retina screen with a menu bar, wide gamut and HDR
+browser = await zd.start(
+    headless=True,
+    screen=zd.Screen(
+        1512,
+        982,
+        device_pixel_ratio=2,
+        color_depth=30,
+        work_area_insets=(33, 0, 0, 0),  # top, right, bottom, left, in CSS pixels
+        wide_gamut=True,
+        hdr=True,
+    ),
+)
+```
+
 A more concrete example, which can be found in the ./example/ folder,
 shows a script for uploading an image to imgur.
 

@@ -26,7 +26,7 @@ import asyncio_atexit
 from .. import cdp
 from . import tab, util
 from ._contradict import ContraDict
-from .config import BrowserType, Config, PathLike, is_posix
+from .config import BrowserType, Config, PathLike, Screen, is_posix
 from .connection import Connection
 from .proxy import ProxyForwarder, UpstreamProxy
 
@@ -207,6 +207,7 @@ class Browser:
         lang: str | None = None,
         host: str | None = None,
         port: int | None = None,
+        screen: Screen | None = None,
         **kwargs: Any,
     ) -> Browser:
         """
@@ -224,6 +225,7 @@ class Browser:
                 lang=lang,
                 host=host,
                 port=port,
+                screen=screen,
                 **kwargs,
             )
         instance = cls(config)
